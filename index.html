@@ -453,7 +453,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 22:06 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 22:35 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2130,13 +2130,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var ids = selIds();
     if (ids.length) openSelMenu(ids, x, y);
   }
-  function openSelMenu(ids, x, y) {
-    var m = document.createElement('div');
-    m.className = 'actmenu'; m.dataset.ids = ids.join(',');
+  function mainMenuHtml(ids) {
     var one = ids.length === 1 ? task(ids[0]) : null;
     var head = ids.length > 1 ? '<span class="selct">' + ids.length + ' selected</span>' : '';
     var wkd = one && (one.worked || []).indexOf(dayStr()) !== -1;
-    m.innerHTML = head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
+    return head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
+  }
+  function openSelMenu(ids, x, y) {
+    var m = document.createElement('div');
+    m.className = 'actmenu'; m.dataset.ids = ids.join(',');
+    m.innerHTML = mainMenuHtml(ids);
     placeMenu(m, x, y);
   }
   function subprojectsOf(secId) {
@@ -2168,8 +2171,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var mts = ids.map(task).filter(Boolean);
       var a = act.dataset.act;
       if (!mts.length) { clearPendMenu(); return; }
-      if (a === 'move') {
-        menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') + moveTargetsHtml();
+      if (a === 'move' || a === 'msecs') {
+        menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') + '<button data-act="mback">‹ back</button>' + moveTargetsHtml();
+        return;
+      }
+      if (a === 'mback') {
+        menuEl.innerHTML = mainMenuHtml(ids);
         return;
       }
       if (a === 'mv2') {
@@ -2178,7 +2185,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           var subs = subprojectsOf(tgt2);
           if (subs.length) {
             menuEl.dataset.tsec = tgt2;
-            var bs = '<button data-act="mv3" data-proj="">top level</button>';
+            var bs = '<button data-act="msecs">‹ back</button><button data-act="mv3" data-proj="">top level</button>';
             subs.forEach(function (sp) { bs += '<button data-act="mv3" data-proj="' + esc(sp.proj) + '">' + esc(sp.leaf) + '</button>'; });
             menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') +
               '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + ' /</span>' + bs;
