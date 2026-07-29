@@ -444,27 +444,31 @@
         <button class="diagbtn" id="btnCopyState">Copy full board state</button>
         <button class="diagbtn" id="btnExport">Export backup (.json)</button>
         <button class="diagbtn" id="btnImport">Import backup</button>
+        <button class="diagbtn" id="ghSettings">Sync settings</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none">
         <span class="note" id="diagCopied"></span>
       </div>
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:58 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:07 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
 
 <div id="ghpanel">
-  <div style="font-weight:750; margin-bottom:8px">GitHub sync setup</div>
-  <input id="gh-repo" class="inline-edit" placeholder="owner/repo (e.g. luisfca/taskboard-state)" style="margin-bottom:6px">
-  <input id="gh-branch" class="inline-edit" placeholder="branch (main)" style="margin-bottom:6px">
-  <input id="gh-path" class="inline-edit" placeholder="file path (taskboard.json)" style="margin-bottom:6px">
-  <input id="gh-token" class="inline-edit" type="password" placeholder="fine-grained token (Contents: read/write)" style="margin-bottom:8px">
-  <div class="hint">Use a PRIVATE repo. Create the token at github.com → Settings → Developer settings → Fine-grained tokens, scoped to that one repo with Contents read/write. The token stays in this browser only — it is never written into the synced file.</div>
-  <div style="margin-top:8px">
-    <button class="diagbtn" id="ghSave">Save & sync</button>
-    <button class="diagbtn" id="ghClose">Close</button>
+  <div style="font-weight:750; margin-bottom:10px">Sync setup — one time per browser</div>
+  <div class="hint">Storage repo (private)</div>
+  <input id="gh-repo" class="inline-edit" style="margin-bottom:8px">
+  <div class="hint">Branch</div>
+  <input id="gh-branch" class="inline-edit" style="margin-bottom:8px">
+  <div class="hint">File</div>
+  <input id="gh-path" class="inline-edit" style="margin-bottom:8px">
+  <div class="hint">Token for that repo (Contents: read &amp; write) — stays in this browser only</div>
+  <input id="gh-token" class="inline-edit" type="password" placeholder="paste your fine-grained token here" style="margin-bottom:10px">
+  <div style="margin-top:4px">
+    <button class="diagbtn" id="ghSave">Save &amp; sync now</button>
+    <button class="diagbtn" id="ghClose">Cancel</button>
   </div>
 </div>
 
@@ -1716,6 +1720,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function scheduleSave() {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(flushSave, 350);
+    try { if (syncCfg() && !syncing) setSyncStatus('sync now •'); } catch (e) {}
   }
   function flushSave() {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
@@ -2062,7 +2067,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function showGhPanel() {
     var cfg = syncCfg() || {};
-    el('gh-repo').value = cfg.repo || '';
+    el('gh-repo').value = cfg.repo || 'anovabr/taskboard-state';
     el('gh-branch').value = cfg.branch || 'main';
     el('gh-path').value = cfg.path || 'taskboard.json';
     el('gh-token').value = cfg.token || '';
@@ -2263,6 +2268,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (e.target.id === 'ghClose') { el('ghpanel').style.display = 'none'; return; }
+    if (e.target.id === 'ghSettings') { showGhPanel(); return; }
     if (e.target.closest && e.target.closest('#layoutBtn')) {
       toggleLayout();
       return;
@@ -2519,6 +2525,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       renderModePill(verified);
       applyTheme();
       applyLayout();
+      setSyncStatus(syncCfg() ? 'sync now' : 'set up sync');
       renderDiag();
       renderAll();
       flushSave();
