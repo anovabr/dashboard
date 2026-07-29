@@ -146,6 +146,8 @@
   .pill.bad { background: var(--pill-bad-bg); color: var(--pill-bad-fg); }
   .pill.chip { background: transparent; border: 1px dashed var(--border); color: var(--muted); cursor: pointer; margin-left: 6px; }
   .pill.chip:hover { color: var(--accent); border-color: var(--accent); }
+  @keyframes syncflash { 0%, 100% { background: transparent; } 50% { background: var(--good); color: #fff; border-color: var(--good); } }
+  .pill.chip.flash { animation: syncflash .55s ease 2; color: var(--good); border-color: var(--good); }
 
   .stats { font-size: 13.5px; color: var(--secondary); margin: 8px 0 18px; }
   .stats b { font-weight: 750; color: var(--ink); }
@@ -451,7 +453,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:58 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:59 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2068,7 +2070,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         renderAll();
         applyTheme();
         syncBar('done');
-        setSyncStatus('last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+        var doneAtTxt = 'last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        setSyncStatus('completed');
+        var sb = el('syncBtn');
+        sb.classList.add('flash');
+        setTimeout(function () {
+          sb.classList.remove('flash');
+          if (!syncing) setSyncStatus(doneAtTxt);
+        }, 1600);
       })
       .catch(function (e) {
         syncing = false;
