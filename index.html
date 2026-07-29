@@ -264,10 +264,11 @@
   .actmenu { position: absolute; right: 0; top: 100%; z-index: 80; display: flex; gap: 4px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); }
   .actmenu button { font: inherit; font-size: 12.5px; font-weight: 650; background: var(--page); color: var(--ink); border: 1px solid var(--border); border-radius: 7px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
   .actmenu button:hover { border-color: var(--accent); color: var(--accent); }
-  .workchip { font-size: 11px; font-weight: 700; color: var(--muted); margin-left: 6px; }
+  .workbar { display: inline-block; width: 48px; height: 5px; border-radius: 3px; background: var(--track); margin-left: 8px; vertical-align: middle; overflow: hidden; }
+  .workbar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
-  .workchip.hot { color: var(--hard); }
+  .workbar.hot i { background: var(--hard); }
   .focus .rowbtn.star.on { opacity: 0; }
   .focus li:hover .rowbtn.star.on { opacity: .9; }
 
@@ -439,7 +440,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:20 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:22 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1783,7 +1784,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     h += esc(t.text);
     if (t.big) h += '<span class="tag">big</span>';
     var wdays = t.worked || [];
-    if (wdays.length) h += '<span class="workchip' + (wdays.indexOf(dayStr()) !== -1 ? ' hot' : '') + '" title="days you worked on this: ' + wdays.length + '">' + wdays.length + 'd</span>';
+    if (wdays.length) {
+      var wpct = Math.max(8, Math.min(wdays.length / 14, 1) * 100);
+      h += '<span class="workbar' + (wdays.indexOf(dayStr()) !== -1 ? ' hot' : '') + '" title="worked ' + wdays.length + ' day' + (wdays.length === 1 ? '' : 's') + ' on this"><i style="width:' + wpct + '%"></i></span>';
+    }
     h += '</span>';
     var star = '<button class="rowbtn star' + (t.week ? ' on' : '') + '" title="pin to This Week">' + (t.week ? '★' : '☆') + '</button>';
     var del = '<button class="rowbtn del" title="remove">✕</button>';
