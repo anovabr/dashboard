@@ -363,14 +363,13 @@
   }
   .inline-edit.small { width: 130px; font-size: 13px; padding: 2px 6px; }
 
-  #ghpanel {
-    position: fixed; right: 20px; top: 70px; z-index: 101; display: none;
-    width: min(440px, 90vw);
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  #tokenbar {
+    position: fixed; left: 50%; transform: translateX(-50%); top: 14px; z-index: 130; display: none;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.25); width: min(430px, 92vw);
   }
-  #ghpanel .hint { font-size: 12px; color: var(--muted); }
-  #ghpanel input { display: block; }
+  #tokenbar .hint { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  #syncbar { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--good); z-index: 300; opacity: 0; transition: width 1.1s ease, opacity .4s; }
   #syncpanel {
     position: fixed; right: 20px; top: 70px; z-index: 100; display: none;
     width: min(440px, 90vw);
@@ -444,31 +443,26 @@
         <button class="diagbtn" id="btnCopyState">Copy full board state</button>
         <button class="diagbtn" id="btnExport">Export backup (.json)</button>
         <button class="diagbtn" id="btnImport">Import backup</button>
-        <button class="diagbtn" id="ghSettings">Sync settings</button>
+        <button class="diagbtn" id="ghSettings">Change sync token</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none">
         <span class="note" id="diagCopied"></span>
       </div>
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:07 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:25 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
 
-<div id="ghpanel">
-  <div style="font-weight:750; margin-bottom:10px">Sync setup — one time per browser</div>
-  <div class="hint">Storage repo (private)</div>
-  <input id="gh-repo" class="inline-edit" style="margin-bottom:8px">
-  <div class="hint">Branch</div>
-  <input id="gh-branch" class="inline-edit" style="margin-bottom:8px">
-  <div class="hint">File</div>
-  <input id="gh-path" class="inline-edit" style="margin-bottom:8px">
-  <div class="hint">Token for that repo (Contents: read &amp; write) — stays in this browser only</div>
-  <input id="gh-token" class="inline-edit" type="password" placeholder="paste your fine-grained token here" style="margin-bottom:10px">
-  <div style="margin-top:4px">
-    <button class="diagbtn" id="ghSave">Save &amp; sync now</button>
-    <button class="diagbtn" id="ghClose">Cancel</button>
+<div id="syncbar"></div>
+
+<div id="tokenbar">
+  <div class="hint">One-time: paste the token for <b>anovabr/taskboard-state</b> (Contents: read &amp; write). It stays in this browser only.</div>
+  <input id="gh-token" class="inline-edit" type="password" placeholder="fine-grained token">
+  <div style="margin-top:8px">
+    <button class="diagbtn" id="tokSave">Save &amp; sync</button>
+    <button class="diagbtn" id="tokCancel">Cancel</button>
   </div>
 </div>
 
@@ -1720,7 +1714,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function scheduleSave() {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(flushSave, 350);
-    try { if (syncCfg() && !syncing) setSyncStatus('sync now •'); } catch (e) {}
+    try { if (getToken() && !syncing) setSyncStatus('sync •'); } catch (e) {}
   }
   function flushSave() {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
@@ -1999,15 +1993,43 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     return 'others';
   }
   var SYNC_KEY = 'task-board-sync';
-  function syncCfg() { try { return JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); } catch (e) { return null; } }
+  var GH_REPO = 'anovabr/taskboard-state', GH_BRANCH = 'main', GH_PATH = 'taskboard.json';
+  function getToken() {
+    try {
+      var v = localStorage.getItem(SYNC_KEY);
+      if (!v) return null;
+      if (v.charAt(0) === '{') { var o = JSON.parse(v); return o.token || null; }
+      return v;
+    } catch (e) { return null; }
+  }
+  function syncBar(state) {
+    var b = el('syncbar');
+    if (!b) return;
+    if (state === 'start') {
+      b.style.background = 'var(--good)';
+      b.style.transition = 'none'; b.style.opacity = '1'; b.style.width = '0';
+      void b.offsetWidth;
+      b.style.transition = 'width 1.1s ease, opacity .4s';
+      b.style.width = '80%';
+    } else {
+      if (state === 'fail') b.style.background = 'var(--hard)';
+      b.style.width = '100%';
+      setTimeout(function () { b.style.opacity = '0'; }, 350);
+      setTimeout(function () {
+        b.style.transition = 'none'; b.style.width = '0';
+        void b.offsetWidth;
+        b.style.transition = 'width 1.1s ease, opacity .4s';
+      }, 900);
+    }
+  }
   function setSyncStatus(txt, bad) {
     var b = el('syncBtn');
     b.textContent = txt;
     b.style.color = bad ? 'var(--hard)' : '';
     b.style.borderColor = bad ? 'var(--hard)' : '';
   }
-  function ghUrl(cfg) { return 'https://api.github.com/repos/' + cfg.repo + '/contents/' + cfg.path; }
-  function ghHdr(cfg) { return { 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json' }; }
+  function ghUrl() { return 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH; }
+  function ghHdr(tok) { return { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/vnd.github+json' }; }
   function b64enc(str) { return btoa(unescape(encodeURIComponent(str))); }
   function b64dec(b) { return decodeURIComponent(escape(atob(String(b).replace(/\s/g, '')))); }
   function mergeRemote(remote) {
@@ -2025,12 +2047,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   var syncing = false;
   function doSync() {
-    var cfg = syncCfg();
-    if (!cfg || syncing) return;
+    var tok = getToken();
+    if (!tok) { showTokenBar(); return; }
+    if (syncing) return;
     syncing = true;
     setSyncStatus('syncing…');
+    syncBar('start');
     flushSave();
-    fetch(ghUrl(cfg) + '?ref=' + encodeURIComponent(cfg.branch) + '&t=' + Date.now(), { headers: ghHdr(cfg) })
+    fetch(ghUrl() + '?ref=' + GH_BRANCH + '&t=' + Date.now(), { headers: ghHdr(tok) })
       .then(function (r) {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error('read ' + r.status);
@@ -2046,9 +2070,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           } catch (e) { DIAG.errors.push('sync parse: ' + e.message); }
         }
         S.savedAt = nowIso();
-        var body = { message: 'task board sync', content: b64enc(JSON.stringify(S, null, 1)), branch: cfg.branch };
+        var body = { message: 'task board sync', content: b64enc(JSON.stringify(S, null, 1)), branch: GH_BRANCH };
         if (sha) body.sha = sha;
-        return fetch(ghUrl(cfg), { method: 'PUT', headers: ghHdr(cfg), body: JSON.stringify(body) });
+        return fetch(ghUrl(), { method: 'PUT', headers: ghHdr(tok), body: JSON.stringify(body) });
       })
       .then(function (r) {
         if (!r.ok) throw new Error('write ' + r.status);
@@ -2056,22 +2080,21 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         if (engine) engine.save(JSON.stringify(S));
         renderAll();
         applyTheme();
-        setSyncStatus('synced ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+        syncBar('done');
+        setSyncStatus('last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
       })
       .catch(function (e) {
         syncing = false;
         DIAG.errors.push('sync: ' + e.message);
+        syncBar('fail');
         setSyncStatus('sync failed — click to retry', true);
         renderDiag();
       });
   }
-  function showGhPanel() {
-    var cfg = syncCfg() || {};
-    el('gh-repo').value = cfg.repo || 'anovabr/taskboard-state';
-    el('gh-branch').value = cfg.branch || 'main';
-    el('gh-path').value = cfg.path || 'taskboard.json';
-    el('gh-token').value = cfg.token || '';
-    el('ghpanel').style.display = 'block';
+  function showTokenBar() {
+    el('gh-token').value = getToken() || '';
+    el('tokenbar').style.display = 'block';
+    el('gh-token').focus();
   }
 
   function placeMenu(m, x, y) {
@@ -2251,24 +2274,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (add && add.dataset.add && !add.querySelector('input')) { inlineAdd(add); return; }
 
     if (e.target.id === 'syncBtn') {
-      if (syncCfg()) doSync(); else showGhPanel();
+      if (getToken()) doSync(); else showTokenBar();
       return;
     }
-    if (e.target.id === 'ghSave') {
-      var cfg = {
-        repo: el('gh-repo').value.trim(),
-        branch: el('gh-branch').value.trim() || 'main',
-        path: el('gh-path').value.trim() || 'taskboard.json',
-        token: el('gh-token').value.trim()
-      };
-      if (!cfg.repo || !cfg.token) { el('ghpanel').querySelector('.hint').textContent = 'Repo and token are required.'; return; }
-      try { localStorage.setItem(SYNC_KEY, JSON.stringify(cfg)); } catch (err) {}
-      el('ghpanel').style.display = 'none';
+    if (e.target.id === 'tokSave') {
+      var tok = el('gh-token').value.trim();
+      if (!tok) return;
+      try { localStorage.setItem(SYNC_KEY, tok); } catch (err) {}
+      el('tokenbar').style.display = 'none';
       doSync();
       return;
     }
-    if (e.target.id === 'ghClose') { el('ghpanel').style.display = 'none'; return; }
-    if (e.target.id === 'ghSettings') { showGhPanel(); return; }
+    if (e.target.id === 'tokCancel') { el('tokenbar').style.display = 'none'; return; }
+    if (e.target.id === 'ghSettings') { showTokenBar(); return; }
     if (e.target.closest && e.target.closest('#layoutBtn')) {
       toggleLayout();
       return;
@@ -2525,11 +2543,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       renderModePill(verified);
       applyTheme();
       applyLayout();
-      setSyncStatus(syncCfg() ? 'sync now' : 'set up sync');
+      setSyncStatus(getToken() ? 'sync' : 'sync — setup');
       renderDiag();
       renderAll();
       flushSave();
-      if (syncCfg()) doSync();
+      if (getToken()) doSync();
     });
   });
 })();
