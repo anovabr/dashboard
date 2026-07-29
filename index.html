@@ -12,7 +12,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Task Board</title>
+<title>Dashboard</title>
 <style>
   :root {
     color-scheme: light;
@@ -386,7 +386,7 @@
 
   <header>
     <div>
-      <div class="titlerow"><h1>My Task Board</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
+      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
       <div class="meta" id="metaline"></div>
     </div>
     <div class="ring-wrap">
@@ -440,7 +440,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:30 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:41 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1816,6 +1816,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     var tdy = wk.filter(function (t) { return t.today && t.status !== 'done'; });
     var rest = wk.filter(function (t) { return !(t.today && t.status !== 'done'); });
+    el('tdyHdr').textContent = 'Today — ' + today.toLocaleDateString('en-US', { weekday: 'long', month: 'numeric', day: 'numeric' });
     el('tdyHdr').style.display = tdy.length ? '' : 'none';
     el('list-tdy').innerHTML = tdy.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
     el('list-week').innerHTML = rest.map(function (t) { return rowHtml(t, { secMark: true }); }).join('') || (tdy.length ? '' : '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>');
