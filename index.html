@@ -453,7 +453,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:59 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 22:06 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2139,6 +2139,18 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     m.innerHTML = head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
     placeMenu(m, x, y);
   }
+  function subprojectsOf(secId) {
+    var out = [], seen = {};
+    var sec = SECMETA[secId];
+    S.tasks.forEach(function (t) {
+      if (t.sec !== secId || t.status === 'gone' || t.status === 'archived' || !t.proj) return;
+      var lf = String(t.proj).split('/').pop().trim();
+      if (!lf || (sec && lf.toLowerCase() === String(sec.title).toLowerCase())) return;
+      if (!seen[lf]) { seen[lf] = 1; out.push({ leaf: lf, proj: String(t.proj) }); }
+    });
+    out.sort(function (a, b) { return a.leaf.toLowerCase() < b.leaf.toLowerCase() ? -1 : 1; });
+    return out;
+  }
   function moveTargetsHtml() {
     var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
     SEED.sections.forEach(function (sc) { h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + '</button>'; });
@@ -2159,6 +2171,20 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (a === 'move') {
         menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') + moveTargetsHtml();
         return;
+      }
+      if (a === 'mv2') {
+        var tgt2 = act.dataset.tgt;
+        if (tgt2 !== 'week') {
+          var subs = subprojectsOf(tgt2);
+          if (subs.length) {
+            menuEl.dataset.tsec = tgt2;
+            var bs = '<button data-act="mv3" data-proj="">top level</button>';
+            subs.forEach(function (sp) { bs += '<button data-act="mv3" data-proj="' + esc(sp.proj) + '">' + esc(sp.leaf) + '</button>'; });
+            menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') +
+              '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + ' /</span>' + bs;
+            return;
+          }
+        }
       }
       var multi = mts.length > 1;
       clearPendMenu();
@@ -2184,6 +2210,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           var tgt = act.dataset.tgt;
           if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
           else { mt.sec = tgt; delete mt.grp; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
+        } else if (a === 'mv3') {
+          var tsec = menuEl.dataset.tsec;
+          mt.sec = tsec; delete mt.grp;
+          var np = act.dataset.proj;
+          if (np) mt.proj = np;
+          logChange('Moved to ' + (SECMETA[tsec] ? SECMETA[tsec].title : tsec) + (np ? ' / ' + np.split('/').pop() : '') + ': ' + taskLabel(mt));
         }
         touch(mt);
       });
