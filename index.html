@@ -264,6 +264,7 @@
   .actmenu { position: fixed; z-index: 120; display: flex; gap: 4px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); }
   .actmenu button { font: inherit; font-size: 12.5px; font-weight: 650; background: var(--page); color: var(--ink); border: 1px solid var(--border); border-radius: 7px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
   .actmenu button:hover { border-color: var(--accent); color: var(--accent); }
+  .selct { font-size: 12px; font-weight: 750; color: var(--muted); padding: 3px 6px; align-self: center; }
   .workbar { display: inline-block; width: 48px; height: 5px; border-radius: 3px; background: var(--track); margin-left: 8px; vertical-align: middle; overflow: hidden; }
   .workbar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
@@ -440,7 +441,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:42 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:45 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2034,21 +2035,51 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('ghpanel').style.display = 'block';
   }
 
-  function openRowMenu(li, t, x, y) {
-    var m = document.createElement('div');
-    m.className = 'actmenu'; m.dataset.id = t.id;
-    if (t.status === 'done' || t.status === 'archived') {
-      m.innerHTML = '<button data-act="undo">not done after all</button><button data-act="del">✕ delete</button>';
-    } else {
-      li.classList.add('pend');
-      var wkd = (t.worked || []).indexOf(dayStr()) !== -1;
-      m.innerHTML = '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (t.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
-    }
+  function placeMenu(m, x, y) {
     document.body.appendChild(m);
     var px = Math.min(x, window.innerWidth - m.offsetWidth - 8);
     var py = Math.min(y + 4, window.innerHeight - m.offsetHeight - 8);
     m.style.left = Math.max(4, px) + 'px';
     m.style.top = Math.max(4, py) + 'px';
+  }
+  function openRowMenu(li, t, x, y) {
+    var m = document.createElement('div');
+    m.className = 'actmenu'; m.dataset.ids = t.id;
+    m.innerHTML = '<button data-act="undo">not done after all</button><button data-act="del">✕ delete</button>';
+    placeMenu(m, x, y);
+  }
+  function selIds() {
+    var ids = [], seen = {};
+    document.querySelectorAll('li.pend').forEach(function (p) {
+      var id = p.getAttribute('data-id');
+      if (id && !seen[id]) { seen[id] = 1; ids.push(id); }
+    });
+    return ids;
+  }
+  function clearPendMenu() {
+    document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
+    var m = document.querySelector('.actmenu');
+    if (m) m.remove();
+  }
+  function toggleSelect(li, t, x, y) {
+    if (li.classList.contains('pend')) {
+      document.querySelectorAll('li.pend[data-id="' + t.id + '"]').forEach(function (p) { p.classList.remove('pend'); });
+    } else {
+      li.classList.add('pend');
+    }
+    var old = document.querySelector('.actmenu');
+    if (old) old.remove();
+    var ids = selIds();
+    if (ids.length) openSelMenu(ids, x, y);
+  }
+  function openSelMenu(ids, x, y) {
+    var m = document.createElement('div');
+    m.className = 'actmenu'; m.dataset.ids = ids.join(',');
+    var one = ids.length === 1 ? task(ids[0]) : null;
+    var head = ids.length > 1 ? '<span class="selct">' + ids.length + ' selected</span>' : '';
+    var wkd = one && (one.worked || []).indexOf(dayStr()) !== -1;
+    m.innerHTML = head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
+    placeMenu(m, x, y);
   }
   function moveTargetsHtml() {
     var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
@@ -2063,52 +2094,46 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var act = e.target.closest('.actmenu button');
     if (act) {
       var menuEl = e.target.closest('.actmenu');
-      var mt = task(menuEl.dataset.id);
+      var ids = String(menuEl.dataset.ids || '').split(',').filter(Boolean);
+      var mts = ids.map(task).filter(Boolean);
       var a = act.dataset.act;
-      if (!mt) { menuEl.remove(); return; }
-      if (a !== 'move') {
-        menuEl.remove();
-        document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
+      if (!mts.length) { clearPendMenu(); return; }
+      if (a === 'move') {
+        menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') + moveTargetsHtml();
+        return;
       }
-      if (a === 'done') {
-        mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso();
-        logChange('Done: ' + taskLabel(mt));
-        touch(mt); scheduleSave(); renderAll();
-      } else if (a === 'undo') {
-        mt.status = mt.prevStatus || 'working'; delete mt.doneAt;
-        logChange('Not done after all: ' + taskLabel(mt));
-        touch(mt); scheduleSave(); renderAll();
-      } else if (a === 'focus') {
-        if (mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
-        else { mt.today = true; mt.week = true; logChange('Today: ' + taskLabel(mt)); }
-        touch(mt); scheduleSave(); renderAll();
-      } else if (a === 'work') {
-        mt.worked = mt.worked || [];
-        var dsx = mt.worked.indexOf(dayStr());
-        if (dsx === -1) { mt.worked.push(dayStr()); logChange('Worked on today: ' + taskLabel(mt)); }
-        else { mt.worked.splice(dsx, 1); logChange('Unmarked worked-today: ' + taskLabel(mt)); }
-        touch(mt); scheduleSave(); renderAll();
-      } else if (a === 'del') {
-        mt.status = 'gone';
-        logChange('Removed: ' + taskLabel(mt));
-        touch(mt); scheduleSave(); renderAll();
-      } else if (a === 'move') {
-        menuEl.innerHTML = moveTargetsHtml();
-      } else if (a === 'mv2') {
-        var tgt = act.dataset.tgt;
-        if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
-        else { mt.sec = tgt; delete mt.grp; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
-        touch(mt); scheduleSave(); renderAll();
-      }
+      var multi = mts.length > 1;
+      clearPendMenu();
+      mts.forEach(function (mt) {
+        if (a === 'done') {
+          mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso();
+          logChange('Done: ' + taskLabel(mt));
+        } else if (a === 'undo') {
+          mt.status = mt.prevStatus || 'working'; delete mt.doneAt;
+          logChange('Not done after all: ' + taskLabel(mt));
+        } else if (a === 'focus') {
+          if (!multi && mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
+          else { mt.today = true; mt.week = true; logChange('Today: ' + taskLabel(mt)); }
+        } else if (a === 'work') {
+          mt.worked = mt.worked || [];
+          var dsx = mt.worked.indexOf(dayStr());
+          if (dsx === -1) { mt.worked.push(dayStr()); logChange('Worked on today: ' + taskLabel(mt)); }
+          else if (!multi) { mt.worked.splice(dsx, 1); logChange('Unmarked worked-today: ' + taskLabel(mt)); }
+        } else if (a === 'del') {
+          mt.status = 'gone';
+          logChange('Removed: ' + taskLabel(mt));
+        } else if (a === 'mv2') {
+          var tgt = act.dataset.tgt;
+          if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
+          else { mt.sec = tgt; delete mt.grp; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
+        }
+        touch(mt);
+      });
+      scheduleSave(); renderAll();
       return;
     }
-    var strayId = null;
-    var stray = document.querySelector('.actmenu');
-    if (stray) {
-      strayId = stray.dataset.id;
-      document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
-      stray.remove();
-    }
+    var onBox = !!(e.target.closest && e.target.closest('li[data-id]') && e.target.closest('.box'));
+    if (!onBox && document.querySelector('.actmenu')) clearPendMenu();
 
     var hh = e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
@@ -2141,13 +2166,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var t = li ? task(li.dataset.id) : null;
 
     if (t && e.target.closest('.box')) {
-      if (strayId === t.id) return; // second click on the same box cancels the pending check
       if (t.status === 'done' || t.status === 'archived') {
         t.status = t.prevStatus || 'working'; delete t.doneAt;
         logChange('Not done after all: ' + taskLabel(t));
         touch(t); scheduleSave(); renderAll();
       } else {
-        openRowMenu(li, t, e.clientX, e.clientY);
+        toggleSelect(li, t, e.clientX, e.clientY);
       }
       return;
     }
@@ -2240,14 +2264,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var t = task(li.dataset.id);
     if (!t) return;
     e.preventDefault();
-    var stray = document.querySelector('.actmenu');
-    if (stray) {
-      var sid = stray.dataset.id;
-      document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
-      stray.remove();
-      if (sid === t.id) return; // right-click again closes it
+    if (t.status === 'done' || t.status === 'archived') {
+      clearPendMenu();
+      openRowMenu(li, t, e.clientX, e.clientY);
+      return;
     }
-    openRowMenu(li, t, e.clientX, e.clientY);
+    toggleSelect(li, t, e.clientX, e.clientY);
   });
 
   var dragId = null;
