@@ -316,7 +316,9 @@
   @media (min-width: 641px) {
     #secnav { position: sticky; top: 8px; }
   }
-  #layoutBtn { font: inherit; font-size: 13px; line-height: 1; background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; cursor: pointer; flex: none; }
+  #layoutBtn { display: inline-flex; align-items: center; background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 5px 7px; cursor: pointer; flex: none; }
+  #layoutBtn svg { display: block; pointer-events: none; }
+  .app { transition: margin .42s cubic-bezier(.2,.8,.2,1); }
   #layoutBtn:hover { color: var(--accent); border-color: var(--accent); }
   @media (max-width: 899px) { #layoutBtn { display: none; } }
   @media (min-width: 900px) {
@@ -411,7 +413,7 @@
   <div class="stats" id="statline"></div>
 
   <nav id="secnav">
-    <button id="layoutBtn" title="move menu to the side / back to top">⟨|</button>
+    <button id="layoutBtn" title="move menu to the side / back to top"></button>
     <button id="navburger" aria-label="sections menu">☰</button>
     <div id="navlinks"></div>
   </nav>
@@ -436,22 +438,19 @@
 
 
   <details class="mini">
-    <summary>System · diagnostics</summary>
+    <summary>Backup &amp; data</summary>
     <div class="card">
-      <div id="diagSummary" class="note">Persistence engine report.</div>
-      <div style="margin-top:8px">
-        <button class="diagbtn" id="btnCopyDiag">Copy diagnostics for Claude</button>
+      <div>
         <button class="diagbtn" id="btnCopyState">Copy full board state</button>
         <button class="diagbtn" id="btnExport">Export backup (.json)</button>
         <button class="diagbtn" id="btnImport">Import backup</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none">
         <span class="note" id="diagCopied"></span>
       </div>
-      <pre class="diag" id="diagOut"></pre>
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:46 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:58 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1911,16 +1910,35 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     else { p.className = 'pill bad'; p.textContent = '⚠ session-only — send updates to Claude before closing'; }
   }
 
-  function renderDiag() {
-    el('diagSummary').textContent = 'Persistence: ' + DIAG.chosen + (engine.mode === 'memory' ? ' (nothing else worked)' : '') + ' · injected globals: ' + (DIAG.injected.length || 0);
-    el('diagOut').textContent = JSON.stringify(DIAG, null, 2);
-  }
+  function renderDiag() {}
 
   function applyLayout() {
     var side = S && S.layout === 'side';
     document.body.classList.toggle('sidenav', side);
     var b = el('layoutBtn');
-    if (b) b.textContent = side ? '|⟩' : '⟨|';
+    if (!b) return;
+    var frame = '<rect x="0.75" y="0.75" width="14.5" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.5" fill="none"/>';
+    var pane = side
+      ? '<rect x="2.6" y="2.6" width="4.4" height="8.8" rx="1" fill="currentColor"/>'
+      : '<rect x="2.6" y="2.6" width="10.8" height="3.4" rx="1" fill="currentColor"/>';
+    b.innerHTML = '<svg width="16" height="14" viewBox="0 0 16 14">' + frame + pane + '</svg>';
+    b.title = side ? 'move menu back to the top' : 'move menu to the side';
+  }
+  function toggleLayout() {
+    var nav = el('secnav');
+    var first = nav.getBoundingClientRect();
+    S.layout = S.layout === 'side' ? 'top' : 'side';
+    applyLayout();
+    var last = nav.getBoundingClientRect();
+    var dx = first.left - last.left, dy = first.top - last.top;
+    var sx = first.width / Math.max(1, last.width), sy = first.height / Math.max(1, last.height);
+    nav.style.transformOrigin = '0 0';
+    nav.animate(
+      [{ transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' },
+       { transform: 'none' }],
+      { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }
+    );
+    scheduleSave();
   }
   function applyTheme() {
     var th = (S && S.theme) || 'auto';
@@ -2245,9 +2263,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (e.target.id === 'ghClose') { el('ghpanel').style.display = 'none'; return; }
-    if (e.target.id === 'layoutBtn') {
-      S.layout = S.layout === 'side' ? 'top' : 'side';
-      applyLayout(); scheduleSave();
+    if (e.target.closest && e.target.closest('#layoutBtn')) {
+      toggleLayout();
       return;
     }
     if (e.target.id === 'themeToggle') {
@@ -2274,7 +2291,6 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (e.target.id === 'btnImport') { el('importFile').click(); return; }
-    if (e.target.id === 'btnCopyDiag') { copyText(JSON.stringify(DIAG, null, 2), el('diagCopied')); return; }
     if (e.target.id === 'btnCopyState') { copyText('Full board state:\n' + JSON.stringify(S, null, 1), el('diagCopied')); return; }
   });
 
