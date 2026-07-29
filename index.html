@@ -440,7 +440,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:22 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:28 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2033,6 +2033,18 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('ghpanel').style.display = 'block';
   }
 
+  function openRowMenu(li, t) {
+    var m = document.createElement('div');
+    m.className = 'actmenu'; m.dataset.id = t.id;
+    if (t.status === 'done' || t.status === 'archived') {
+      m.innerHTML = '<button data-act="undo">not done after all</button><button data-act="del">✕ delete</button>';
+    } else {
+      li.classList.add('pend');
+      var wkd = (t.worked || []).indexOf(dayStr()) !== -1;
+      m.innerHTML = '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (t.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
+    }
+    li.appendChild(m);
+  }
   function moveTargetsHtml() {
     var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
     SEED.sections.forEach(function (sc) { h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + '</button>'; });
@@ -2126,12 +2138,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         logChange('Not done after all: ' + taskLabel(t));
         touch(t); scheduleSave(); renderAll();
       } else {
-        li.classList.add('pend');
-        var m = document.createElement('div');
-        m.className = 'actmenu'; m.dataset.id = t.id;
-        var wkd = (t.worked || []).indexOf(dayStr()) !== -1;
-        m.innerHTML = '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (t.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
-        li.appendChild(m);
+        openRowMenu(li, t);
       }
       return;
     }
@@ -2215,6 +2222,23 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (e.target.id === 'btnImport') { el('importFile').click(); return; }
     if (e.target.id === 'btnCopyDiag') { copyText(JSON.stringify(DIAG, null, 2), el('diagCopied')); return; }
     if (e.target.id === 'btnCopyState') { copyText('Full board state:\n' + JSON.stringify(S, null, 1), el('diagCopied')); return; }
+  });
+
+  document.addEventListener('contextmenu', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    var li = e.target.closest ? e.target.closest('li[data-id]') : null;
+    if (!li) return;
+    var t = task(li.dataset.id);
+    if (!t) return;
+    e.preventDefault();
+    var stray = document.querySelector('.actmenu');
+    if (stray) {
+      var sl = stray.closest('li');
+      if (sl) sl.classList.remove('pend');
+      stray.remove();
+      if (sl === li) return; // right-click again closes it
+    }
+    openRowMenu(li, t);
   });
 
   var dragId = null;
