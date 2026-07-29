@@ -261,7 +261,7 @@
   .card.folded > h2::after { content: " ▸"; }
   .card.folded > *:not(h2) { display: none !important; }
   li.dragging { opacity: .45; }
-  .actmenu { position: absolute; right: 0; top: 100%; z-index: 80; display: flex; gap: 4px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); }
+  .actmenu { position: fixed; z-index: 120; display: flex; gap: 4px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); }
   .actmenu button { font: inherit; font-size: 12.5px; font-weight: 650; background: var(--page); color: var(--ink); border: 1px solid var(--border); border-radius: 7px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
   .actmenu button:hover { border-color: var(--accent); color: var(--accent); }
   .workbar { display: inline-block; width: 48px; height: 5px; border-radius: 3px; background: var(--track); margin-left: 8px; vertical-align: middle; overflow: hidden; }
@@ -440,7 +440,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:28 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:30 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2033,7 +2033,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('ghpanel').style.display = 'block';
   }
 
-  function openRowMenu(li, t) {
+  function openRowMenu(li, t, x, y) {
     var m = document.createElement('div');
     m.className = 'actmenu'; m.dataset.id = t.id;
     if (t.status === 'done' || t.status === 'archived') {
@@ -2043,7 +2043,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var wkd = (t.worked || []).indexOf(dayStr()) !== -1;
       m.innerHTML = '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (t.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
     }
-    li.appendChild(m);
+    document.body.appendChild(m);
+    var px = Math.min(x, window.innerWidth - m.offsetWidth - 8);
+    var py = Math.min(y + 4, window.innerHeight - m.offsetHeight - 8);
+    m.style.left = Math.max(4, px) + 'px';
+    m.style.top = Math.max(4, py) + 'px';
   }
   function moveTargetsHtml() {
     var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
@@ -2061,6 +2065,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var mt = task(menuEl.dataset.id);
       var a = act.dataset.act;
       if (!mt) { menuEl.remove(); return; }
+      if (a !== 'move') {
+        menuEl.remove();
+        document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
+      }
       if (a === 'done') {
         mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso();
         logChange('Done: ' + taskLabel(mt));
@@ -2093,11 +2101,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       }
       return;
     }
-    var strayLi = null;
+    var strayId = null;
     var stray = document.querySelector('.actmenu');
     if (stray) {
-      strayLi = stray.closest('li');
-      if (strayLi) strayLi.classList.remove('pend');
+      strayId = stray.dataset.id;
+      document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
       stray.remove();
     }
 
@@ -2132,13 +2140,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var t = li ? task(li.dataset.id) : null;
 
     if (t && e.target.closest('.box')) {
-      if (strayLi === li) return; // second click on the same box cancels the pending check
+      if (strayId === t.id) return; // second click on the same box cancels the pending check
       if (t.status === 'done' || t.status === 'archived') {
         t.status = t.prevStatus || 'working'; delete t.doneAt;
         logChange('Not done after all: ' + taskLabel(t));
         touch(t); scheduleSave(); renderAll();
       } else {
-        openRowMenu(li, t);
+        openRowMenu(li, t, e.clientX, e.clientY);
       }
       return;
     }
@@ -2233,12 +2241,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     e.preventDefault();
     var stray = document.querySelector('.actmenu');
     if (stray) {
-      var sl = stray.closest('li');
-      if (sl) sl.classList.remove('pend');
+      var sid = stray.dataset.id;
+      document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
       stray.remove();
-      if (sl === li) return; // right-click again closes it
+      if (sid === t.id) return; // right-click again closes it
     }
-    openRowMenu(li, t);
+    openRowMenu(li, t, e.clientX, e.clientY);
   });
 
   var dragId = null;
