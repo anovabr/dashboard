@@ -440,7 +440,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:41 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 20:42 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2357,6 +2357,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         S.tasks.push(nt);
         logChange('Added to ' + secT + ': ' + v);
         scheduleSave(); renderAll();
+        reset();
       } else if (ev.key === 'Escape') reset();
     });
     inp.addEventListener('blur', function () { setTimeout(function () { if (add.querySelector('input')) reset(); }, 150); });
