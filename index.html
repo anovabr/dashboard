@@ -450,7 +450,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:25 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 21:28 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1896,7 +1896,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var chip = el('syncchip');
     if (!n) { chip.style.display = 'none'; el('syncpanel').style.display = 'none'; return; }
     chip.style.display = 'inline-block';
-    chip.textContent = n + (n === 1 ? ' update' : ' updates') + ' for Claude';
+    chip.textContent = n + (n === 1 ? ' change' : ' changes') + ' since last sync';
   }
 
   function renderModePill(verified) {
@@ -2077,6 +2077,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       .then(function (r) {
         if (!r.ok) throw new Error('write ' + r.status);
         syncing = false;
+        S.changelog = [];
         if (engine) engine.save(JSON.stringify(S));
         renderAll();
         applyTheme();
