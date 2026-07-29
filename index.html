@@ -452,7 +452,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 19:44 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 19:55 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2084,16 +2084,17 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         menuEl.innerHTML = moveTargetsHtml();
       } else if (a === 'mv2') {
         var tgt = act.dataset.tgt;
-        if (tgt === 'week') { mt.week = true; logChange('Pinned to This Week: ' + taskLabel(mt)); }
+        if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
         else { mt.sec = tgt; delete mt.grp; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
         touch(mt); scheduleSave(); renderAll();
       }
       return;
     }
+    var strayLi = null;
     var stray = document.querySelector('.actmenu');
     if (stray) {
-      var pli = stray.closest('li');
-      if (pli) pli.classList.remove('pend');
+      strayLi = stray.closest('li');
+      if (strayLi) strayLi.classList.remove('pend');
       stray.remove();
     }
 
@@ -2128,6 +2129,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var t = li ? task(li.dataset.id) : null;
 
     if (t && e.target.closest('.box')) {
+      if (strayLi === li) return; // second click on the same box cancels the pending check
       if (t.status === 'done' || t.status === 'archived') {
         t.status = t.prevStatus || 'working'; delete t.doneAt;
         logChange('Not done after all: ' + taskLabel(t));
