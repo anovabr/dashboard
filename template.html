@@ -13,6 +13,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Crect%20width%3D%2764%27%20height%3D%2764%27%20rx%3D%2714%27%20fill%3D%27%2314544f%27/%3E%3Cpath%20d%3D%27M17%2034%20L28%2045%20L47%2021%27%20stroke%3D%27%23ffffff%27%20stroke-width%3D%278%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27/%3E%3Ccircle%20cx%3D%2751%27%20cy%3D%2714%27%20r%3D%278%27%20fill%3D%27%23f26652%27/%3E%3C/svg%3E">
 <style>
   :root {
     color-scheme: light;
@@ -145,6 +146,8 @@
   .pill.bad { background: var(--pill-bad-bg); color: var(--pill-bad-fg); }
   .pill.chip { background: transparent; border: 1px dashed var(--border); color: var(--muted); cursor: pointer; margin-left: 6px; }
   .pill.chip:hover { color: var(--accent); border-color: var(--accent); }
+  @keyframes syncflash { 0%, 100% { background: transparent; } 50% { background: var(--good); color: #fff; border-color: var(--good); } }
+  .pill.chip.flash { animation: syncflash .55s ease 2; color: var(--good); border-color: var(--good); }
 
   .stats { font-size: 13.5px; color: var(--secondary); margin: 8px 0 18px; }
   .stats b { font-weight: 750; color: var(--ink); }
@@ -261,10 +264,11 @@
   .card.folded > h2::after { content: " ▸"; }
   .card.folded > *:not(h2) { display: none !important; }
   li.dragging { opacity: .45; }
-  .actmenu { position: fixed; z-index: 120; display: flex; gap: 4px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 5px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); }
-  .actmenu button { font: inherit; font-size: 12.5px; font-weight: 650; background: var(--page); color: var(--ink); border: 1px solid var(--border); border-radius: 7px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
-  .actmenu button:hover { border-color: var(--accent); color: var(--accent); }
-  .selct { font-size: 12px; font-weight: 750; color: var(--muted); padding: 3px 6px; align-self: center; }
+  .actmenu { position: fixed; z-index: 120; display: flex; flex-direction: column; gap: 1px; min-width: 168px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+  .actmenu button { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: inherit; font-size: 13px; font-weight: 550; background: transparent; color: var(--ink); border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; text-align: left; white-space: nowrap; }
+  .actmenu button:hover { background: var(--bg-focus); color: var(--accent); }
+  .actmenu .sub-arrow { color: var(--muted); font-size: 11px; }
+  .selct { font-size: 11.5px; font-weight: 750; color: var(--muted); padding: 4px 10px 2px; }
   .workbar { display: inline-block; width: 48px; height: 5px; border-radius: 3px; background: var(--track); margin-left: 8px; vertical-align: middle; overflow: hidden; }
   .workbar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
@@ -322,8 +326,10 @@
   #layoutBtn:hover { color: var(--accent); border-color: var(--accent); }
   @media (max-width: 899px) { #layoutBtn { display: none; } }
   @media (min-width: 900px) {
-    body.sidenav .app { margin: 0 auto 0 205px; }
-    body.sidenav #secnav { position: fixed; left: 14px; top: 14px; width: 172px; flex-direction: column; align-items: stretch; margin-bottom: 0; }
+    body { transition: padding-left .42s cubic-bezier(.2,.8,.2,1); }
+    body.sidenav { padding-left: 192px; padding-right: 24px; }
+    body.sidenav .app { margin: 0; max-width: none; }
+    body.sidenav #secnav { position: fixed; left: 10px; top: 12px; width: 168px; flex-direction: column; align-items: stretch; margin-bottom: 0; }
     body.sidenav #navlinks { flex-direction: column; justify-content: flex-start; gap: 2px; }
     body.sidenav #navlinks a { justify-content: flex-start; }
   }
@@ -397,7 +403,7 @@
 
   <header>
     <div>
-      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
+      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
       <div class="meta" id="metaline"></div>
     </div>
     <div class="ring-wrap">
@@ -450,7 +456,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build template 2026-07-29</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build template 2026-07-29 v2</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -506,7 +512,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 -->
 <script type="application/json" id="board-seed">
 {
-  "version": "2026-07-29T21:40:00Z",
+  "version": "2026-07-30T00:00:00Z",
   "nextUp": "Tell Claude (or edit here) what's coming after this week.",
   "sections": [
     {
@@ -553,19 +559,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         "kind": "hard",
         "label": "due Fri"
       },
-      "updatedAt": "2026-07-29T21:40:00Z"
+      "updatedAt": "2026-07-30T00:00:00Z"
     },
     {
       "id": "s2",
       "sec": "projects",
-      "proj": "Sample Project",
-      "text": "an aim date is your own target — purple italic",
+      "proj": "Sample Project/sub-project",
+      "text": "paths like Project/sub group tasks into folders",
       "status": "working",
       "date": {
         "kind": "aim",
         "label": "aim next week"
       },
-      "updatedAt": "2026-07-29T21:40:00Z"
+      "updatedAt": "2026-07-30T00:00:00Z"
     },
     {
       "id": "s3",
@@ -577,18 +583,18 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         "kind": "none",
         "label": ""
       },
-      "updatedAt": "2026-07-29T21:40:00Z"
+      "updatedAt": "2026-07-30T00:00:00Z"
     },
     {
       "id": "s4",
       "sec": "other",
-      "text": "right-click me or click the checkbox for actions — try it",
+      "text": "right-click me for actions; Ctrl+Z undoes mistakes",
       "status": "planning",
       "date": {
         "kind": "none",
         "label": ""
       },
-      "updatedAt": "2026-07-29T21:40:00Z"
+      "updatedAt": "2026-07-30T00:00:00Z"
     },
     {
       "id": "s5",
@@ -599,7 +605,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         "kind": "none",
         "label": ""
       },
-      "updatedAt": "2026-07-29T21:40:00Z"
+      "updatedAt": "2026-07-30T00:00:00Z"
     }
   ]
 }
@@ -795,6 +801,24 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function taskLabel(t) { return (t.proj ? t.proj + ' — ' : '') + t.text; }
   function dayStr() { return new Date().toDateString(); }
+  var undoStack = [];
+  function pushUndo() {
+    try {
+      var cur = JSON.stringify(S.tasks);
+      if (undoStack.length && undoStack[undoStack.length - 1] === cur) return;
+      undoStack.push(cur);
+      if (undoStack.length > 30) undoStack.shift();
+      var u = el('undoBtn');
+      if (u) u.style.display = '';
+    } catch (e) {}
+  }
+  function doUndo() {
+    if (!undoStack.length || !S) return;
+    try { S.tasks = JSON.parse(undoStack.pop()); } catch (e) { return; }
+    logChange('Undo');
+    scheduleSave(); renderAll();
+    if (!undoStack.length) el('undoBtn').style.display = 'none';
+  }
 
   // ---------- rendering ----------
   var SECMETA = {};
@@ -993,6 +1017,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
 
   function commitOrder(ul) {
+    pushUndo();
     var n = 0;
     for (var i = 0; i < ul.children.length; i++) {
       var id = ul.children[i].getAttribute('data-id');
@@ -1111,7 +1136,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         renderAll();
         applyTheme();
         syncBar('done');
-        setSyncStatus('last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+        var doneAtTxt = 'last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        setSyncStatus('completed');
+        var sb = el('syncBtn');
+        sb.classList.add('flash');
+        setTimeout(function () {
+          sb.classList.remove('flash');
+          if (!syncing) setSyncStatus(doneAtTxt);
+        }, 1600);
       })
       .catch(function (e) {
         syncing = false;
@@ -1120,6 +1152,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         setSyncStatus('sync failed — click to retry', true);
         renderDiag();
       });
+  }
+  function doExport() {
+    flushSave();
+    var blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    var d = new Date();
+    a.download = 'taskboard-backup-' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
   }
   function showTokenBar() {
     el('gh-token').value = getToken() || '';
@@ -1136,9 +1178,29 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function openRowMenu(li, t, x, y) {
     var m = document.createElement('div');
-    m.className = 'actmenu'; m.dataset.ids = t.id;
+    m.className = 'actmenu'; m.dataset.ids = t.id; m.dataset.level = '1';
     m.innerHTML = '<button data-act="undo">not done after all</button><button data-act="del">✕ delete</button>';
     placeMenu(m, x, y);
+  }
+  function spawnSub(anchor, html, level, ids, tsec) {
+    var m = document.createElement('div');
+    m.className = 'actmenu';
+    m.dataset.level = String(level);
+    m.dataset.ids = ids;
+    if (tsec) m.dataset.tsec = tsec;
+    m.innerHTML = html;
+    document.body.appendChild(m);
+    var r = anchor.getBoundingClientRect();
+    var x = r.right + 4;
+    if (x + m.offsetWidth > window.innerWidth - 6) x = r.left - m.offsetWidth - 4;
+    var y = Math.min(r.top - 4, window.innerHeight - m.offsetHeight - 8);
+    m.style.left = Math.max(4, x) + 'px';
+    m.style.top = Math.max(4, y) + 'px';
+  }
+  function removePanelsAbove(level) {
+    document.querySelectorAll('.actmenu').forEach(function (p) {
+      if (+(p.dataset.level || 1) > level) p.remove();
+    });
   }
   function selIds() {
     var ids = [], seen = {};
@@ -1150,8 +1212,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function clearPendMenu() {
     document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
-    var m = document.querySelector('.actmenu');
-    if (m) m.remove();
+    document.querySelectorAll('.actmenu').forEach(function (m) { m.remove(); });
   }
   function toggleSelect(li, t, x, y) {
     if (li.classList.contains('pend')) {
@@ -1164,18 +1225,36 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var ids = selIds();
     if (ids.length) openSelMenu(ids, x, y);
   }
-  function openSelMenu(ids, x, y) {
-    var m = document.createElement('div');
-    m.className = 'actmenu'; m.dataset.ids = ids.join(',');
+  function mainMenuHtml(ids) {
     var one = ids.length === 1 ? task(ids[0]) : null;
     var head = ids.length > 1 ? '<span class="selct">' + ids.length + ' selected</span>' : '';
     var wkd = one && (one.worked || []).indexOf(dayStr()) !== -1;
-    m.innerHTML = head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">→ move</button><button data-act="del">✕ delete</button>';
+    return head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">move<span class="sub-arrow">▸</span></button><button data-act="del">✕ delete</button>';
+  }
+  function openSelMenu(ids, x, y) {
+    var m = document.createElement('div');
+    m.className = 'actmenu'; m.dataset.ids = ids.join(','); m.dataset.level = '1';
+    m.innerHTML = mainMenuHtml(ids);
     placeMenu(m, x, y);
+  }
+  function subprojectsOf(secId) {
+    var out = [], seen = {};
+    var sec = SECMETA[secId];
+    S.tasks.forEach(function (t) {
+      if (t.sec !== secId || t.status === 'gone' || t.status === 'archived' || !t.proj) return;
+      var lf = String(t.proj).split('/').pop().trim();
+      if (!lf || (sec && lf.toLowerCase() === String(sec.title).toLowerCase())) return;
+      if (!seen[lf]) { seen[lf] = 1; out.push({ leaf: lf, proj: String(t.proj) }); }
+    });
+    out.sort(function (a, b) { return a.leaf.toLowerCase() < b.leaf.toLowerCase() ? -1 : 1; });
+    return out;
   }
   function moveTargetsHtml() {
     var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
-    SEED.sections.forEach(function (sc) { h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + '</button>'; });
+    SEED.sections.forEach(function (sc) {
+      var has = subprojectsOf(sc.id).length;
+      h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + (has ? '<span class="sub-arrow">▸</span>' : '') + '</button>';
+    });
     return h;
   }
 
@@ -1190,11 +1269,26 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var mts = ids.map(task).filter(Boolean);
       var a = act.dataset.act;
       if (!mts.length) { clearPendMenu(); return; }
+      var level = +(menuEl.dataset.level || 1);
+      removePanelsAbove(level);
       if (a === 'move') {
-        menuEl.innerHTML = (mts.length > 1 ? '<span class="selct">' + mts.length + ' selected</span>' : '') + moveTargetsHtml();
+        spawnSub(act, moveTargetsHtml(), level + 1, menuEl.dataset.ids);
         return;
       }
+      if (a === 'mv2') {
+        var tgt2 = act.dataset.tgt;
+        if (tgt2 !== 'week') {
+          var subs = subprojectsOf(tgt2);
+          if (subs.length) {
+            var bs = '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + '</span><button data-act="mv3" data-proj="">top level</button>';
+            subs.forEach(function (sp) { bs += '<button data-act="mv3" data-proj="' + esc(sp.proj) + '">' + esc(sp.leaf) + '</button>'; });
+            spawnSub(act, bs, level + 1, menuEl.dataset.ids, tgt2);
+            return;
+          }
+        }
+      }
       var multi = mts.length > 1;
+      pushUndo();
       clearPendMenu();
       mts.forEach(function (mt) {
         if (a === 'done') {
@@ -1218,6 +1312,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           var tgt = act.dataset.tgt;
           if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
           else { mt.sec = tgt; delete mt.grp; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
+        } else if (a === 'mv3') {
+          var tsec = menuEl.dataset.tsec;
+          mt.sec = tsec; delete mt.grp;
+          var np = act.dataset.proj;
+          if (np) mt.proj = np;
+          logChange('Moved to ' + (SECMETA[tsec] ? SECMETA[tsec].title : tsec) + (np ? ' / ' + np.split('/').pop() : '') + ': ' + taskLabel(mt));
         }
         touch(mt);
       });
@@ -1259,6 +1359,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
     if (t && e.target.closest('.box')) {
       if (t.status === 'done' || t.status === 'archived') {
+        pushUndo();
         t.status = t.prevStatus || 'working'; delete t.doneAt;
         logChange('Not done after all: ' + taskLabel(t));
         touch(t); scheduleSave(); renderAll();
@@ -1268,6 +1369,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (t && e.target.closest('.dot') && t.status !== 'done') {
+      pushUndo();
       var cyc = ['now', 'working', 'planning', 'waiting'];
       t.status = cyc[(cyc.indexOf(t.status) + 1) % cyc.length];
       logChange('Status → ' + t.status + ': ' + taskLabel(t));
@@ -1275,12 +1377,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (t && e.target.closest('.star')) {
+      pushUndo();
       t.week = !t.week;
       logChange((t.week ? 'Pinned to This Week: ' : 'Unpinned from This Week: ') + taskLabel(t));
       touch(t); scheduleSave(); renderAll();
       return;
     }
     if (t && e.target.closest('.del')) {
+      pushUndo();
       t.status = 'gone';
       logChange('Removed: ' + taskLabel(t));
       touch(t); scheduleSave(); renderAll();
@@ -1292,6 +1396,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
 
     if (e.target.id === 'clearDone') {
+      pushUndo();
       var n = 0;
       S.tasks.forEach(function (t) {
         if (t.status === 'done' && t.week) { t.status = 'archived'; touch(t); n++; }
@@ -1303,6 +1408,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var add = e.target.closest('.addrow');
     if (add && add.dataset.add && !add.querySelector('input')) { inlineAdd(add); return; }
 
+    if (e.target.id === 'undoBtn') { doUndo(); return; }
     if (e.target.id === 'syncBtn') {
       if (getToken()) doSync(); else showTokenBar();
       return;
@@ -1334,17 +1440,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (e.target.id === 'syncCloseBtn') { el('syncpanel').style.display = 'none'; return; }
-    if (e.target.id === 'btnExport') {
-      var blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      var d = new Date();
-      a.download = 'taskboard-backup-' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '.json';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-      return;
-    }
-    if (e.target.id === 'btnImport') { el('importFile').click(); return; }
+    if (e.target.id === 'btnExport' || e.target.id === 'localSave') { doExport(); return; }
+    if (e.target.id === 'btnImport' || e.target.id === 'localLoad') { el('importFile').click(); return; }
     if (e.target.id === 'btnCopyState') { copyText('Full board state:\n' + JSON.stringify(S, null, 1), el('diagCopied')); return; }
   });
 
@@ -1392,6 +1489,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     dragId = null;
   });
 
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      e.preventDefault();
+      doUndo();
+    }
+  });
+
   document.addEventListener('dblclick', function (e) {
     var li = e.target.closest('li[data-id]');
     if (!li || !e.target.closest('.txt')) return;
@@ -1404,6 +1509,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     txtEl.replaceWith(inp); inp.focus(); inp.select();
     function commit(save) {
       if (save && inp.value.trim() && inp.value.trim() !== cur) {
+        pushUndo();
         var v = inp.value.trim();
         var m = v.match(/^(.+?)\s+—\s+(.+)$/);
         if (t.proj && m) { t.proj = m[1]; t.text = m[2]; } else { if (!t.proj) t.text = v; else { t.proj = null; t.text = v; } }
@@ -1426,6 +1532,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     dEl.textContent = ''; dEl.appendChild(inp); inp.focus(); inp.select();
     function commit(save) {
       if (save) {
+        pushUndo();
         var v = inp.value.trim();
         var old = (t.date && t.date.label) || 'none';
         if (!v) t.date = { kind: 'none', label: '' };
@@ -1467,6 +1574,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         };
         var secT = SECMETA[nt.sec] ? SECMETA[nt.sec].title : nt.sec;
         if (target === 'week') secT = 'This Week → ' + secT;
+        pushUndo();
         S.tasks.push(nt);
         logChange('Added to ' + secT + ': ' + v);
         scheduleSave(); renderAll();
