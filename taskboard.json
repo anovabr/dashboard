@@ -1,1 +1,1267 @@
-{"note":"task board state lives here; written by the board sync"}
+{
+ "seedVersion": "2026-07-30T00:00:00Z",
+ "firstRunAt": "2026-07-29T19:40:30.541Z",
+ "tasks": [
+  {
+   "id": "s1",
+   "sec": "writing",
+   "text": "a BIG task with a hard deadline",
+   "status": "gone",
+   "updatedAt": "2026-07-30T00:14:31.645Z",
+   "proj": "Sample Paper",
+   "big": true,
+   "week": true,
+   "date": {
+    "kind": "hard",
+    "label": "due Fri"
+   }
+  },
+  {
+   "id": "s2",
+   "sec": "projects",
+   "text": "paths like Project/sub group tasks into folders",
+   "status": "working",
+   "updatedAt": "2026-07-30T00:00:00Z",
+   "proj": "Sample Project/sub-project",
+   "date": {
+    "kind": "aim",
+    "label": "aim next week"
+   }
+  },
+  {
+   "id": "s3",
+   "sec": "rne",
+   "text": "hollow dot = waiting on someone else",
+   "status": "waiting",
+   "updatedAt": "2026-07-30T00:00:00Z",
+   "proj": "Sample Study",
+   "date": {
+    "kind": "none",
+    "label": ""
+   }
+  },
+  {
+   "id": "s4",
+   "sec": "other",
+   "text": "right-click me for actions; Ctrl+Z undoes mistakes",
+   "status": "planning",
+   "updatedAt": "2026-07-30T00:00:00Z",
+   "date": {
+    "kind": "none",
+    "label": ""
+   }
+  },
+  {
+   "id": "s5",
+   "sec": "personal",
+   "text": "check me off, then click sync to save to your repo",
+   "status": "gone",
+   "updatedAt": "2026-07-30T00:22:50.612Z",
+   "date": {
+    "kind": "none",
+    "label": ""
+   }
+  },
+  {
+   "id": "ms-murray",
+   "sec": "writing",
+   "proj": "Teacher / classroom climate SEL",
+   "text": "Murray — finish and submit",
+   "status": "now",
+   "date": {
+    "kind": "hard",
+    "label": "due this week"
+   },
+   "updatedAt": "2026-07-29T20:39:43.101Z",
+   "grp": "Manuscripts",
+   "big": true,
+   "week": true,
+   "today": true,
+   "prevStatus": "now",
+   "ord": 30,
+   "worked": [
+    "Wed Jul 29 2026"
+   ]
+  },
+  {
+   "id": "ms-knowles",
+   "sec": "writing",
+   "proj": "Autism & comorbidities",
+   "text": "Knowles — starts in August",
+   "status": "planning",
+   "date": {
+    "kind": "aim",
+    "label": "aim August"
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "ms-asqse2",
+   "sec": "writing",
+   "proj": "ASQ-SE",
+   "text": "autism in ASQ:SE-2 — incidental detection, ROC/AUC, N=28,025",
+   "status": "done",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:00:00Z",
+   "grp": "Manuscripts",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "ms-arabic",
+   "sec": "writing",
+   "proj": "ASQ Saudi Arabia",
+   "text": "Arabic ASQ-3 validation (N=42,680, Tawakkalna) — submitted",
+   "status": "done",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:00:00Z",
+   "grp": "Manuscripts",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "ms-esq",
+   "sec": "writing",
+   "proj": "ASQ",
+   "text": "ESQ network analysis (Squires, Bricker, Murphy)",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "ms-genios",
+   "sec": "writing",
+   "proj": "Genios-Brief SEL",
+   "text": "network-to-CFA sequential design",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-30T00:29:16.898Z",
+   "grp": "Manuscripts",
+   "week": true,
+   "ord": 10,
+   "today": true
+  },
+  {
+   "id": "ms-nr1",
+   "sec": "writing",
+   "proj": "NR-1 psychosocial risk",
+   "text": "RBSO submission",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "ms-parenting",
+   "sec": "writing",
+   "proj": "Parenting profiles",
+   "text": "Families in Society resubmission (awaiting editor)",
+   "status": "waiting",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T14:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "ms-gmi",
+   "sec": "writing",
+   "proj": "GMI/IRT validation",
+   "text": "write reviewer response",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "ms-school",
+   "sec": "writing",
+   "proj": "Does school matter?",
+   "text": "John Lindt",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "ms-suicide",
+   "sec": "writing",
+   "proj": "Suicide across countries",
+   "text": "Jonathan",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-30T00:29:16.898Z",
+   "grp": "Manuscripts",
+   "today": true,
+   "week": true,
+   "worked": [
+    "Wed Jul 29 2026"
+   ],
+   "ord": 10
+  },
+  {
+   "id": "ms-ress",
+   "sec": "writing",
+   "proj": "RESS methodological series",
+   "text": "four articles, SDOH N=22,391",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts"
+  },
+  {
+   "id": "re-screening",
+   "sec": "rne",
+   "proj": "Oregon",
+   "text": "screening study — UO crosswalk data collection (IRB STUDY00002224, Squires co-I); site hosted in ANOVA",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:30:00Z"
+  },
+  {
+   "id": "app-pankeka",
+   "sec": "anova",
+   "proj": "Pankeka",
+   "text": "fix TLS name-mismatch on apex; treino reminders, leaderboard backend on VPS",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T23:28:04.903Z",
+   "today": true,
+   "week": true,
+   "ord": 40
+  },
+  {
+   "id": "app-anova",
+   "sec": "anova",
+   "proj": "ANOVA/anova autismo app",
+   "text": "EAS Build, Google Play Billing",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z"
+  },
+  {
+   "id": "app-new",
+   "sec": "others",
+   "proj": "New app",
+   "text": "start in Claude Code (not Cowork)",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:50:00Z",
+   "grp": "Apps",
+   "ord": 20
+  },
+  {
+   "id": "web-vica",
+   "sec": "others",
+   "proj": "Vica dog walking site",
+   "text": "VS Code + Claude Code build",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:50:00Z",
+   "grp": "Web"
+  },
+  {
+   "id": "web-anovabr",
+   "sec": "anova",
+   "proj": "ANOVA/anovabr.com",
+   "text": "umbrella landing routing to sub-properties",
+   "status": "done",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "grp": "Web",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "web-educacao",
+   "sec": "anova",
+   "proj": "ANOVA/anova saude",
+   "text": "educacao — logo e cursos, syllabi, PubMed bibliographies, locked video",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "grp": "Web"
+  },
+  {
+   "id": "web-autismo",
+   "sec": "anova",
+   "proj": "ANOVA/anova autismo",
+   "text": "RABESP-A/F, Faux Pas; freemium tiers; logo + landing page",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "grp": "Web",
+   "ord": 20
+  },
+  {
+   "id": "web-testetea",
+   "sec": "anova",
+   "proj": "ANOVA/anova autismo",
+   "text": "testetea.com.br — DNS via Netlify/Hostgator",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "grp": "Web",
+   "ord": 30
+  },
+  {
+   "id": "web-statsbook",
+   "sec": "writing",
+   "proj": "Statistics textbook",
+   "text": "Conceitos e análises estatísticas com R e JASP — static site on GitHub Pages",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:50:00Z",
+   "grp": "Other Writing"
+  },
+  {
+   "id": "infra-vps",
+   "sec": "anova",
+   "proj": "ANOVA/infra",
+   "text": "anova-vps — Gunicorn 8000/8001, nginx, Remote-SSH",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z"
+  },
+  {
+   "id": "ow-puc",
+   "sec": "puc",
+   "proj": "PUC-Rio teaching",
+   "text": "grade pipelines, psychometrics lab, AI-resistant homework",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:30:00Z"
+  },
+  {
+   "id": "ow-o1a",
+   "sec": "personal",
+   "proj": "O-1A petition",
+   "text": "collect recommendation letters",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z"
+  },
+  {
+   "id": "ow-cnpq",
+   "sec": "personal",
+   "proj": "CNPq PQ-2025 appeal",
+   "text": "filed after budgetary denial — awaiting decision",
+   "status": "waiting",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z"
+  },
+  {
+   "id": "ow-j1",
+   "sec": "personal",
+   "proj": "J-1 status",
+   "text": "I-94 rule fixed; Brazil travel as mitigation",
+   "status": "waiting",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z"
+  },
+  {
+   "id": "re-cutoff",
+   "sec": "rne",
+   "proj": null,
+   "text": "New cutoff scores",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z"
+  },
+  {
+   "id": "re-genios26",
+   "sec": "rne",
+   "proj": "Genios 2026",
+   "text": "aproveitar algo dos dados?",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z"
+  },
+  {
+   "id": "re-lta",
+   "sec": "rne",
+   "proj": null,
+   "text": "Latent transition analysis",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z"
+  },
+  {
+   "id": "re-ai",
+   "sec": "rne",
+   "proj": "Pesquisa AI",
+   "text": "data collection",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z"
+  },
+  {
+   "id": "wr-lego",
+   "sec": "writing",
+   "proj": "LEGO grant",
+   "text": "application",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-30T01:38:05.722Z",
+   "grp": "Grants",
+   "week": true,
+   "today": true
+  },
+  {
+   "id": "wr-book",
+   "sec": "writing",
+   "proj": "Book chapter",
+   "text": "review others' chapters (own revision done)",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "grp": "Other Writing"
+  },
+  {
+   "id": "app-todos",
+   "sec": "others",
+   "proj": "Claude agent",
+   "text": "agente para meus TODOs",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:50:00Z",
+   "grp": "Apps",
+   "ord": 30
+  },
+  {
+   "id": "web-psicologos",
+   "sec": "anova",
+   "proj": "ANOVA/anova saude para profissionais",
+   "text": "continuar seleção de testes",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "grp": "Web"
+  },
+  {
+   "id": "web-oregon",
+   "sec": "rne",
+   "proj": "Oregon",
+   "text": "site — começar (should be an app also)",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:30:00Z"
+  },
+  {
+   "id": "infra-py",
+   "sec": "others",
+   "proj": null,
+   "text": "Python packages (Claude desk)",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:50:00Z",
+   "grp": "Infrastructure"
+  },
+  {
+   "id": "ow-nf-adriana",
+   "sec": "personal",
+   "proj": "ANOVA",
+   "text": "nota fiscal Adriana (via Claude)",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:56:52.101Z"
+  },
+  {
+   "id": "ow-saudi",
+   "sec": "personal",
+   "proj": "ASQ Saudi Arabia",
+   "text": "pagamento",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:00:00Z"
+  },
+  {
+   "id": "ow-visa",
+   "sec": "personal",
+   "proj": null,
+   "text": "VISA — checar payment",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z"
+  },
+  {
+   "id": "ow-admin2",
+   "sec": "anova",
+   "proj": "ANOVA/infra",
+   "text": "admin",
+   "status": "working",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T23:27:13.240Z",
+   "ord": 10
+  },
+  {
+   "id": "ow-chris",
+   "sec": "personal",
+   "proj": "ANOVA",
+   "text": "contrato com Chris",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T21:56:52.101Z"
+  },
+  {
+   "id": "ow-insta",
+   "sec": "anova",
+   "proj": "ANOVA/anova autismo",
+   "text": "Instagram via Claude",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T22:00:00Z",
+   "ord": 10
+  },
+  {
+   "id": "ow-video",
+   "sec": "writing",
+   "proj": "ANOVA",
+   "text": "vídeo regulamentação (certificado vs competência)",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T22:50:58.663Z",
+   "ord": 30
+  },
+  {
+   "id": "pers-contas",
+   "sec": "personal",
+   "proj": null,
+   "text": "Contas",
+   "status": "now",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-30T00:22:59.835Z"
+  },
+  {
+   "id": "pers-bike",
+   "sec": "personal",
+   "proj": null,
+   "text": "Ride a bike",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z"
+  },
+  {
+   "id": "sd-artigo",
+   "sec": "someday",
+   "proj": null,
+   "text": "algum artigo novo",
+   "status": "gone",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z"
+  },
+  {
+   "id": "a-bass",
+   "sec": "personal",
+   "proj": null,
+   "text": "Bass Diane",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-family",
+   "sec": "writing",
+   "proj": "Family paper",
+   "text": "Nem",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-anamnese",
+   "sec": "rne",
+   "proj": null,
+   "text": "anamnese / bateria de testes — paciente vê ou não o resultado",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-seltestes",
+   "sec": "anova",
+   "proj": "ANOVA/anova saude para profissionais",
+   "text": "seleção de testes — primeira parte",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "grp": "Web",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-sabatico",
+   "sec": "personal",
+   "proj": null,
+   "text": "Sabático",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-cbook",
+   "sec": "writing",
+   "proj": "Claude Book",
+   "text": "repo GitHub",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "grp": "Other Writing",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-adriana",
+   "sec": "writing",
+   "proj": "Paper Adriana (Liderança)",
+   "text": "submitted Jul 1 — rejected",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts",
+   "doneAt": "2026-07-01T12:00:00Z"
+  },
+  {
+   "id": "a-brefspec",
+   "sec": "rne",
+   "proj": null,
+   "text": "redo Bref-SPEC analyses removing AQ < 6",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-lizzy",
+   "sec": "personal",
+   "proj": null,
+   "text": "Ask Lizzy about site",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-diane",
+   "sec": "personal",
+   "proj": null,
+   "text": "Diane email",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-grupo",
+   "sec": "personal",
+   "proj": null,
+   "text": "mensagem grupo",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-asq4",
+   "sec": "rne",
+   "proj": null,
+   "text": "ASQ-4 chegar",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-eagles",
+   "sec": "personal",
+   "proj": null,
+   "text": "EAGLES",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-irb",
+   "sec": "personal",
+   "proj": null,
+   "text": "Reply to IRB",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-06-30T12:00:00Z"
+  },
+  {
+   "id": "a-debora",
+   "sec": "personal",
+   "proj": null,
+   "text": "Debora",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-manut",
+   "sec": "personal",
+   "proj": null,
+   "text": "Seção manutenção",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-bruno",
+   "sec": "personal",
+   "proj": null,
+   "text": "Dinheiro Bruno",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-07-01T12:00:00Z"
+  },
+  {
+   "id": "a-monitor",
+   "sec": "personal",
+   "proj": null,
+   "text": "Monitor and docking station",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "doneAt": "2026-06-29T12:00:00Z"
+  },
+  {
+   "id": "a-reuniao",
+   "sec": "personal",
+   "proj": null,
+   "text": "Reunião com Adriana",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-06-29T12:00:00Z"
+  },
+  {
+   "id": "a-rbpot",
+   "sec": "writing",
+   "proj": "Artigo RBPOT",
+   "text": "finalizado",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T10:00:00Z",
+   "grp": "Manuscripts",
+   "doneAt": "2026-06-29T12:00:00Z"
+  },
+  {
+   "id": "a-playlist",
+   "sec": "personal",
+   "proj": null,
+   "text": "Playlist IBNeC",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T11:00:00Z",
+   "doneAt": "2026-06-28T12:00:00Z"
+  },
+  {
+   "id": "a-tags",
+   "sec": "anova",
+   "proj": "ANOVA",
+   "text": "melhores tags; agendar uma hora",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z",
+   "doneAt": "2026-06-28T12:00:00Z"
+  },
+  {
+   "id": "a-bluezone",
+   "sec": "personal",
+   "proj": "ASQ Saudi Arabia",
+   "text": "blue zone manuscript",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:00:00Z",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "a-revcap",
+   "sec": "writing",
+   "proj": null,
+   "text": "revisão do capítulo do livro (a minha)",
+   "status": "archived",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T08:30:00Z",
+   "grp": "Other Writing",
+   "doneAt": "2026-07-28T12:00:00Z"
+  },
+  {
+   "id": "asq4-psy",
+   "sec": "personal",
+   "proj": "ANOVA",
+   "text": "psychometric properties manuscript",
+   "status": "gone",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T23:26:30.336Z",
+   "today": true,
+   "week": true,
+   "worked": [
+    "Wed Jul 29 2026"
+   ],
+   "ord": 20
+  },
+  {
+   "id": "asq4-ch9",
+   "sec": "writing",
+   "grp": "Manuscripts",
+   "proj": "ASQ-4",
+   "text": "chapter 9",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:00:00Z"
+  },
+  {
+   "id": "asq4-ch10",
+   "sec": "writing",
+   "grp": "Manuscripts",
+   "proj": "ASQ-4",
+   "text": "chapter 10",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T12:00:00Z"
+  },
+  {
+   "id": "anova-methods",
+   "sec": "anova",
+   "proj": "ANOVA/anova methods",
+   "text": "definir escopo",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z"
+  },
+  {
+   "id": "saudi-empbz",
+   "sec": "writing",
+   "grp": "Manuscripts",
+   "proj": "ASQ Saudi Arabia",
+   "text": "empirical blue zone",
+   "status": "planning",
+   "date": {
+    "kind": "none",
+    "label": ""
+   },
+   "updatedAt": "2026-07-29T13:30:00Z"
+  },
+  {
+   "id": "jms6hxbvdch4l",
+   "sec": "others",
+   "proj": null,
+   "text": "Email my girl",
+   "status": "gone",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T19:47:01.082Z",
+   "updatedAt": "2026-07-29T20:03:10.884Z"
+  },
+  {
+   "id": "jms6juw3xhvu5",
+   "sec": "others",
+   "proj": null,
+   "text": "Talk to..",
+   "status": "gone",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T20:41:06.573Z",
+   "updatedAt": "2026-07-29T20:41:15.604Z"
+  },
+  {
+   "id": "jms6jv4gu8f76",
+   "sec": "others",
+   "proj": null,
+   "text": "test",
+   "status": "gone",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T20:41:17.406Z",
+   "updatedAt": "2026-07-29T20:43:10.396Z"
+  },
+  {
+   "id": "jms6jwjd92saz",
+   "sec": "others",
+   "proj": null,
+   "text": "type",
+   "status": "gone",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T20:42:23.373Z",
+   "updatedAt": "2026-07-29T20:43:08.011Z"
+  },
+  {
+   "id": "jms6jxbbxzdgf",
+   "sec": "others",
+   "proj": null,
+   "text": "test",
+   "status": "gone",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T20:42:59.614Z",
+   "updatedAt": "2026-07-29T20:43:12.228Z"
+  },
+  {
+   "id": "jms6p6cgt1s1g",
+   "sec": "writing",
+   "proj": null,
+   "text": "Autism in females with Jonathan",
+   "status": "now",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T23:09:59.070Z",
+   "updatedAt": "2026-07-30T00:29:16.898Z",
+   "worked": [
+    "Wed Jul 29 2026"
+   ],
+   "today": true,
+   "ord": 20
+  },
+  {
+   "id": "jms6ps1dknnaq",
+   "sec": "writing",
+   "proj": null,
+   "text": "ASQ 4 - Psych. manuscript",
+   "status": "planning",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-29T23:26:51.128Z",
+   "updatedAt": "2026-07-29T23:27:04.552Z",
+   "ord": 50,
+   "today": true,
+   "worked": [
+    "Wed Jul 29 2026"
+   ]
+  },
+  {
+   "id": "jms6r2cr842mw",
+   "sec": "others",
+   "proj": null,
+   "text": "new",
+   "status": "gone",
+   "week": true,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-30T00:02:52.053Z",
+   "updatedAt": "2026-07-30T01:24:09.208Z"
+  },
+  {
+   "id": "jms6rsyfh861a",
+   "sec": "anova",
+   "proj": "ANOVA/ANOVA Consulting",
+   "text": "First page",
+   "status": "planning",
+   "week": false,
+   "date": {
+    "kind": "plain",
+    "label": "added 7/29"
+   },
+   "addedAt": "2026-07-30T00:23:33.197Z",
+   "updatedAt": "2026-07-30T00:33:59.920Z",
+   "ord": 10
+  }
+ ],
+ "claims": {},
+ "changelog": [],
+ "nextUp": "Tell Claude (or edit here) what's coming after this week.",
+ "savedAt": "2026-07-30T02:43:15.460Z",
+ "theme": "light",
+ "folded": {
+  "projects": false,
+  "writing": false,
+  "anova": false,
+  "rne": false,
+  "puc": false,
+  "personal": false
+ },
+ "layout": "side",
+ "folders": {
+  "anova": [
+   "infra",
+   "ANOVA Consulting",
+   "anova autismo",
+   "Pankeka",
+   "anova autismo app",
+   "anova saude",
+   "anova saude para profissionais",
+   "anova methods"
+  ],
+  "rne": [
+   "Oregon",
+   "Pesquisa AI",
+   "Genios 2026",
+   "Sample Study"
+  ],
+  "puc": [
+   "PUC-Rio teaching"
+  ],
+  "personal": [
+   "O-1A petition",
+   "ANOVA",
+   "ASQ Saudi Arabia",
+   "CNPq PQ-2025 appeal",
+   "J-1 status"
+  ],
+  "others": [
+   "New app",
+   "Claude agent",
+   "Vica dog walking site"
+  ]
+ },
+ "subFolded": {
+  "anova/ANOVA Consulting": true,
+  "anova/anova autismo": true,
+  "anova/Pankeka": true,
+  "anova/anova autismo app": true,
+  "anova/anova saude": true,
+  "anova/anova saude para profissionais": true,
+  "anova/anova methods": true,
+  "rne/Oregon": true
+ }
+}
