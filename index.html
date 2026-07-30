@@ -368,7 +368,8 @@
   .subhead { cursor: pointer; user-select: none; }
   .subct { font-size: 10.5px; font-weight: 700; color: var(--muted); margin-left: 6px; }
   .subhead.dragging { opacity: .45; }
-  .subhead.drophint { box-shadow: inset 0 -2px 0 var(--accent); }
+  .subhead.drophint { box-shadow: inset 0 -2px 0 var(--accent); background: var(--bg-focus); }
+  #sec-week.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
   .card.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
 
 
@@ -563,7 +564,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 22:59 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 23:01 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2206,6 +2207,26 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }).join('');
   }
 
+  function dropDest(node) {
+    if (!node || !node.closest) return null;
+    var head = node.closest('.subhead');
+    if (head) return { sec: head.dataset.sec, fold: head.dataset.fold };
+    if (node.closest('#sec-week')) return { week: true };
+    var card = node.closest('.card[data-sec]');
+    if (!card) return null;
+    var d = { sec: card.dataset.sec, fold: null, grp: null };
+    var li = node.closest('li[data-id]');
+    if (li && li.parentNode) {
+      var p = li.parentNode.previousElementSibling;
+      while (p && !(p.classList && p.classList.contains('micro'))) p = p.previousElementSibling;
+      if (p) {
+        if (p.classList.contains('subhead')) d.fold = p.dataset.fold;
+        else d.grp = p.textContent.trim();
+      }
+      d.ord = (task(li.getAttribute('data-id')) || {}).ord;
+    }
+    return d;
+  }
   function commitOrder(ul) {
     pushUndo();
     var n = 0;
@@ -2945,11 +2966,22 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (!dragId) return;
     var li = e.target.closest ? e.target.closest('li[data-id]') : null;
     var srcLi = document.querySelector('li.dragging');
-    if (!li || !srcLi || li === srcLi || li.parentNode !== srcLi.parentNode) return;
+    if (li && srcLi && li !== srcLi && li.parentNode === srcLi.parentNode) {
+      e.preventDefault();
+      var r = li.getBoundingClientRect();
+      var before = e.clientY < r.top + r.height / 2;
+      li.parentNode.insertBefore(srcLi, before ? li : li.nextSibling);
+      return;
+    }
+    var dst = dropDest(e.target);
+    document.querySelectorAll('.drophint').forEach(function (x) { x.classList.remove('drophint'); });
+    if (!dst) return;
+    var t0 = task(dragId);
+    if (!t0) return;
+    if (dst.week ? t0.week : (dst.sec === t0.sec && !dst.fold)) return;
     e.preventDefault();
-    var r = li.getBoundingClientRect();
-    var before = e.clientY < r.top + r.height / 2;
-    li.parentNode.insertBefore(srcLi, before ? li : li.nextSibling);
+    var hintEl = e.target.closest('.subhead') || e.target.closest('.card[data-sec]') || e.target.closest('#sec-week');
+    if (hintEl) hintEl.classList.add('drophint');
   });
   document.addEventListener('drop', function (e) {
     if (dragSec) {
@@ -2966,7 +2998,41 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       scheduleSave(); renderAll();
       return;
     }
-    if (dragId) { e.preventDefault(); return; }
+    if (dragId) {
+      e.preventDefault();
+      var srcLi2 = document.querySelector('li.dragging');
+      var mt2 = task(dragId);
+      var dst2 = dropDest(e.target);
+      if (!mt2 || !dst2) return;
+      var sameList = srcLi2 && e.target.closest && e.target.closest('li[data-id]') &&
+        e.target.closest('li[data-id]').parentNode === srcLi2.parentNode;
+      if (sameList) return;
+      if (dst2.week) {
+        if (mt2.week) return;
+        pushUndo();
+        mt2.week = true;
+        logChange('Pinned to This Week: ' + taskLabel(mt2));
+      } else {
+        if (dst2.sec === mt2.sec && !dst2.fold && !dst2.grp) return;
+        pushUndo();
+        mt2.sec = dst2.sec;
+        if (dst2.fold) {
+          mt2.proj = (SECMETA[dst2.sec] ? SECMETA[dst2.sec].title : dst2.sec) + '/' + dst2.fold;
+          delete mt2.grp;
+        } else if (dst2.grp) {
+          mt2.grp = dst2.grp;
+        } else {
+          delete mt2.grp;
+        }
+        if (dst2.ord) mt2.ord = dst2.ord - 1;
+        logChange('Moved to ' + (SECMETA[dst2.sec] ? SECMETA[dst2.sec].title : dst2.sec) +
+          (dst2.fold ? ' / ' + dst2.fold : '') + ': ' + taskLabel(mt2));
+      }
+      touch(mt2);
+      dragId = null;
+      scheduleSave(); renderAll();
+      return;
+    }
     if (!dragFold) return;
     e.preventDefault();
     var head = e.target.closest ? e.target.closest('.subhead') : null;
