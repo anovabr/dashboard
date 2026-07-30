@@ -464,7 +464,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 03:35 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 03:40 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2067,7 +2067,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     b.style.borderColor = bad ? 'var(--hard)' : '';
   }
   function ghUrl() { return 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH; }
-  function ghHdr(tok) { return { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/vnd.github+json' }; }
+  function ghHdr(tok) {
+    var h = { 'Accept': 'application/vnd.github+json' };
+    if (tok) h['Authorization'] = 'Bearer ' + tok;
+    return h;
+  }
   function b64enc(str) { return btoa(unescape(encodeURIComponent(str))); }
   function b64dec(b) { return decodeURIComponent(escape(atob(String(b).replace(/\s/g, '')))); }
   function mergeRemote(remote) {
@@ -2084,9 +2088,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
   }
   var syncing = false;
-  function doSync() {
+  function doSync(auto) {
     var tok = getToken();
-    if (!tok) { showTokenBar(); return; }
     if (syncing) return;
     syncing = true;
     setSyncStatus('syncing…');
@@ -2107,12 +2110,23 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
             if (remote && remote.tasks) mergeRemote(remote);
           } catch (e) { DIAG.errors.push('sync parse: ' + e.message); }
         }
+        if (!tok) {
+          syncing = false;
+          if (engine) engine.save(JSON.stringify(S));
+          renderAll();
+          applyTheme();
+          syncBar('done');
+          setSyncStatus(auto ? 'viewing latest — token needed to save' : 'up to date (read-only)');
+          if (!auto) showTokenBar();
+          return null;
+        }
         S.savedAt = nowIso();
         var body = { message: 'task board sync', content: b64enc(JSON.stringify(S, null, 1)), branch: GH_BRANCH };
         if (sha) body.sha = sha;
         return fetch(ghUrl(), { method: 'PUT', headers: ghHdr(tok), body: JSON.stringify(body) });
       })
       .then(function (r) {
+        if (r === null) return;
         if (!r.ok) throw new Error('write ' + r.status);
         syncing = false;
         S.changelog = [];
@@ -2434,7 +2448,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
     if (e.target.id === 'undoBtn') { doUndo(); return; }
     if (e.target.id === 'syncBtn') {
-      if (getToken()) doSync(); else showTokenBar();
+      doSync();
       return;
     }
     if (e.target.id === 'tokSave') {
@@ -2762,11 +2776,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       renderModePill(verified);
       applyTheme();
       applyLayout();
-      setSyncStatus(getToken() ? 'sync' : 'sync — setup');
+      setSyncStatus('sync');
       renderDiag();
       renderAll();
       flushSave();
-      if (getToken()) doSync();
+      doSync(true);
     });
   });
 })();
