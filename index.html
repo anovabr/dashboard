@@ -419,6 +419,26 @@
   }
   #gatego:hover { filter: brightness(1.12); }
   .gateerr { margin-top: 10px; font-size: 13px; font-weight: 650; color: var(--hard); min-height: 17px; }
+  .gatelink { display: inline-block; margin-top: 12px; font-size: 12.5px; font-weight: 650; color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+  .gatelink:hover { color: var(--accent); }
+  #forgotBox { display: none; }
+  #forgotBox.on { display: block; }
+  .fgtitle { font-size: 20px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .fgtext { font-size: 14px; color: var(--secondary); line-height: 1.65; }
+  .fgtext b { color: var(--ink); }
+  .dancer { position: relative; height: 96px; margin: 16px auto 6px; width: 80px; animation: bop .55s ease-in-out infinite alternate; }
+  .dancer i { position: absolute; background: var(--accent); border-radius: 6px; display: block; }
+  .d-head { width: 26px; height: 26px; left: 27px; top: 0; border-radius: 50% !important; }
+  .d-body { width: 14px; height: 38px; left: 33px; top: 26px; }
+  .d-arm-l { width: 30px; height: 10px; left: 6px; top: 30px; transform-origin: 100% 50%; animation: armL .55s ease-in-out infinite alternate; }
+  .d-arm-r { width: 30px; height: 10px; left: 44px; top: 30px; transform-origin: 0 50%; animation: armR .55s ease-in-out infinite alternate; }
+  .d-leg-l { width: 11px; height: 32px; left: 28px; top: 62px; transform-origin: 50% 0; animation: legL .55s ease-in-out infinite alternate; }
+  .d-leg-r { width: 11px; height: 32px; left: 41px; top: 62px; transform-origin: 50% 0; animation: legR .55s ease-in-out infinite alternate; }
+  @keyframes bop { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-7px) rotate(3deg); } }
+  @keyframes armL { from { transform: rotate(28deg); } to { transform: rotate(-52deg); } }
+  @keyframes armR { from { transform: rotate(-28deg); } to { transform: rotate(52deg); } }
+  @keyframes legL { from { transform: rotate(12deg); } to { transform: rotate(-16deg); } }
+  @keyframes legR { from { transform: rotate(-12deg); } to { transform: rotate(16deg); } }
   .gatefoot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hairline); font-size: 12px; color: var(--muted); line-height: 1.6; }
   #syncbar { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--good); z-index: 300; opacity: 0; transition: width 1.1s ease, opacity .4s; }
   #syncpanel {
@@ -501,7 +521,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:15 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:16 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -513,6 +533,13 @@
     <input id="gatepw" type="password" placeholder="password" autocomplete="current-password">
     <button id="gatego">Unlock</button>
     <div class="gateerr" id="gateerr"></div>
+    <span class="gatelink" id="forgotLink">Forgot the password?</span>
+    <div id="forgotBox">
+      <div class="dancer"><i class="d-head"></i><i class="d-body"></i><i class="d-arm-l"></i><i class="d-arm-r"></i><i class="d-leg-l"></i><i class="d-leg-r"></i></div>
+      <div class="fgtitle">Never gonna give you… a reset link.</div>
+      <div class="fgtext">There is no recovery, and that is the point: the password never left your devices and no server has a copy. So, with great affection — <b>you are on your own</b>.<br><br>Still fixable if any device is still unlocked: open it, <b>save file</b> to export a backup, then set a new password there and sync. Otherwise the encrypted board stays encrypted, forever.</div>
+      <span class="gatelink" id="fgBack">Back to the password</span>
+    </div>
     <div class="gatefoot">Board data is stored encrypted (AES-256-GCM). The password stays on this device and is needed to read or write the board.</div>
   </div>
 </div>
@@ -2121,6 +2148,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function showGate(msg) {
     el('gateerr').textContent = msg || '';
+    el('forgotBox').classList.remove('on');
+    el('forgotLink').style.display = '';
     el('gate').classList.add('on');
     document.body.style.overflow = 'hidden';
     setTimeout(function () { el('gatepw').focus(); }, 60);
@@ -2561,6 +2590,17 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var add = e.target.closest('.addrow');
     if (add && add.dataset.add && !add.querySelector('input')) { inlineAdd(add); return; }
 
+    if (e.target.id === 'forgotLink') {
+      el('forgotBox').classList.add('on');
+      el('forgotLink').style.display = 'none';
+      return;
+    }
+    if (e.target.id === 'fgBack') {
+      el('forgotBox').classList.remove('on');
+      el('forgotLink').style.display = '';
+      el('gatepw').focus();
+      return;
+    }
     if (e.target.id === 'gatego') {
       var pv = el('gatepw').value;
       if (!pv) { el('gateerr').textContent = 'Type the password.'; return; }
