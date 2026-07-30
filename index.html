@@ -353,6 +353,11 @@
   .toolrow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
   .toolrow .addrow { margin-top: 0; }
   .card.seccard.dragging { opacity: .5; }
+  @keyframes newflash {
+    0%, 100% { box-shadow: var(--shadow); }
+    50% { box-shadow: 0 0 0 3px var(--accent), 0 0 18px rgba(20,84,79,0.35); }
+  }
+  .card.flashnew { animation: newflash .52s ease 4; }
   .card.seccard > h2 { cursor: grab; }
   .subhead { cursor: pointer; user-select: none; }
   .subct { font-size: 10.5px; font-weight: 700; color: var(--muted); margin-left: 6px; }
@@ -552,7 +557,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:39 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:40 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2693,7 +2698,17 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       ainp.placeholder = 'section name · Enter to create';
       asb.appendChild(ainp); ainp.focus();
       ainp.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Enter' && ainp.value.trim()) { addSection(ainp.value.trim()); renderAll(); }
+        if (ev.key === 'Enter' && ainp.value.trim()) {
+          var newId = addSection(ainp.value.trim());
+          asb.innerHTML = esc(aorig);
+          renderAll();
+          var card = el('sec-' + newId);
+          if (card) {
+            card.classList.add('flashnew');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(function () { card.classList.remove('flashnew'); }, 2100);
+          }
+        }
         else if (ev.key === 'Escape') { asb.innerHTML = esc(aorig); }
       });
       ainp.addEventListener('blur', function () { setTimeout(function () { if (asb.querySelector('input')) asb.innerHTML = esc(aorig); }, 150); });
