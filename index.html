@@ -383,6 +383,35 @@
     padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.25); width: min(430px, 92vw);
   }
   #tokenbar .hint { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  #gate {
+    position: fixed; inset: 0; z-index: 999; display: none;
+    background: radial-gradient(120% 100% at 20% 0%, #16302c 0%, #0b0d10 60%, #000 100%);
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  #gate.on { display: flex; }
+  .gatebox { width: min(560px, 100%); text-align: left; }
+  .gatemark { width: 74px; height: 12px; background: #f26652; border-radius: 3px; margin-bottom: 22px; }
+  .gatetitle {
+    font-size: clamp(46px, 11vw, 96px); font-weight: 900; line-height: .92;
+    letter-spacing: -0.03em; color: #fff; text-transform: uppercase; margin: 0 0 6px;
+  }
+  .gatetitle span { color: #f26652; }
+  .gatesub { font-size: 13px; font-weight: 800; letter-spacing: .28em; text-transform: uppercase; color: #7cc6b8; margin-bottom: 30px; }
+  #gatepw {
+    width: 100%; font: inherit; font-size: 20px; font-weight: 700; letter-spacing: .12em;
+    padding: 16px 18px; border: 2px solid #2f3b41; border-radius: 12px;
+    background: rgba(255,255,255,0.04); color: #fff; outline: none;
+  }
+  #gatepw::placeholder { color: #5d6a70; letter-spacing: .3em; font-weight: 800; }
+  #gatepw:focus { border-color: #7cc6b8; background: rgba(124,198,184,0.07); }
+  #gatego {
+    margin-top: 14px; width: 100%; font: inherit; font-size: 17px; font-weight: 900;
+    letter-spacing: .22em; text-transform: uppercase; padding: 16px;
+    border: 0; border-radius: 12px; background: #f26652; color: #1a0c09; cursor: pointer;
+  }
+  #gatego:hover { background: #ff7b66; }
+  .gateerr { margin-top: 14px; font-size: 13.5px; font-weight: 700; color: #ef8a70; min-height: 18px; }
+  .gatefoot { margin-top: 26px; font-size: 12px; color: #6b757b; line-height: 1.6; }
   #syncbar { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--good); z-index: 300; opacity: 0; transition: width 1.1s ease, opacity .4s; }
   #syncpanel {
     position: fixed; right: 20px; top: 70px; z-index: 100; display: none;
@@ -411,7 +440,7 @@
 
   <header>
     <div>
-      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
+      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="lockBtn" title="forget the password on this device">lock</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
       <div class="meta" id="metaline"></div>
     </div>
     <div class="ring-wrap">
@@ -464,10 +493,22 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 04:48 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 04:55 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
+
+<div id="gate">
+  <div class="gatebox">
+    <div class="gatemark"></div>
+    <h1 class="gatetitle">Dash<span>board</span></h1>
+    <div class="gatesub">encrypted · private</div>
+    <input id="gatepw" type="password" placeholder="password" autocomplete="current-password">
+    <button id="gatego">unlock</button>
+    <div class="gateerr" id="gateerr"></div>
+    <div class="gatefoot">Board data is stored encrypted (AES-256-GCM). The password never leaves this device and is required to read or write the board.</div>
+  </div>
+</div>
 
 <div id="syncbar"></div>
 
@@ -2030,6 +2071,48 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (/visa|cnpq|o-1|j-1|conta|pagamento|gym|bike/.test(low)) return 'personal';
     return 'others';
   }
+  var PW_KEY = 'task-board-pw';
+  function getPw() { try { return localStorage.getItem(PW_KEY) || null; } catch (e) { return null; } }
+  function setPw(p) { try { localStorage.setItem(PW_KEY, p); } catch (e) {} }
+  function clearPw() { try { localStorage.removeItem(PW_KEY); } catch (e) {} }
+  function bytesToB64(u8) { var str = ''; for (var i = 0; i < u8.length; i++) str += String.fromCharCode(u8[i]); return btoa(str); }
+  function b64ToBytes(b) { var str = atob(b), u = new Uint8Array(str.length); for (var i = 0; i < str.length; i++) u[i] = str.charCodeAt(i); return u; }
+  function randBytes(n) { var u = new Uint8Array(n); crypto.getRandomValues(u); return u; }
+  function deriveKey(pw, saltB64) {
+    var salt = b64ToBytes(saltB64);
+    return crypto.subtle.importKey('raw', new TextEncoder().encode(pw), { name: 'PBKDF2' }, false, ['deriveKey'])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: salt, iterations: 250000, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+      });
+  }
+  function encryptState(obj, pw, saltB64) {
+    var salt = saltB64 || bytesToB64(randBytes(16));
+    return deriveKey(pw, salt).then(function (key) {
+      var iv = randBytes(12);
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj)))
+        .then(function (ct) {
+          return { enc: 'v1', kdf: 'PBKDF2-SHA256-250k', salt: salt, iv: bytesToB64(iv), data: bytesToB64(new Uint8Array(ct)) };
+        });
+    });
+  }
+  function decryptState(env, pw) {
+    return deriveKey(pw, env.salt).then(function (key) {
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(env.iv) }, key, b64ToBytes(env.data));
+    }).then(function (pt) { return JSON.parse(new TextDecoder().decode(pt)); });
+  }
+  function showGate(msg) {
+    el('gateerr').textContent = msg || '';
+    el('gate').classList.add('on');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { el('gatepw').focus(); }, 60);
+  }
+  function hideGate() {
+    el('gate').classList.remove('on');
+    document.body.style.overflow = '';
+    el('gatepw').value = '';
+  }
   var SYNC_KEY = 'task-board-sync';
   var GH_REPO = 'anovabr/dashboard', GH_BRANCH = 'state', GH_PATH = 'taskboard.json';
   function getToken() {
@@ -2089,12 +2172,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   var syncing = false;
   function doSync(auto) {
-    var tok = getToken();
+    var tok = getToken(), pw = getPw();
+    if (!pw) { showGate(); return; }
     if (syncing) return;
     syncing = true;
     setSyncStatus('syncing…');
     syncBar('start');
     flushSave();
+    var sha = null, salt = null;
     fetch(ghUrl() + '?ref=' + GH_BRANCH + '&t=' + Date.now(), { headers: ghHdr(tok) })
       .then(function (r) {
         if (r.status === 404) return null;
@@ -2102,14 +2187,18 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         return r.json();
       })
       .then(function (j) {
-        var sha = null;
-        if (j && j.content) {
-          sha = j.sha;
-          try {
-            var remote = JSON.parse(b64dec(j.content));
-            if (remote && remote.tasks) mergeRemote(remote);
-          } catch (e) { DIAG.errors.push('sync parse: ' + e.message); }
+        if (!j || !j.content) return null;
+        sha = j.sha;
+        var parsed = null;
+        try { parsed = JSON.parse(b64dec(j.content)); } catch (e) { DIAG.errors.push('sync parse: ' + e.message); return null; }
+        if (parsed && parsed.enc === 'v1') {
+          salt = parsed.salt;
+          return decryptState(parsed, pw).catch(function () { throw new Error('badpw'); });
         }
+        return parsed;
+      })
+      .then(function (remote) {
+        if (remote && remote.tasks) mergeRemote(remote);
         if (!tok) {
           syncing = false;
           if (engine) engine.save(JSON.stringify(S));
@@ -2121,12 +2210,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           return null;
         }
         S.savedAt = nowIso();
-        var body = { message: 'task board sync', content: b64enc(JSON.stringify(S, null, 1)), branch: GH_BRANCH };
-        if (sha) body.sha = sha;
-        return fetch(ghUrl(), { method: 'PUT', headers: ghHdr(tok), body: JSON.stringify(body) });
+        return encryptState(S, pw, salt).then(function (env) {
+          var body = { message: 'task board sync', content: b64enc(JSON.stringify(env)), branch: GH_BRANCH };
+          if (sha) body.sha = sha;
+          return fetch(ghUrl(), { method: 'PUT', headers: ghHdr(tok), body: JSON.stringify(body) });
+        });
       })
       .then(function (r) {
-        if (r === null) return;
+        if (r === null || r === undefined) return;
         if (!r.ok) throw new Error('write ' + r.status);
         syncing = false;
         S.changelog = [];
@@ -2145,6 +2236,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       })
       .catch(function (e) {
         syncing = false;
+        if (String(e && e.message) === 'badpw') {
+          syncBar('fail');
+          setSyncStatus('locked', true);
+          clearPw();
+          showGate('Wrong password for this board.');
+          return;
+        }
         DIAG.errors.push('sync: ' + e.message);
         syncBar('fail');
         setSyncStatus('sync failed — click to retry', true);
@@ -2446,6 +2544,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var add = e.target.closest('.addrow');
     if (add && add.dataset.add && !add.querySelector('input')) { inlineAdd(add); return; }
 
+    if (e.target.id === 'gatego') {
+      var pv = el('gatepw').value;
+      if (!pv) { el('gateerr').textContent = 'Type the password.'; return; }
+      setPw(pv); hideGate(); doSync(true);
+      return;
+    }
+    if (e.target.id === 'lockBtn') { clearPw(); location.reload(); return; }
     if (e.target.id === 'undoBtn') { doUndo(); return; }
     if (e.target.id === 'syncBtn') {
       doSync();
@@ -2585,6 +2690,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   });
 
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target && e.target.id === 'gatepw') {
+      var pv = el('gatepw').value;
+      if (!pv) { el('gateerr').textContent = 'Type the password.'; return; }
+      setPw(pv); hideGate(); doSync(true);
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       e.preventDefault();
@@ -2780,7 +2891,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       renderDiag();
       renderAll();
       flushSave();
-      doSync(true);
+      if (getPw()) doSync(true); else showGate();
     });
   });
 })();
