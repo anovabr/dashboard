@@ -563,7 +563,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 06:16 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 22:59 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1916,7 +1916,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function undoSnap() {
     return JSON.stringify({
       t: S.tasks, c: S.customSections || [], o: S.secOrder || [],
-      h: S.hiddenSections || [], f: S.folders || {}
+      h: S.hiddenSections || [], r: S.removedSections || [], f: S.folders || {}
     });
   }
   function pushUndo() {
@@ -1935,7 +1935,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var snap = JSON.parse(undoStack.pop());
       if (snap && snap.t) {
         S.tasks = snap.t; S.customSections = snap.c; S.secOrder = snap.o;
-        S.hiddenSections = snap.h; S.folders = snap.f;
+        S.hiddenSections = snap.h; S.removedSections = snap.r || []; S.folders = snap.f;
       } else { S.tasks = snap; }
     } catch (e) { return; }
     logChange('Undo');
@@ -1945,9 +1945,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
   // ---------- rendering ----------
   var HUES = ['writing', 'rne', 'river', 'other', 'personal', 'others', 'rewards', 'focus'];
+  function removedSet() {
+    var out = {};
+    ((S && S.removedSections) || []).forEach(function (id) { out[id] = 1; });
+    ((S && S.hiddenSections) || []).forEach(function (id) { out[id] = 1; });
+    return out;
+  }
   function allSections() {
-    var hid = (S && S.hiddenSections) || [];
-    return SEED.sections.concat((S && S.customSections) || []).filter(function (sc) { return hid.indexOf(sc.id) === -1; });
+    var rm = removedSet();
+    return SEED.sections.concat((S && S.customSections) || []).filter(function (sc) { return !rm[sc.id]; });
   }
   function secOrder() {
     var list = allSections(), byId = {};
@@ -2339,12 +2345,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (!lt) S.tasks.push(rt);
       else if ((rt.updatedAt || '') > (lt.updatedAt || '')) Object.keys(rt).forEach(function (k) { lt[k] = rt[k]; });
     });
+    S.removedSections = S.removedSections || [];
+    [].concat(remote.removedSections || [], remote.hiddenSections || []).forEach(function (id) {
+      if (S.removedSections.indexOf(id) === -1) S.removedSections.push(id);
+    });
     if (remote.customSections) {
       S.customSections = S.customSections || [];
       var haveC = {};
       S.customSections.forEach(function (c) { haveC[c.id] = 1; });
       remote.customSections.forEach(function (c) { if (!haveC[c.id]) S.customSections.push(c); });
     }
+    var rmNow = removedSet();
+    S.customSections = (S.customSections || []).filter(function (c) { return !rmNow[c.id]; });
+    if (S.secOrder) S.secOrder = S.secOrder.filter(function (id) { return !rmNow[id]; });
     if (remote.folders) {
       S.folders = S.folders || {};
       Object.keys(remote.folders).forEach(function (k) {
@@ -2356,7 +2369,6 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (remote.nextUp) S.nextUp = remote.nextUp;
       if (remote.theme) S.theme = remote.theme;
       if (remote.secOrder) S.secOrder = remote.secOrder;
-      if (remote.hiddenSections) S.hiddenSections = remote.hiddenSections;
       if (remote.subFolded) S.subFolded = remote.subFolded;
       if (remote.folded) S.folded = remote.folded;
     }
@@ -2563,8 +2575,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         if (t.sec === did && t.status !== 'gone') { t.status = 'gone'; touch(t); n2++; }
       });
       S.customSections = (S.customSections || []).filter(function (c) { return c.id !== did; });
-      S.hiddenSections = S.hiddenSections || [];
-      if (SEED.sections.some(function (sc) { return sc.id === did; })) S.hiddenSections.push(did);
+      S.removedSections = S.removedSections || [];
+      if (S.removedSections.indexOf(did) === -1) S.removedSections.push(did);
       S.secOrder = (S.secOrder || []).filter(function (id) { return id !== did; });
       if (S.folders) delete S.folders[did];
       logChange('Deleted section ' + (SECMETA[did] ? SECMETA[did].title : did) + ' with ' + n2 + ' task' + (n2 === 1 ? '' : 's'));
