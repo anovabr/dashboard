@@ -560,7 +560,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:41 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:48 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2614,7 +2614,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var onBox = !!(e.target.closest && e.target.closest('li[data-id]') && e.target.closest('.box'));
     if (!onBox && document.querySelector('.actmenu')) clearPendMenu();
 
-    var hh = e.target.closest('h2');
+    var hh = e.target.closest('.secdel') ? null : e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
       var card = hh.parentNode;
       var fkey = card.dataset.sec || (card.id === 'sec-week' ? 'week' : null);
