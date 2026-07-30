@@ -499,6 +499,7 @@
   </div>
 
   <div class="grid" id="sections"></div>
+  <div class="addrow" id="addSecBtn">+ add section</div>
 
   <details class="mini" id="sec-archive">
     <summary>Done archive</summary>
@@ -521,7 +522,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:16 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:20 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1811,6 +1812,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       tasks: clone(SEED.tasks),
       claims: {},        // rewardId -> {sit, tot}
       folders: {},       // secId -> [subsection names]
+      customSections: [],
       changelog: [],     // {t, msg} not yet synced
       nextUp: SEED.nextUp
     };
@@ -1862,14 +1864,33 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
 
   // ---------- rendering ----------
+  var HUES = ['writing', 'rne', 'river', 'other', 'personal', 'others', 'rewards', 'focus'];
+  function allSections() {
+    return SEED.sections.concat((S && S.customSections) || []);
+  }
   function secOrder() {
-    var byId = {};
-    SEED.sections.forEach(function (sc) { byId[sc.id] = sc; });
+    var list = allSections(), byId = {};
+    list.forEach(function (sc) { byId[sc.id] = sc; });
     var ord = (S && S.secOrder) || [];
     var out = [];
     ord.forEach(function (id) { if (byId[id]) { out.push(byId[id]); delete byId[id]; } });
-    SEED.sections.forEach(function (sc) { if (byId[sc.id]) out.push(sc); });
+    list.forEach(function (sc) { if (byId[sc.id]) out.push(sc); });
     return out;
+  }
+  function rebuildSecMeta() {
+    allSections().forEach(function (sc) { SECMETA[sc.id] = sc; });
+  }
+  function addSection(title) {
+    S.customSections = S.customSections || [];
+    var id = 'c' + Date.now().toString(36);
+    var hue = HUES[(SEED.sections.length + S.customSections.length) % HUES.length];
+    S.customSections.push({ id: id, title: title, hue: hue, groups: [] });
+    S.secOrder = secOrder().map(function (sc) { return sc.id; });
+    if (S.secOrder.indexOf(id) === -1) S.secOrder.push(id);
+    rebuildSecMeta();
+    logChange('Created section: ' + title);
+    scheduleSave();
+    return id;
   }
   var SECMETA = {};
   SEED.sections.forEach(function (s) { SECMETA[s.id] = s; });
@@ -1914,6 +1935,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
   var STATUS_ORDER = { now: 0, working: 1, planning: 2, waiting: 3 };
   function renderAll() {
+    rebuildSecMeta();
     var today = new Date();
     el('metaline').textContent = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ' · weekly review Mondays 9 AM';
 
@@ -2396,7 +2418,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     return out;
   }
   function moveTargetsHtml() {
-    var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
+    var h = '<button data-act="mvnew">+ new section…</button><button data-act="mv2" data-tgt="week">★ This Week</button>';
     secOrder().forEach(function (sc) {
       var has = subprojectsOf(sc.id).length;
       h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + (has ? '<span class="sub-arrow">▸</span>' : '') + '</button>';
@@ -2419,6 +2441,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       removePanelsAbove(level);
       if (a === 'move') {
         spawnSub(act, moveTargetsHtml(), level + 1, menuEl.dataset.ids);
+        return;
+      }
+      if (a === 'mvnew') {
+        menuEl.innerHTML = '<span class="selct">new section</span><input id="newsecinp" class="inline-edit" placeholder="name · Enter">';
+        var ni = el('newsecinp');
+        ni.dataset.ids = menuEl.dataset.ids;
+        ni.focus();
         return;
       }
       if (a === 'mv2') {
@@ -2564,6 +2593,20 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var fl = (S.folders && S.folders[sd.dataset.sec]) || [];
       var fi = fl.indexOf(sd.dataset.fold);
       if (fi !== -1) { fl.splice(fi, 1); logChange('Removed subsection: ' + sd.dataset.fold); scheduleSave(); renderAll(); }
+      return;
+    }
+    var asb = e.target.closest('#addSecBtn');
+    if (asb && !asb.querySelector('input')) {
+      var aorig = asb.textContent;
+      asb.innerHTML = '';
+      var ainp = document.createElement('input');
+      ainp.placeholder = 'section name · Enter to create';
+      asb.appendChild(ainp); ainp.focus();
+      ainp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' && ainp.value.trim()) { addSection(ainp.value.trim()); renderAll(); }
+        else if (ev.key === 'Escape') { asb.innerHTML = esc(aorig); }
+      });
+      ainp.addEventListener('blur', function () { setTimeout(function () { if (asb.querySelector('input')) asb.innerHTML = esc(aorig); }, 150); });
       return;
     }
     var addf = e.target.closest('.addrow[data-addfold]');
@@ -2778,6 +2821,21 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   });
 
   document.addEventListener('keydown', function (e) {
+    if (e.target && e.target.id === 'newsecinp') {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        var nid = addSection(e.target.value.trim());
+        var ids2 = String(e.target.dataset.ids || '').split(',').filter(Boolean);
+        pushUndo();
+        ids2.map(task).filter(Boolean).forEach(function (mt) {
+          mt.sec = nid; delete mt.grp;
+          logChange('Moved to ' + SECMETA[nid].title + ': ' + taskLabel(mt));
+          touch(mt);
+        });
+        clearPendMenu();
+        scheduleSave(); renderAll();
+      } else if (e.key === 'Escape') { clearPendMenu(); }
+      return;
+    }
     if (e.key === 'Enter' && e.target && e.target.id === 'gatepw') {
       var pv = el('gatepw').value;
       if (!pv) { el('gateerr').textContent = 'Type the password.'; return; }
