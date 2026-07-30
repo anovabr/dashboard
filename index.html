@@ -498,8 +498,8 @@
     <div class="nextup" id="nextup"></div>
   </div>
 
+  <div class="addrow" id="addSecBtn" style="margin-bottom:10px">+ add section</div>
   <div class="grid" id="sections"></div>
-  <div class="addrow" id="addSecBtn">+ add section</div>
 
   <details class="mini" id="sec-archive">
     <summary>Done archive</summary>
@@ -522,7 +522,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:20 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:28 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2233,9 +2233,25 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (!lt) S.tasks.push(rt);
       else if ((rt.updatedAt || '') > (lt.updatedAt || '')) Object.keys(rt).forEach(function (k) { lt[k] = rt[k]; });
     });
+    if (remote.customSections) {
+      S.customSections = S.customSections || [];
+      var haveC = {};
+      S.customSections.forEach(function (c) { haveC[c.id] = 1; });
+      remote.customSections.forEach(function (c) { if (!haveC[c.id]) S.customSections.push(c); });
+    }
+    if (remote.folders) {
+      S.folders = S.folders || {};
+      Object.keys(remote.folders).forEach(function (k) {
+        var loc = S.folders[k] = S.folders[k] || [];
+        (remote.folders[k] || []).forEach(function (n) { if (loc.indexOf(n) === -1) loc.push(n); });
+      });
+    }
     if ((remote.savedAt || '') > (S.savedAt || '')) {
       if (remote.nextUp) S.nextUp = remote.nextUp;
       if (remote.theme) S.theme = remote.theme;
+      if (remote.secOrder) S.secOrder = remote.secOrder;
+      if (remote.subFolded) S.subFolded = remote.subFolded;
+      if (remote.folded) S.folded = remote.folded;
     }
   }
   var syncing = false;
@@ -2766,7 +2782,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var i = ord.indexOf(src), j = ord.indexOf(tgtC.dataset.sec);
       if (i === -1 || j === -1) { renderAll(); return; }
       ord[i] = ord[j]; ord[j] = src;
-      S.secOrder = ord;
+      S.secOrder = ord.slice();
       logChange('Swapped section positions: ' + (SECMETA[src] ? SECMETA[src].title : src) + ' / ' + (SECMETA[ord[i]] ? SECMETA[ord[i]].title : ord[i]));
       scheduleSave(); renderAll();
       return;
