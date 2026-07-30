@@ -493,7 +493,7 @@
 
   <header>
     <div>
-      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync board state to a GitHub repo — click to set up or sync now">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="lockBtn" title="log out — back to the password screen">exit</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
+      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync now — also runs automatically every 3 minutes when there are changes">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="lockBtn" title="log out — back to the password screen">exit</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
       <div class="meta" id="metaline"></div>
     </div>
     <div class="ring-wrap">
@@ -547,7 +547,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:29 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:38 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1822,6 +1822,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (engine && S) { S.savedAt = nowIso(); engine.save(JSON.stringify(S)); }
   }
   document.addEventListener('visibilitychange', function () { if (document.hidden) flushSave(); });
+  setInterval(function () {
+    if (!S || syncing) return;
+    if (!getToken() || !getPw()) return;
+    if (document.hidden) return;
+    if (!S.changelog || !S.changelog.length) return;
+    doSync(true);
+  }, 180000);
+
   window.addEventListener('scroll', function () {
     var b = el('topBtn');
     if (b) b.style.display = window.scrollY > 400 ? 'block' : 'none';
