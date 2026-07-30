@@ -350,6 +350,8 @@
   .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
+  .toolrow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .toolrow .addrow { margin-top: 0; }
   .card.seccard.dragging { opacity: .5; }
   .card.seccard > h2 { cursor: grab; }
   .subhead { cursor: pointer; user-select: none; }
@@ -523,7 +525,10 @@
     <div class="nextup" id="nextup"></div>
   </div>
 
-  <div class="addrow" id="addSecBtn" style="margin-bottom:10px">+ add section</div>
+  <div class="toolrow">
+    <span class="addrow" id="addSecBtn">+ add section</span>
+    <span class="addrow" id="foldAllBtn">fold all</span>
+  </div>
   <div class="grid" id="sections"></div>
 
   <details class="mini" id="sec-archive">
@@ -547,7 +552,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:38 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:39 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2056,6 +2061,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     el('sections').innerHTML = html;
     buildNav();
+    var fsecs = secOrder();
+    var openAny = !(S.folded && S.folded.week) || fsecs.some(function (sc) { return !(S.folded && S.folded[sc.id]); });
+    el('foldAllBtn').textContent = openAny ? 'fold all' : 'expand all';
     el('sec-week').classList.toggle('folded', !!(S.folded && S.folded.week));
 
 
@@ -2657,6 +2665,24 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var fl = (S.folders && S.folders[sd.dataset.sec]) || [];
       var fi = fl.indexOf(sd.dataset.fold);
       if (fi !== -1) { fl.splice(fi, 1); logChange('Removed subsection: ' + sd.dataset.fold); scheduleSave(); renderAll(); }
+      return;
+    }
+    if (e.target.id === 'foldAllBtn') {
+      var secs = secOrder();
+      S.folded = S.folded || {};
+      S.subFolded = S.subFolded || {};
+      var anyOpen = !S.folded.week || secs.some(function (sc) { return !S.folded[sc.id]; });
+      if (anyOpen) {
+        S.folded.week = true;
+        secs.forEach(function (sc) {
+          S.folded[sc.id] = true;
+          ((S.folders && S.folders[sc.id]) || []).forEach(function (fn) { S.subFolded[sc.id + '/' + fn] = true; });
+        });
+      } else {
+        S.folded = {};
+        S.subFolded = {};
+      }
+      scheduleSave(); renderAll();
       return;
     }
     var asb = e.target.closest('#addSecBtn');
