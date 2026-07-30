@@ -350,6 +350,8 @@
   .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
+  .card.seccard.dragging { opacity: .5; }
+  .card.seccard > h2 { cursor: grab; }
   .subhead { cursor: pointer; user-select: none; }
   .subct { font-size: 10.5px; font-weight: 700; color: var(--muted); margin-left: 6px; }
   .subhead.dragging { opacity: .45; }
@@ -493,7 +495,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 04:55 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:01 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1828,6 +1830,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
 
   // ---------- rendering ----------
+  function secOrder() {
+    var byId = {};
+    SEED.sections.forEach(function (sc) { byId[sc.id] = sc; });
+    var ord = (S && S.secOrder) || [];
+    var out = [];
+    ord.forEach(function (id) { if (byId[id]) { out.push(byId[id]); delete byId[id]; } });
+    SEED.sections.forEach(function (sc) { if (byId[sc.id]) out.push(sc); });
+    return out;
+  }
   var SECMETA = {};
   SEED.sections.forEach(function (s) { SECMETA[s.id] = s; });
   SECMETA.today = { id: 'today', title: 'Today' };
@@ -1903,13 +1914,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
     // sections
     var html = '';
-    SEED.sections.forEach(function (sec) {
+    secOrder().forEach(function (sec) {
       var ts = live.filter(function (t) { return t.sec === sec.id && t.status !== 'done'; });
       ts.sort(function (a, b) {
         return ((a.ord || 1e9) - (b.ord || 1e9)) || ((STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0));
       });
       var folded = S.folded && S.folded[sec.id] ? ' folded' : '';
-      html += '<div class="card foldable' + folded + '" id="sec-' + sec.id + '" data-hue style="--hue:var(--h-' + sec.hue + '); --hue-bg:var(--bg-' + sec.hue + ')" data-sec="' + sec.id + '">';
+      html += '<div class="card foldable seccard' + folded + '" draggable="true" id="sec-' + sec.id + '" data-hue style="--hue:var(--h-' + sec.hue + '); --hue-bg:var(--bg-' + sec.hue + ')" data-sec="' + sec.id + '">';
       html += '<h2>' + esc(sec.title) + '</h2>';
       if (sec.groups && sec.groups.length) {
         sec.groups.forEach(function (g) {
@@ -1956,6 +1967,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       html += '</div>';
     });
     el('sections').innerHTML = html;
+    buildNav();
     el('sec-week').classList.toggle('folded', !!(S.folded && S.folded.week));
 
 
@@ -2033,7 +2045,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function buildNav() {
     var items = [{ id: 'sec-week', label: 'This Week', hue: 'focus', full: 'This Week' }];
-    SEED.sections.forEach(function (sc) { items.push({ id: 'sec-' + sc.id, label: shortTitle(sc.title), hue: sc.hue, full: sc.title }); });
+    secOrder().forEach(function (sc) { items.push({ id: 'sec-' + sc.id, label: shortTitle(sc.title), hue: sc.hue, full: sc.title }); });
     items.push({ id: 'sec-archive', label: 'Archive', full: 'Done archive' });
     el('navlinks').innerHTML = items.map(function (it) {
       var mark = it.hue ? '<span class="secmark" style="background:var(--h-' + it.hue + ')"></span>' : '';
@@ -2351,7 +2363,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function moveTargetsHtml() {
     var h = '<button data-act="mv2" data-tgt="week">★ This Week</button>';
-    SEED.sections.forEach(function (sc) {
+    secOrder().forEach(function (sc) {
       var has = subprojectsOf(sc.id).length;
       h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + (has ? '<span class="sub-arrow">▸</span>' : '') + '</button>';
     });
@@ -2603,7 +2615,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     toggleSelect(li, t, e.clientX, e.clientY);
   });
 
-  var dragId = null, dragFold = null;
+  var dragId = null, dragFold = null, dragSec = null;
   document.addEventListener('dragstart', function (e) {
     var sh = e.target.closest ? e.target.closest('.subhead') : null;
     if (sh) {
@@ -2614,13 +2626,28 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     var li = e.target.closest ? e.target.closest('li[data-id]') : null;
-    if (!li) return;
+    if (!li) {
+      var cd = e.target.closest ? e.target.closest('.seccard') : null;
+      if (cd) {
+        dragSec = cd.dataset.sec;
+        cd.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', 'sec:' + dragSec); } catch (err) {}
+      }
+      return;
+    }
     dragId = li.getAttribute('data-id');
     li.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
   });
   document.addEventListener('dragover', function (e) {
+    if (dragSec) {
+      var overC = e.target.closest ? e.target.closest('.seccard') : null;
+      document.querySelectorAll('.drophint').forEach(function (x) { x.classList.remove('drophint'); });
+      if (overC && overC.dataset.sec !== dragSec) { e.preventDefault(); overC.classList.add('drophint'); }
+      return;
+    }
     if (dragFold) {
       var overHead = e.target.closest ? e.target.closest('.subhead') : null;
       var overCard = e.target.closest ? e.target.closest('.card[data-sec]') : null;
@@ -2642,6 +2669,20 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     li.parentNode.insertBefore(srcLi, before ? li : li.nextSibling);
   });
   document.addEventListener('drop', function (e) {
+    if (dragSec) {
+      e.preventDefault();
+      var tgtC = e.target.closest ? e.target.closest('.seccard') : null;
+      var src = dragSec; dragSec = null;
+      if (!tgtC || tgtC.dataset.sec === src) { renderAll(); return; }
+      var ord = secOrder().map(function (sc) { return sc.id; });
+      var i = ord.indexOf(src), j = ord.indexOf(tgtC.dataset.sec);
+      if (i === -1 || j === -1) { renderAll(); return; }
+      ord[i] = ord[j]; ord[j] = src;
+      S.secOrder = ord;
+      logChange('Swapped section positions: ' + (SECMETA[src] ? SECMETA[src].title : src) + ' / ' + (SECMETA[ord[i]] ? SECMETA[ord[i]].title : ord[i]));
+      scheduleSave(); renderAll();
+      return;
+    }
     if (dragId) { e.preventDefault(); return; }
     if (!dragFold) return;
     e.preventDefault();
@@ -2678,6 +2719,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   });
   document.addEventListener('dragend', function () {
     document.querySelectorAll('.drophint').forEach(function (x) { x.classList.remove('drophint'); });
+    document.querySelectorAll('.seccard.dragging').forEach(function (x) { x.classList.remove('dragging'); });
+    if (dragSec) { dragSec = null; renderAll(); }
     var sh = document.querySelector('.subhead.dragging');
     if (sh) sh.classList.remove('dragging');
     if (dragFold) { dragFold = null; renderAll(); }
