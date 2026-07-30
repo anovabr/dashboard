@@ -347,6 +347,9 @@
     margin: 12px 0 2px;
   }
   .micro:first-of-type { margin-top: 0; }
+  .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
+  .micro .subdel:hover { color: var(--hard); opacity: 1; }
+  .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
 
 
   details.mini { margin: 0 2px 6px; }
@@ -456,7 +459,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-29 23:54 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 00:29 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1727,6 +1730,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       firstRunAt: nowIso(),
       tasks: clone(SEED.tasks),
       claims: {},        // rewardId -> {sit, tot}
+      folders: {},       // secId -> [subsection names]
       changelog: [],     // {t, msg} not yet synced
       nextUp: SEED.nextUp
     };
@@ -1745,6 +1749,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     if ((SEED.version || '') > (st.seedVersion || '')) { st.nextUp = SEED.nextUp; st.seedVersion = SEED.version; }
     if (!st.claims) st.claims = {};
+    if (!st.folders) st.folders = {};
     if (!st.changelog) st.changelog = [];
     return st;
   }
@@ -1867,11 +1872,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         });
       } else {
         var empty = '<li class="waiting"><span class="txt">Nothing here right now.</span></li>';
-        var loose = [], byP = {};
+        var loose = [], byP = {}, pathOf = {};
         ts.forEach(function (t) {
           var lf = t.proj ? String(t.proj).split('/').pop().trim() : '';
           if (!lf || lf.toLowerCase() === sec.title.toLowerCase()) loose.push(t);
-          else (byP[lf] = byP[lf] || []).push(t);
+          else { (byP[lf] = byP[lf] || []).push(t); if (!pathOf[lf]) pathOf[lf] = String(t.proj); }
+        });
+        var stFolds = (S.folders && S.folders[sec.id]) || [];
+        stFolds.forEach(function (fn) {
+          if (!byP[fn]) byP[fn] = [];
+          if (!pathOf[fn]) pathOf[fn] = sec.title + '/' + fn;
         });
         var pn = Object.keys(byP).sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
         if (!pn.length) {
@@ -1879,9 +1889,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         } else {
           if (loose.length) html += '<ul class="rows">' + loose.map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
           pn.forEach(function (p) {
-            html += '<div class="micro">' + esc(p) + '</div><ul class="rows">' + byP[p].map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
+            var deletable = !byP[p].length && stFolds.indexOf(p) !== -1;
+            html += '<div class="micro">' + esc(p) +
+              (deletable ? '<button class="subdel" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="remove empty subsection">✕</button>' : '') +
+              '</div><ul class="rows">' + byP[p].map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
+            html += '<div class="addrow sub" data-add="' + sec.id + '" data-proj="' + esc(pathOf[p]) + '">+ add</div>';
           });
         }
+        html += '<div class="addrow" data-addfold="' + sec.id + '">+ add subsection</div>';
       }
       html += '<div class="addrow" data-add="' + sec.id + '">+ add task</div>';
       html += '</div>';
@@ -2202,6 +2217,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (!lf || (sec && lf.toLowerCase() === String(sec.title).toLowerCase())) return;
       if (!seen[lf]) { seen[lf] = 1; out.push({ leaf: lf, proj: String(t.proj) }); }
     });
+    var stF = (S.folders && S.folders[secId]) || [];
+    stF.forEach(function (fn) {
+      if (!seen[fn]) { seen[fn] = 1; out.push({ leaf: fn, proj: (sec ? sec.title : secId) + '/' + fn }); }
+    });
     out.sort(function (a, b) { return a.leaf.toLowerCase() < b.leaf.toLowerCase() ? -1 : 1; });
     return out;
   }
@@ -2361,6 +2380,34 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
 
+    var sd = e.target.closest('.subdel');
+    if (sd) {
+      var fl = (S.folders && S.folders[sd.dataset.sec]) || [];
+      var fi = fl.indexOf(sd.dataset.fold);
+      if (fi !== -1) { fl.splice(fi, 1); logChange('Removed subsection: ' + sd.dataset.fold); scheduleSave(); renderAll(); }
+      return;
+    }
+    var addf = e.target.closest('.addrow[data-addfold]');
+    if (addf && !addf.querySelector('input')) {
+      var forig = addf.textContent;
+      addf.innerHTML = '';
+      var finp = document.createElement('input');
+      finp.placeholder = 'subsection name · Enter to create';
+      addf.appendChild(finp); finp.focus();
+      var fsec = addf.dataset.addfold;
+      finp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' && finp.value.trim()) {
+          var nm = finp.value.trim();
+          S.folders = S.folders || {};
+          S.folders[fsec] = S.folders[fsec] || [];
+          if (S.folders[fsec].indexOf(nm) === -1) S.folders[fsec].push(nm);
+          logChange('Created subsection ' + nm + ' in ' + (SECMETA[fsec] ? SECMETA[fsec].title : fsec));
+          scheduleSave(); renderAll();
+        } else if (ev.key === 'Escape') { addf.innerHTML = esc(forig); }
+      });
+      finp.addEventListener('blur', function () { setTimeout(function () { if (addf.querySelector('input')) addf.innerHTML = esc(forig); }, 150); });
+      return;
+    }
     var add = e.target.closest('.addrow');
     if (add && add.dataset.add && !add.querySelector('input')) { inlineAdd(add); return; }
 
@@ -2467,8 +2514,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (save && inp.value.trim() && inp.value.trim() !== cur) {
         pushUndo();
         var v = inp.value.trim();
-        var m = v.match(/^(.+?)\s+—\s+(.+)$/);
-        if (t.proj && m) { t.proj = m[1]; t.text = m[2]; } else { if (!t.proj) t.text = v; else { t.proj = null; t.text = v; } }
+        var m = v.match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
+        if (m) { t.proj = m[1]; t.text = m[2]; } else { t.proj = null; t.text = v; }
         logChange('Edited: "' + cur + '" → "' + v + '"');
         touch(t); scheduleSave();
       }
@@ -2514,8 +2561,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     inp.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter' && inp.value.trim()) {
         var v = inp.value.trim();
-        var m = v.match(/^(.+?)\s+—\s+(.+)$/);
-        var proj = m ? m[1] : null;
+        var m = v.match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
+        var proj = m ? m[1] : (add.dataset.proj || null);
         var text = m ? m[2] : v;
         var nt = {
           id: uid(),
