@@ -269,6 +269,9 @@
   .actmenu button:hover { background: var(--bg-focus); color: var(--accent); }
   .actmenu .sub-arrow { color: var(--muted); font-size: 11px; }
   .selct { font-size: 11.5px; font-weight: 750; color: var(--muted); padding: 4px 10px 2px; }
+  .carried { font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase;
+    border: 1px solid var(--aim); color: var(--aim); border-radius: 4px; padding: 0 5px; margin-left: 7px; }
+  .carried.hot { border-color: var(--hard); color: var(--hard); }
   .workbar { display: inline-block; width: 48px; height: 5px; border-radius: 3px; background: var(--track); margin-left: 8px; vertical-align: middle; overflow: hidden; }
   .workbar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
@@ -560,7 +563,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 05:48 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 06:16 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1834,7 +1837,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     if (engine && S) { S.savedAt = nowIso(); engine.save(JSON.stringify(S)); }
   }
-  document.addEventListener('visibilitychange', function () { if (document.hidden) flushSave(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { flushSave(); return; }
+    if (S && rolloverToday()) renderAll();
+  });
   setInterval(function () {
     if (!S || syncing) return;
     if (!getToken() || !getPw()) return;
@@ -1891,6 +1897,21 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function taskLabel(t) { return (t.proj ? t.proj + ' — ' : '') + t.text; }
   function dayStr() { return new Date().toDateString(); }
+  function rolloverToday() {
+    if (!S) return 0;
+    var today = dayStr(), n = 0;
+    S.tasks.forEach(function (t) {
+      if (!t.today || t.status === 'done' || t.status === 'archived' || t.status === 'gone') return;
+      if (!t.todayOn) { t.todayOn = today; return; }
+      if (t.todayOn === today) return;
+      t.today = false;
+      t.carried = (t.carried || 0) + 1;
+      delete t.todayOn;
+      n++;
+    });
+    if (n) { logChange('Rolled over ' + n + ' unfinished Today task' + (n === 1 ? '' : 's')); scheduleSave(); }
+    return n;
+  }
   var undoStack = [];
   function undoSnap() {
     return JSON.stringify({
@@ -1976,6 +1997,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (t.proj && !opts.hideProj) { var pp = String(t.proj).split('/'); h += '<strong>' + esc(pp[pp.length - 1]) + '</strong> — '; }
     h += esc(t.text);
     if (t.big) h += '<span class="tag">big</span>';
+    if (t.carried && t.status !== 'done' && t.status !== 'archived') {
+      h += '<span class="carried' + (t.carried >= 3 ? ' hot' : '') + '" title="carried over ' + t.carried + ' day' + (t.carried === 1 ? '' : 's') + ' without finishing">carried ×' + t.carried + '</span>';
+    }
     var wdays = t.worked || [];
     if (wdays.length) {
       var wpct = Math.max(8, Math.min(wdays.length / 14, 1) * 100);
@@ -2010,6 +2034,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     var tdy = wk.filter(function (t) { return t.today && t.status !== 'done'; });
     var rest = wk.filter(function (t) { return !(t.today && t.status !== 'done'); });
+    rest.sort(function (a, b) {
+      var ad = a.status === 'done' ? 1 : 0, bd = b.status === 'done' ? 1 : 0;
+      if (ad !== bd) return ad - bd;
+      return ((b.carried || 0) - (a.carried || 0));
+    });
     el('tdyHdr').textContent = 'Today — ' + today.toLocaleDateString('en-US', { weekday: 'long', month: 'numeric', day: 'numeric' });
     el('tdyHdr').style.display = tdy.length ? '' : 'none';
     el('list-tdy').innerHTML = tdy.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
@@ -2580,13 +2609,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       mts.forEach(function (mt) {
         if (a === 'done') {
           mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso();
+          delete mt.carried; delete mt.todayOn; mt.today = false;
           logChange('Done: ' + taskLabel(mt));
         } else if (a === 'undo') {
           mt.status = mt.prevStatus || 'working'; delete mt.doneAt;
           logChange('Not done after all: ' + taskLabel(mt));
         } else if (a === 'focus') {
           if (!multi && mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
-          else { mt.today = true; mt.week = true; logChange('Today: ' + taskLabel(mt)); }
+          else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; logChange('Today: ' + taskLabel(mt)); }
         } else if (a === 'work') {
           mt.worked = mt.worked || [];
           var dsx = mt.worked.indexOf(dayStr());
@@ -3188,6 +3218,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       applyLayout();
       setSyncStatus('sync');
       renderDiag();
+      rolloverToday();
       renderAll();
       flushSave();
       if (getPw()) doSync(true); else showGate();
