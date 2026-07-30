@@ -493,7 +493,7 @@
 
   <header>
     <div>
-      <div class="titlerow"><h1>Dashboard</h1><span class="pill warn" id="modePill">starting…</span><span class="pill chip" id="syncBtn" title="sync now — also runs automatically every 3 minutes when there are changes">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="lockBtn" title="log out — back to the password screen">exit</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
+      <div class="titlerow"><h1>Dashboard</h1><span class="pill chip" id="syncBtn" title="sync now — also runs automatically every 3 minutes when there are changes">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="lockBtn" title="log out — back to the password screen">exit</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
       <div class="meta" id="metaline"></div>
     </div>
     <div class="ring-wrap">
@@ -2079,6 +2079,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
   function renderModePill(verified) {
     var p = el('modePill');
+    if (!p) return;
     if (engine.mode === 'artifact') { p.className = 'pill ok'; p.textContent = '✓ saves to artifact storage'; }
     else if (engine.mode === 'browser') {
       if (verified) { p.className = 'pill ok'; p.textContent = '✓ auto-saves on this computer'; }
