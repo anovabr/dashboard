@@ -350,6 +350,10 @@
   .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
+  .subhead { cursor: grab; }
+  .subhead.dragging { opacity: .45; }
+  .subhead.drophint { box-shadow: inset 0 -2px 0 var(--accent); }
+  .card.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
 
 
   details.mini { margin: 0 2px 6px; }
@@ -459,7 +463,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 00:29 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 00:37 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1878,19 +1882,21 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           if (!lf || lf.toLowerCase() === sec.title.toLowerCase()) loose.push(t);
           else { (byP[lf] = byP[lf] || []).push(t); if (!pathOf[lf]) pathOf[lf] = String(t.proj); }
         });
-        var stFolds = (S.folders && S.folders[sec.id]) || [];
-        stFolds.forEach(function (fn) {
+        S.folders = S.folders || {};
+        var ord = S.folders[sec.id] = S.folders[sec.id] || [];
+        Object.keys(byP).forEach(function (lf) { if (ord.indexOf(lf) === -1) ord.push(lf); });
+        var pn = ord.slice();
+        pn.forEach(function (fn) {
           if (!byP[fn]) byP[fn] = [];
           if (!pathOf[fn]) pathOf[fn] = sec.title + '/' + fn;
         });
-        var pn = Object.keys(byP).sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
         if (!pn.length) {
           html += '<ul class="rows">' + (ts.map(function (t) { return rowHtml(t); }).join('') || empty) + '</ul>';
         } else {
           if (loose.length) html += '<ul class="rows">' + loose.map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
           pn.forEach(function (p) {
-            var deletable = !byP[p].length && stFolds.indexOf(p) !== -1;
-            html += '<div class="micro">' + esc(p) +
+            var deletable = !byP[p].length;
+            html += '<div class="micro subhead" draggable="true" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="drag to reorder or drop on another section">' + esc(p) +
               (deletable ? '<button class="subdel" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="remove empty subsection">✕</button>' : '') +
               '</div><ul class="rows">' + byP[p].map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
             html += '<div class="addrow sub" data-add="' + sec.id + '" data-proj="' + esc(pathOf[p]) + '">+ add</div>';
@@ -2463,8 +2469,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     toggleSelect(li, t, e.clientX, e.clientY);
   });
 
-  var dragId = null;
+  var dragId = null, dragFold = null;
   document.addEventListener('dragstart', function (e) {
+    var sh = e.target.closest ? e.target.closest('.subhead') : null;
+    if (sh) {
+      dragFold = { sec: sh.dataset.sec, name: sh.dataset.fold };
+      sh.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', 'fold:' + dragFold.name); } catch (err) {}
+      return;
+    }
     var li = e.target.closest ? e.target.closest('li[data-id]') : null;
     if (!li) return;
     dragId = li.getAttribute('data-id');
@@ -2473,6 +2487,17 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
   });
   document.addEventListener('dragover', function (e) {
+    if (dragFold) {
+      var overHead = e.target.closest ? e.target.closest('.subhead') : null;
+      var overCard = e.target.closest ? e.target.closest('.card[data-sec]') : null;
+      document.querySelectorAll('.drophint').forEach(function (x) { x.classList.remove('drophint'); });
+      if (overHead && !(overHead.dataset.sec === dragFold.sec && overHead.dataset.fold === dragFold.name)) {
+        e.preventDefault(); overHead.classList.add('drophint');
+      } else if (overCard && overCard.dataset.sec !== dragFold.sec) {
+        e.preventDefault(); overCard.classList.add('drophint');
+      }
+      return;
+    }
     if (!dragId) return;
     var li = e.target.closest ? e.target.closest('li[data-id]') : null;
     var srcLi = document.querySelector('li.dragging');
@@ -2482,8 +2507,46 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var before = e.clientY < r.top + r.height / 2;
     li.parentNode.insertBefore(srcLi, before ? li : li.nextSibling);
   });
-  document.addEventListener('drop', function (e) { if (dragId) e.preventDefault(); });
+  document.addEventListener('drop', function (e) {
+    if (dragId) { e.preventDefault(); return; }
+    if (!dragFold) return;
+    e.preventDefault();
+    var head = e.target.closest ? e.target.closest('.subhead') : null;
+    var card = e.target.closest ? e.target.closest('.card[data-sec]') : null;
+    var src = dragFold; dragFold = null;
+    var srcOrd = S.folders[src.sec] || [];
+    var si = srcOrd.indexOf(src.name);
+    if (head && head.dataset.sec === src.sec) {
+      if (head.dataset.fold === src.name || si === -1) return;
+      srcOrd.splice(si, 1);
+      var ti = srcOrd.indexOf(head.dataset.fold);
+      srcOrd.splice(ti === -1 ? srcOrd.length : ti, 0, src.name);
+      scheduleSave(); renderAll();
+      return;
+    }
+    var destSec = head ? head.dataset.sec : (card ? card.dataset.sec : null);
+    if (!destSec || destSec === src.sec) return;
+    pushUndo();
+    var destTitle = SECMETA[destSec] ? SECMETA[destSec].title : destSec;
+    var moved = 0;
+    S.tasks.forEach(function (t) {
+      if (t.sec !== src.sec || t.status === 'gone' || !t.proj) return;
+      if (String(t.proj).split('/').pop().trim() !== src.name) return;
+      t.sec = destSec; delete t.grp;
+      t.proj = destTitle + '/' + src.name;
+      touch(t); moved++;
+    });
+    if (si !== -1) srcOrd.splice(si, 1);
+    S.folders[destSec] = S.folders[destSec] || [];
+    if (S.folders[destSec].indexOf(src.name) === -1) S.folders[destSec].push(src.name);
+    logChange('Moved subsection ' + src.name + ' (' + moved + ' task' + (moved === 1 ? '' : 's') + ') to ' + destTitle);
+    scheduleSave(); renderAll();
+  });
   document.addEventListener('dragend', function () {
+    document.querySelectorAll('.drophint').forEach(function (x) { x.classList.remove('drophint'); });
+    var sh = document.querySelector('.subhead.dragging');
+    if (sh) sh.classList.remove('dragging');
+    if (dragFold) { dragFold = null; renderAll(); }
     var srcLi = document.querySelector('li.dragging');
     if (srcLi) {
       srcLi.classList.remove('dragging');
