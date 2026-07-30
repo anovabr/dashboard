@@ -350,7 +350,8 @@
   .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
-  .subhead { cursor: grab; }
+  .subhead { cursor: pointer; user-select: none; }
+  .subct { font-size: 10.5px; font-weight: 700; color: var(--muted); margin-left: 6px; }
   .subhead.dragging { opacity: .45; }
   .subhead.drophint { box-shadow: inset 0 -2px 0 var(--accent); }
   .card.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
@@ -463,7 +464,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 00:37 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 01:27 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -1896,10 +1897,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           if (loose.length) html += '<ul class="rows">' + loose.map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
           pn.forEach(function (p) {
             var deletable = !byP[p].length;
-            html += '<div class="micro subhead" draggable="true" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="drag to reorder or drop on another section">' + esc(p) +
+            var isF = S.subFolded && S.subFolded[sec.id + '/' + p];
+            html += '<div class="micro subhead" draggable="true" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="click to fold/unfold · drag to reorder or move">' +
+              (isF ? '▸ ' : '▾ ') + esc(p) +
+              (isF && byP[p].length ? '<span class="subct">' + byP[p].length + '</span>' : '') +
               (deletable ? '<button class="subdel" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="remove empty subsection">✕</button>' : '') +
-              '</div><ul class="rows">' + byP[p].map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
-            html += '<div class="addrow sub" data-add="' + sec.id + '" data-proj="' + esc(pathOf[p]) + '">+ add</div>';
+              '</div>';
+            if (!isF) {
+              html += '<ul class="rows">' + byP[p].map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
+              html += '<div class="addrow sub" data-add="' + sec.id + '" data-proj="' + esc(pathOf[p]) + '">+ add</div>';
+            }
           });
         }
         html += '<div class="addrow" data-addfold="' + sec.id + '">+ add subsection</div>';
@@ -2386,6 +2393,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
 
+    var shc = e.target.closest('.subhead');
+    if (shc && !e.target.closest('.subdel')) {
+      S.subFolded = S.subFolded || {};
+      var k2 = shc.dataset.sec + '/' + shc.dataset.fold;
+      S.subFolded[k2] = !S.subFolded[k2];
+      scheduleSave(); renderAll();
+      return;
+    }
     var sd = e.target.closest('.subdel');
     if (sd) {
       var fl = (S.folders && S.folders[sd.dataset.sec]) || [];
