@@ -464,7 +464,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 01:27 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 03:35 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -472,7 +472,7 @@
 <div id="syncbar"></div>
 
 <div id="tokenbar">
-  <div class="hint">One-time: paste the token for <b>anovabr/taskboard-state</b> (Contents: read &amp; write). It stays in this browser only.</div>
+  <div class="hint">One-time: paste the token for <b>anovabr/dashboard</b> (Contents: read &amp; write). It stays in this browser only.</div>
   <input id="gh-token" class="inline-edit" type="password" placeholder="fine-grained token">
   <div style="margin-top:8px">
     <button class="diagbtn" id="tokSave">Save &amp; sync</button>
@@ -2031,7 +2031,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     return 'others';
   }
   var SYNC_KEY = 'task-board-sync';
-  var GH_REPO = 'anovabr/taskboard-state', GH_BRANCH = 'main', GH_PATH = 'taskboard.json';
+  var GH_REPO = 'anovabr/dashboard', GH_BRANCH = 'state', GH_PATH = 'taskboard.json';
   function getToken() {
     try {
       var v = localStorage.getItem(SYNC_KEY);
