@@ -370,6 +370,19 @@
   .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
+  .donestrip { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 7px 8px; border-radius: 8px;
+    cursor: pointer; user-select: none; border-top: 1px solid var(--hairline); }
+  .donestrip:hover { background: var(--bg-focus); }
+  .donestrip .dcaret { color: var(--muted); font-size: 10px; transition: transform .16s; }
+  .donestrip.open .dcaret { transform: rotate(90deg); }
+  .donestrip .dlabel { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+  .donestrip .dcount { font-size: 11.5px; font-weight: 750; color: var(--good); background: rgba(63,125,97,0.13);
+    border-radius: 999px; padding: 1px 8px; }
+  .donestrip .dweek { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted); }
+  ul.rows.donelist { margin-top: 2px; opacity: .8; }
+  ul.rows.donelist li { padding-top: 5px; padding-bottom: 5px; font-size: 14px; }
+  ul.rows.donelist li .box { display: none; }
+  .addrow.domore { font-size: 12px; margin-left: 4px; }
   .toolrow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
   .toolrow .addrow { margin-top: 0; }
   .card.seccard.dragging { opacity: .5; }
@@ -464,6 +477,7 @@
   .msec.open .mcaret { transform:rotate(90deg); }
   .msecbody { display:none; padding:0 9px 9px; }
   .msec.open .msecbody { display:block; }
+  .mdone { cursor:pointer; color:var(--good); }
   .msub { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
     padding:9px 4px 4px; display:flex; justify-content:space-between; }
   #mfab { position:fixed; right:16px; bottom:80px; width:58px; height:58px; border-radius:50%; background:var(--accent);
@@ -717,7 +731,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:23 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:25 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2346,6 +2360,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         html += '<div class="addrow" data-addfold="' + sec.id + '">+ add subsection</div>';
       }
       html += '<div class="addrow" data-add="' + sec.id + '">+ add task</div>';
+      html += doneStripHtml(sec.id);
       html += '</div>';
     });
     el('sections').innerHTML = html;
@@ -2787,6 +2802,34 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     m.innerHTML = mainMenuHtml(ids);
     placeMenu(m, x, y);
   }
+  function doneOf(secId) {
+    var out = S.tasks.filter(function (t) {
+      return t.sec === secId && (t.status === 'done' || t.status === 'archived');
+    });
+    out.sort(function (a, b) { return (b.doneAt || b.updatedAt || '') < (a.doneAt || a.updatedAt || '') ? -1 : 1; });
+    return out;
+  }
+  function doneStripHtml(secId) {
+    var dn = doneOf(secId);
+    if (!dn.length) return '';
+    var open = S.doneOpen && S.doneOpen[secId];
+    var week = dn.filter(function (t) {
+      var d = new Date(t.doneAt || t.updatedAt || 0);
+      return (Date.now() - d.getTime()) < 7 * 864e5;
+    }).length;
+    var h = '<div class="donestrip' + (open ? ' open' : '') + '" data-donesec="' + secId + '">' +
+      '<span class="dcaret">▸</span><span class="dlabel">Completed</span>' +
+      '<span class="dcount">' + dn.length + '</span>' +
+      (week ? '<span class="dweek">' + week + ' this week</span>' : '') + '</div>';
+    if (open) {
+      var shown = dn.slice(0, 12);
+      h += '<ul class="rows donelist">' + shown.map(function (t) { return rowHtml(t, { doneStamp: true, hideProj: false }); }).join('') + '</ul>';
+      if (dn.length > shown.length) {
+        h += '<div class="addrow domore" data-domore="1">' + (dn.length - shown.length) + ' older — open the archive</div>';
+      }
+    }
+    return h;
+  }
   function subprojectsOf(secId) {
     var out = [], seen = {};
     var sec = SECMETA[secId];
@@ -2888,6 +2931,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           h += sts.map(function (t) { return mRow(t, false); }).join('');
         });
         if (!ts.length) h += '<div class="mempty" style="padding:16px">Empty</div>';
+        var mdn = doneOf(sc.id);
+        if (mdn.length) {
+          var mopen = S.doneOpen && S.doneOpen[sc.id];
+          h += '<div class="msub mdone" data-donesec="' + sc.id + '"><span>' + (mopen ? '▾' : '▸') + ' Completed</span><span>' + mdn.length + '</span></div>';
+          if (mopen) h += mdn.slice(0, 12).map(function (t) { return mRow(t, false); }).join('');
+        }
         h += '</div></div>';
       });
     } else {
@@ -2975,6 +3024,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (e.target.id === 'mscrim') { mCloseSheet(); return; }
     if (e.target.id === 'msync') { doSync(); return; }
 
+    var mds = e.target.closest('.mdone');
+    if (mds) {
+      S.doneOpen = S.doneOpen || {};
+      var mdid = mds.dataset.donesec;
+      S.doneOpen[mdid] = !S.doneOpen[mdid];
+      scheduleSave(); renderMobile();
+      return;
+    }
     var sh = e.target.closest('.msechead');
     if (sh) { var sid = sh.parentNode.dataset.msec; mOpen[sid] = !mOpen[sid]; renderMobile(); return; }
 
@@ -3296,6 +3353,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         '<div class="msep"></div>' +
         '<button data-act="seccancel"><span class="mi">↩️</span><span class="ml">Cancel</span></button>';
       placeMenu(dm, e.clientX, e.clientY);
+      return;
+    }
+    var dstrip = e.target.closest('.donestrip');
+    if (dstrip) {
+      S.doneOpen = S.doneOpen || {};
+      var dsid = dstrip.dataset.donesec;
+      S.doneOpen[dsid] = !S.doneOpen[dsid];
+      scheduleSave(); renderAll();
+      return;
+    }
+    if (e.target.closest('[data-domore]')) {
+      var arch = el('sec-archive');
+      if (arch) { arch.open = true; arch.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       return;
     }
     var shc = e.target.closest('.subhead');
