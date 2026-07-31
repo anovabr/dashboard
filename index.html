@@ -282,6 +282,17 @@
     border: 1px solid var(--accent); border-radius: 4px; padding: 0 4px; margin-right: 8px; position: relative; top: -1px;
   }
   ul.rows li.tdylast { border-bottom: 2px solid var(--accent); margin-bottom: 7px; padding-bottom: 10px; }
+  ul.rows li.tmrrow { background: rgba(111,100,148,0.07); box-shadow: inset 3px 0 0 0 var(--aim); padding-left: 9px; border-top-color: transparent; }
+  ul.rows li.tmrrow .txt::before {
+    content: "TOMORROW"; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; color: var(--aim);
+    border: 1px solid var(--aim); border-radius: 4px; padding: 0 4px; margin-right: 8px; position: relative; top: -1px;
+  }
+  ul.rows li.tmrrow.tdylast { border-bottom-color: var(--aim); }
+  .planbar { font-size: 13px; color: var(--secondary); background: rgba(111,100,148,0.09); border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px 12px; margin: 2px 0 10px; }
+  .planbar b { color: var(--ink); }
+  .planx { margin-left: 8px; font-weight: 650; color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+  .planx:hover { color: var(--accent); }
   .workbar.hot i { background: var(--hard); }
   .focus .rowbtn.star.on { opacity: 0; }
   .focus li:hover .rowbtn.star.on { opacity: .9; }
@@ -656,6 +667,7 @@
 
   <div class="card focus foldable" id="sec-week" data-hue style="--hue:var(--h-focus); --hue-bg:var(--bg-focus)">
     <h2>This Week</h2>
+    <div class="planbar" id="planbar" style="display:none"></div>
     <div class="micro" id="tdyHdr" style="display:none">Today</div>
     <ul class="rows" id="list-tdy"></ul>
     <ul class="rows" id="list-week"></ul>
@@ -694,7 +706,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:17 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:19 UTC</div>
 </div>
 
 <div id="mobile">
@@ -1995,7 +2007,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) { flushSave(); return; }
-    if (S && rolloverToday()) renderAll();
+    if (S) { var chg = rolloverToday(); chg += promoteTomorrow(); if (chg) renderAll(); }
   });
   setInterval(function () {
     if (!S || syncing) return;
@@ -2053,6 +2065,20 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function taskLabel(t) { return (t.proj ? t.proj + ' — ' : '') + t.text; }
   function dayStr() { return new Date().toDateString(); }
+  function tomorrowStr() { var d = new Date(); d.setDate(d.getDate() + 1); return d.toDateString(); }
+  function promoteTomorrow() {
+    if (!S) return 0;
+    var today = dayStr(), n = 0;
+    S.tasks.forEach(function (t) {
+      if (!t.tomorrow || t.status === 'done' || t.status === 'archived' || t.status === 'gone') return;
+      if (t.tomorrowFor && t.tomorrowFor !== today) return;
+      t.tomorrow = false; delete t.tomorrowFor;
+      t.today = true; t.todayOn = today; t.week = true;
+      n++;
+    });
+    if (n) { logChange('Promoted ' + n + ' planned task' + (n === 1 ? '' : 's') + ' into Today'); scheduleSave(); }
+    return n;
+  }
   function rolloverToday() {
     if (!S) return 0;
     var today = dayStr(), n = 0;
@@ -2217,10 +2243,29 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     el('tdyHdr').style.display = 'none';
     el('list-tdy').innerHTML = '';
+    var tmr = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
+    var rest2 = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
     var wkHtml = tdy.map(function (t, i) {
-      return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tdyrow' + (i === tdy.length - 1 ? ' tdylast' : '') + ' ');
-    }).join('') + rest.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
+      return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tdyrow' + (i === tdy.length - 1 && !tmr.length ? ' tdylast' : '') + ' ');
+    }).join('') + tmr.map(function (t, i) {
+      return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tmrrow' + (i === tmr.length - 1 ? ' tdylast' : '') + ' ');
+    }).join('') + rest2.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
     el('list-week').innerHTML = wkHtml || '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>';
+    var planEl = el('planbar');
+    if (planEl) {
+      if (tmr.length) {
+        planEl.style.display = '';
+        planEl.innerHTML = '<b>Tomorrow is planned:</b> ' + tmr.length + ' task' + (tmr.length === 1 ? '' : 's') +
+          (tmr.length > 3 ? ' — more than 3; the effect comes from picking few.' : '.') + ' They become Today automatically.';
+      } else {
+        var hr = new Date().getHours();
+        var showPlan = (hr >= 17 || tdy.length === 0) && S.planHidden !== dayStr();
+        planEl.style.display = showPlan ? '' : 'none';
+        planEl.innerHTML = showPlan
+          ? '<b>Plan tomorrow.</b> Pick up to 3 from this week — right-click a task and choose “Tomorrow”. Deciding tonight is what makes it happen. <span class="planx" id="planDismiss">not now</span>'
+          : '';
+      }
+    }
     var wkDone = wk.filter(function (t) { return t.status === 'done'; }).length;
     el('weekCount').textContent = wkDone + ' of ' + wk.length;
     el('ringVal').style.strokeDashoffset = String(107 * (1 - (wk.length ? wkDone / wk.length : 0)));
@@ -2713,7 +2758,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var one = ids.length === 1 ? task(ids[0]) : null;
     var head = ids.length > 1 ? '<span class="selct">' + ids.length + ' selected</span>' : '';
     var wkd = one && (one.worked || []).indexOf(dayStr()) !== -1;
-    return head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="move">move<span class="sub-arrow">▸</span></button><button data-act="del">✕ delete</button>';
+    return head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="tmr">' + (one && one.tomorrow ? 'Tomorrow ✓' : 'Tomorrow') + '</button><button data-act="move">move<span class="sub-arrow">▸</span></button><button data-act="del">✕ delete</button>';
   }
   function openSelMenu(ids, x, y) {
     var m = document.createElement('div');
@@ -2796,6 +2841,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         return (b.carried || 0) - (a.carried || 0);
       });
       if (tdy.length) h += '<div class="mgroup"><span>Today</span></div>' + tdy.map(function (t) { return mRow(t, true); }).join('');
+      var tmrM = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
+      rest = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
+      if (tmrM.length) h += '<div class="mgroup"><span>Tomorrow · planned</span></div>' + tmrM.map(function (t) { return mRow(t, true); }).join('');
       h += '<div class="mgroup"><span>Rest of the week · ' + rest.length + '</span></div>';
       h += rest.length ? rest.map(function (t) { return mRow(t, true); }).join('')
         : '<div class="mempty">Nothing else pinned this week.</div>';
@@ -2844,6 +2892,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       '<button class="mact" data-mact="done"><span class="ic">✓</span>' + (done ? 'Mark not done' : 'Complete') + '</button>' +
       (done ? '' :
         '<button class="mact" data-mact="today"><span class="ic">◉</span>' + (t.today ? 'Remove from Today' : 'Do it today') + '</button>' +
+        '<button class="mact" data-mact="tmr"><span class="ic">→</span>' + (t.tomorrow ? 'Unplan tomorrow' : 'Plan for tomorrow') + '</button>' +
         '<button class="mact" data-mact="week"><span class="ic">★</span>' + (t.week ? 'Unpin from This Week' : 'Pin to This Week') + '</button>' +
         '<button class="mact" data-mact="worked"><span class="ic">▤</span>' + (wkd ? 'Worked today ✓' : 'Worked on it today') + '</button>' +
         '<button class="mact" data-mact="edit"><span class="ic">✎</span>Edit text</button>' +
@@ -2964,7 +3013,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         else { mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso(); mt.today = false; delete mt.carried; logChange('Done: ' + taskLabel(mt)); }
       } else if (a === 'today') {
         if (mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
-        else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; logChange('Today: ' + taskLabel(mt)); }
+        else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; mt.tomorrow = false; logChange('Today: ' + taskLabel(mt)); }
+      } else if (a === 'tmr') {
+        if (mt.tomorrow) { mt.tomorrow = false; delete mt.tomorrowFor; logChange('Unplanned from tomorrow: ' + taskLabel(mt)); }
+        else { mt.tomorrow = true; mt.tomorrowFor = tomorrowStr(); mt.week = true; mt.today = false; logChange('Planned for tomorrow: ' + taskLabel(mt)); }
       } else if (a === 'week') {
         mt.week = !mt.week; if (!mt.week) mt.today = false;
         logChange((mt.week ? 'Pinned to This Week: ' : 'Unpinned: ') + taskLabel(mt));
@@ -3094,7 +3146,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           logChange('Not done after all: ' + taskLabel(mt));
         } else if (a === 'focus') {
           if (!multi && mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
-          else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; logChange('Today: ' + taskLabel(mt)); }
+          else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; mt.tomorrow = false; logChange('Today: ' + taskLabel(mt)); }
+        } else if (a === 'tmr') {
+          if (!multi && mt.tomorrow) { mt.tomorrow = false; delete mt.tomorrowFor; logChange('Unplanned from tomorrow: ' + taskLabel(mt)); }
+          else { mt.tomorrow = true; mt.tomorrowFor = tomorrowStr(); mt.week = true; mt.today = false; logChange('Planned for tomorrow: ' + taskLabel(mt)); }
         } else if (a === 'work') {
           mt.worked = mt.worked || [];
           var dsx = mt.worked.indexOf(dayStr());
@@ -3321,6 +3376,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       });
       return;
     }
+    if (e.target.id === 'planDismiss') { S.planHidden = dayStr(); scheduleSave(); renderAll(); return; }
     if (e.target.id === 'undoBtn') { doUndo(); return; }
     if (e.target.id === 'syncBtn') {
       doSync();
@@ -3758,6 +3814,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       setSyncStatus('sync');
       renderDiag();
       rolloverToday();
+      promoteTomorrow();
       renderAll();
       flushSave();
       if (getPw()) doSync(true); else showGate();
