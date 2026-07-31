@@ -301,7 +301,7 @@
     margin-bottom: 14px;
   }
 
-  #secnav { position: static; z-index: 60; display: flex; align-items: center; gap: 8px; background: var(--glass); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  #secnav { position: static; z-index: 60; display: flex; flex-direction: column; align-items: stretch; gap: 3px; background: transparent; border: 0 !important; padding: 0 !important; box-shadow: none !important; --unused: var(--glass); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; margin-bottom: 12px; box-shadow: var(--shadow); }
   #secnav::before {
     content: ""; position: absolute; inset: 0; border-radius: 10px; pointer-events: none; opacity: 0; transition: opacity .5s;
     background-image:
@@ -316,13 +316,10 @@
     to { background-position: 120px 100%, 200px 100%; }
   }
   #navburger { display: none; font: inherit; font-size: 17px; line-height: 1; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
-  #navlinks { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; justify-content: space-between; }
-  #navlinks a { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-size: 12.5px; font-weight: 650; color: var(--secondary); text-decoration: none; border-radius: 8px; padding: 4px 9px; white-space: nowrap; }
+  #navlinks { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+  #navlinks a { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 600; color: var(--secondary); text-decoration: none; border-radius: 9px; padding: 7px 10px; }
   #navlinks .secmark { margin-right: 0; width: 9px; height: 9px; flex: none; }
   #navlinks a:hover { color: var(--accent); background: var(--bg-focus); }
-  @media (min-width: 641px) {
-    #secnav { position: sticky; top: 8px; }
-  }
   #layoutBtn { display: inline-flex; align-items: center; background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 5px 7px; cursor: pointer; flex: none; }
   #layoutBtn svg { display: block; pointer-events: none; }
   .app { transition: margin .42s cubic-bezier(.2,.8,.2,1); }
@@ -481,6 +478,33 @@
   .mprimary { width:100%; margin-top:14px; padding:14px; border:0; border-radius:11px; background:var(--accent);
     color:var(--surface); font:inherit; font-size:15px; font-weight:750; }
   .mempty { text-align:center; color:var(--muted); font-size:13.5px; padding:34px 10px; }
+  .top { position:sticky; top:0; z-index:45; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:10px 0 12px; margin-bottom:16px; background:var(--page); border-bottom:1px solid var(--hairline); }
+  .brand { display:flex; align-items:baseline; gap:12px; flex:none; }
+  .brand b { font-size:19px; font-weight:800; color:var(--accent); letter-spacing:-.01em; }
+  .brand .meta { margin-top:0; }
+  .searchbox { flex:1; max-width:470px; position:relative; }
+  .searchbox input { width:100%; font:inherit; font-size:13.5px; padding:8px 12px 8px 31px; border-radius:9px;
+    border:1px solid var(--border); background:var(--surface); color:var(--ink); outline:none; }
+  .searchbox input:focus { border-color:var(--accent); }
+  .searchbox .mag { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; }
+  .topact { margin-left:auto; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .topact .pill.chip { margin-top:0; margin-left:0; }
+  .shell { display:grid; grid-template-columns:214px 1fr; gap:22px; align-items:start; }
+  @media (max-width:1080px) { .shell { grid-template-columns:1fr; } .shell aside { display:none; } }
+  .shell aside { position:sticky; top:78px; display:flex; flex-direction:column; gap:16px; }
+  .navblock h3 { font-size:10.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+    margin:0 0 6px 8px; }
+  .navitem { display:flex; align-items:center; gap:9px; width:100%; text-align:left; font:inherit; font-size:13.5px;
+    padding:7px 10px; border-radius:9px; border:0; background:transparent; color:var(--secondary); cursor:pointer; }
+  .navitem:hover { background:var(--bg-focus); }
+  .navitem.on { background:var(--accent); color:var(--surface); font-weight:700; }
+  .navitem .n { margin-left:auto; font-size:11.5px; font-weight:750; color:var(--muted); }
+  .navitem.on .n { color:var(--surface); opacity:.85; }
+  .loadwrap { margin-left:auto; display:flex; align-items:center; gap:7px; font-size:11.5px; font-weight:750;
+    color:var(--muted); text-transform:none; letter-spacing:0; }
+  .loadbar { width:42px; height:4px; border-radius:2px; background:var(--track); overflow:hidden; }
+  .loadbar i { display:block; height:100%; border-radius:2px; }
   #gate {
     position: fixed; inset: 0; z-index: 999; display: none;
     background: linear-gradient(165deg, #0b201e 0%, #08161c 55%, #061019 100%);
@@ -587,27 +611,50 @@
 <body>
 <div class="app">
 
-  <header>
-    <div>
-      <div class="titlerow"><h1>Dashboard</h1><span class="pill chip" id="syncBtn" title="sync now — also runs automatically every 3 minutes when there are changes">sync</span><span class="pill chip" id="localSave" title="download the board as a .json file">save file</span><span class="pill chip" id="localLoad" title="load a board .json file (merges with current tasks)">load file</span><span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span><span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span><span class="pill chip" id="lockBtn" title="log out — back to the password screen">exit</span><span class="pill chip" id="syncchip" style="display:none" title="Briefing for Claude — click when you want to sync, no rush"></span></div>
-      <div class="meta" id="metaline"></div>
+  <div class="top">
+    <div class="brand"><b>Dashboard</b><span class="meta" id="metaline"></span></div>
+    <div class="searchbox"><span class="mag">⌕</span><input id="deskq" placeholder="Search tasks, projects…  (/)"></div>
+    <div class="topact">
+      <div class="ring-wrap">
+        <div class="ring-lbl">this week<br><b id="weekCount">–</b></div>
+        <svg class="ring" width="40" height="40" viewBox="0 0 46 46" aria-label="Weekly progress">
+          <circle class="track" cx="23" cy="23" r="17"></circle>
+          <circle class="val" id="ringVal" cx="23" cy="23" r="17"></circle>
+        </svg>
+      </div>
+      <span class="pill chip" id="syncBtn" title="sync now — also runs automatically every 3 minutes when there are changes">sync</span>
+      <span class="pill chip" id="syncchip" style="display:none" title="changes since last sync"></span>
+      <span class="pill chip" id="undoBtn" style="display:none" title="undo last action (Ctrl+Z)">undo</span>
+      <span class="pill chip" id="themeToggle" title="click: auto / light / dark">◐ auto</span>
+      <span class="pill chip" id="moreBtn" title="more">⋯</span>
+      <span class="pill chip" id="localSave" style="display:none" title="download the board as a .json file">save file</span>
+      <span class="pill chip" id="localLoad" style="display:none" title="load a board .json file">load file</span>
+      <span class="pill chip" id="lockBtn" style="display:none" title="log out">exit</span>
     </div>
-    <div class="ring-wrap">
-      <div class="ring-lbl">this week<br><b id="weekCount">–</b></div>
-      <svg class="ring" width="44" height="44" viewBox="0 0 46 46" aria-label="Weekly progress">
-        <circle class="track" cx="23" cy="23" r="17"></circle>
-        <circle class="val" id="ringVal" cx="23" cy="23" r="17"></circle>
-      </svg>
-    </div>
-  </header>
+  </div>
 
-  <div class="stats" id="statline"></div>
+  <div class="shell">
+    <aside>
+      <div class="navblock">
+        <h3>Focus</h3>
+        <button class="navitem on" data-dfilter="all">All work <span class="n" id="f-all"></span></button>
+        <button class="navitem" data-dfilter="today">Today <span class="n" id="f-today"></span></button>
+        <button class="navitem" data-dfilter="week">This week <span class="n" id="f-week"></span></button>
+        <button class="navitem" data-dfilter="due">Deadlines <span class="n" id="f-due"></span></button>
+        <button class="navitem" data-dfilter="stale">Carried <span class="n" id="f-stale"></span></button>
+      </div>
+      <div class="navblock">
+        <h3>Sections</h3>
+        <nav id="secnav">
+          <button id="layoutBtn" style="display:none"></button>
+          <button id="navburger" aria-label="sections menu">☰</button>
+          <div id="navlinks"></div>
+        </nav>
+      </div>
+    </aside>
 
-  <nav id="secnav">
-    <button id="layoutBtn" title="move menu to the side / back to top"></button>
-    <button id="navburger" aria-label="sections menu">☰</button>
-    <div id="navlinks"></div>
-  </nav>
+    <main>
+      <div class="stats" id="statline"></div>
 
   <div class="card focus foldable" id="sec-week" data-hue style="--hue:var(--h-focus); --hue-bg:var(--bg-focus)">
     <h2>This Week</h2>
@@ -624,6 +671,9 @@
     <span class="addrow" id="foldAllBtn">fold all</span>
   </div>
   <div class="grid" id="sections"></div>
+
+    </main>
+  </div>
 
   <details class="mini" id="sec-archive">
     <summary>Done archive</summary>
@@ -646,7 +696,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 02:45 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 06:29 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2132,6 +2182,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
 
   var STATUS_ORDER = { now: 0, working: 1, planning: 2, waiting: 3 };
+  var deskQ = '', deskFilter = 'all';
+  function qMatch(t) {
+    if (!deskQ) return true;
+    var sc = SECMETA[t.sec];
+    return ((t.proj || '') + ' ' + t.text + ' ' + (sc ? sc.title : '')).toLowerCase().indexOf(deskQ) !== -1;
+  }
+  function fMatch(t) {
+    if (deskFilter === 'today') return !!t.today;
+    if (deskFilter === 'week') return !!t.week;
+    if (deskFilter === 'due') return !!(t.date && (t.date.kind === 'hard' || t.date.kind === 'aim'));
+    if (deskFilter === 'stale') return !!t.carried;
+    return true;
+  }
   function renderAll() {
     rebuildSecMeta();
     if (isPhone()) { renderMobile(); renderSyncPill(); return; }
@@ -2173,13 +2236,18 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     // sections
     var html = '';
     secOrder().forEach(function (sec) {
-      var ts = live.filter(function (t) { return t.sec === sec.id && t.status !== 'done'; });
+      var allN = live.filter(function (t) { return t.sec === sec.id && t.status !== 'done'; }).length;
+      var wkN = live.filter(function (t) { return t.sec === sec.id && t.week && t.status !== 'done'; }).length;
+      var ts = live.filter(function (t) { return t.sec === sec.id && t.status !== 'done' && qMatch(t) && fMatch(t); });
       ts.sort(function (a, b) {
         return ((a.ord || 1e9) - (b.ord || 1e9)) || ((STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0));
       });
       var folded = S.folded && S.folded[sec.id] ? ' folded' : '';
       html += '<div class="card foldable seccard' + folded + '" draggable="true" id="sec-' + sec.id + '" data-hue style="--hue:var(--h-' + sec.hue + '); --hue-bg:var(--bg-' + sec.hue + ')" data-sec="' + sec.id + '">';
-      html += '<h2>' + esc(sec.title) + '<button class="secdel" data-secdel="' + sec.id + '" title="delete section and its tasks">✕</button></h2>';
+      html += '<h2>' + esc(sec.title) +
+        '<span class="loadwrap"><span class="loadbar"><i style="width:' + (allN ? Math.min(100, Math.round(wkN / allN * 100)) : 0) +
+        '%;background:var(--h-' + sec.hue + ')"></i></span>' + allN + '</span>' +
+        '<button class="secdel" data-secdel="' + sec.id + '" title="delete section and its tasks">✕</button></h2>';
       if (sec.groups && sec.groups.length) {
         sec.groups.forEach(function (g) {
           var gts = ts.filter(function (t) { return (t.grp || sec.groups[0]) === g; });
@@ -2226,6 +2294,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     el('sections').innerHTML = html;
     buildNav();
+    var cnt = function (f) { return live.filter(function (t) { return t.status !== 'done' && f(t); }).length; };
+    if (el('f-all')) {
+      el('f-all').textContent = cnt(function () { return true; });
+      el('f-today').textContent = cnt(function (t) { return t.today; });
+      el('f-week').textContent = cnt(function (t) { return t.week; });
+      el('f-due').textContent = cnt(function (t) { return t.date && (t.date.kind === 'hard' || t.date.kind === 'aim'); });
+      el('f-stale').textContent = cnt(function (t) { return t.carried; });
+      document.querySelectorAll('[data-dfilter]').forEach(function (b) { b.classList.toggle('on', b.dataset.dfilter === deskFilter); });
+    }
     var fsecs = secOrder();
     var openAny = !(S.folded && S.folded.week) || fsecs.some(function (sc) { return !(S.folded && S.folded[sc.id]); });
     el('foldAllBtn').textContent = openAny ? 'fold all' : 'expand all';
@@ -3258,6 +3335,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     if (e.target.id === 'lockBtn') { flushSave(); clearPw(); showGate('Locked. Enter the password to continue.'); return; }
+    var df = e.target.closest && e.target.closest('[data-dfilter]');
+    if (df) { deskFilter = df.dataset.dfilter; renderAll(); return; }
+    if (e.target.id === 'moreBtn') {
+      ['localSave', 'localLoad', 'lockBtn'].forEach(function (id) {
+        var n = el(id);
+        if (n) n.style.display = (n.style.display === 'none' ? 'inline-block' : 'none');
+      });
+      return;
+    }
     if (e.target.id === 'undoBtn') { doUndo(); return; }
     if (e.target.id === 'syncBtn') {
       doSync();
@@ -3472,7 +3558,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     dragId = null;
   });
 
+  document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'deskq') { deskQ = e.target.value.trim().toLowerCase(); renderAll(); }
+  });
   document.addEventListener('keydown', function (e) {
+    if (!isPhone() && e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault(); var sf = el('deskq'); if (sf) sf.focus(); return;
+    }
     if (e.target && e.target.id === 'newsecinp') {
       if (e.key === 'Enter' && e.target.value.trim()) {
         var nid = addSection(e.target.value.trim());
