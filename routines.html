@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routines — desktop mockup</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:#eef3f2; --surface:#fff; --ink:#1b2130; --secondary:#3f4453; --muted:#666b7a;
+    --hairline:#dde4e2; --border:rgba(27,33,48,.11); --accent:#14544f; --hard:#c2402c;
+    --aim:#6f6494; --good:#3f7d61; --track:#dbe3e1; --shadow:0 1px 3px rgba(27,33,48,.06);
+    --bg-focus:rgba(20,84,79,.06);
+    --h-writing:#b03352; --h-anova:#a83f28; --h-rne:#6f6494; --h-others:#5d6a78; --h-personal:#5d5a6e;
+    --claude:#8f6312;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --page:#14161c; --surface:#1d2027; --ink:#f0f1f4; --secondary:#c6c9d2; --muted:#8f93a1;
+      --hairline:#2b2f39; --border:rgba(255,255,255,.10); --accent:#7cc6b8; --hard:#ef8a70; --aim:#b3a8d6;
+      --good:#7fc39f; --track:#2c313b; --shadow:none; --bg-focus:rgba(124,198,184,.08); --claude:#e2b269; }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--page); color:var(--ink);
+    font-size:15px; line-height:1.55; padding:26px clamp(18px,3vw,48px) 60px; }
+  .app { max-width:1500px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:800; color:var(--accent); }
+  .sub { font-size:13px; color:var(--muted); margin-top:2px; }
+  .note { font-size:13px; color:var(--muted); }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 20px;
+    box-shadow:var(--shadow); margin-bottom:14px; }
+  .card h2 { font-size:13.5px; font-weight:800; text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+    margin-bottom:10px; display:flex; align-items:center; gap:10px; }
+
+  /* ---- routines strip ---- */
+  .routines { border-left:3px solid var(--accent); background:linear-gradient(var(--bg-focus),var(--bg-focus)),var(--surface); }
+  .routines h2 { color:var(--accent); }
+  .rmeta { margin-left:auto; font-size:11.5px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--muted); }
+  .strip { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:inline-flex; align-items:center; gap:9px; border:1px solid var(--border); border-radius:999px;
+    padding:7px 14px 7px 10px; background:var(--surface); cursor:pointer; user-select:none;
+    transition:border-color .14s, background .14s, transform .1s; font-size:14px; }
+  .chip:hover { border-color:var(--accent); }
+  .chip:active { transform:scale(.97); }
+  .tick { width:19px; height:19px; border-radius:50%; border:2px solid var(--secondary); flex:none; position:relative; }
+  .chip.done { background:rgba(63,125,97,.12); border-color:var(--good); }
+  .chip.done .tick { background:var(--good); border-color:var(--good); }
+  .chip.done .tick::after { content:"✓"; position:absolute; left:3px; top:-4px; color:#fff; font-size:13px; font-weight:800; }
+  .chip.done .cname { color:var(--good); font-weight:650; }
+  .cname { font-weight:550; }
+  .cdot { width:8px; height:8px; border-radius:2px; flex:none; }
+  .streak { font-size:11px; font-weight:750; color:var(--muted); background:rgba(0,0,0,.05); border-radius:5px; padding:1px 6px; }
+  @media (prefers-color-scheme: dark){ .streak{background:rgba(255,255,255,.08)} }
+  .streak.hot { color:var(--good); }
+  .streak.cold { color:var(--hard); }
+  .chip.mine-claude { border-style:dashed; }
+  .owner { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--claude);
+    border:1px solid var(--claude); border-radius:4px; padding:0 5px; }
+  .striplabel { font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+    margin:14px 0 6px; }
+  .striplabel:first-of-type { margin-top:0; }
+  .progress { height:5px; border-radius:3px; background:var(--track); overflow:hidden; margin:14px 0 2px; }
+  .progress i { display:block; height:100%; background:var(--good); border-radius:3px; transition:width .35s ease; }
+  .prognote { font-size:12px; color:var(--muted); }
+
+  /* ---- weekly grid ---- */
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { text-align:left; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); padding:0 8px 8px; }
+  th.d { text-align:center; width:44px; }
+  td { padding:8px; border-top:1px solid var(--hairline); }
+  td.d { text-align:center; }
+  .cellyes { display:inline-block; width:16px; height:16px; border-radius:5px; background:var(--good); }
+  .cellno { display:inline-block; width:16px; height:16px; border-radius:5px; background:var(--track); }
+  .cellskip { display:inline-block; width:16px; height:16px; border-radius:5px; border:1.5px dashed var(--border); }
+  .tname { font-weight:600; }
+  .tsec { font-size:11px; color:var(--muted); }
+
+  /* ---- editor row ---- */
+  .editrow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  .pick { font:inherit; font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--border); background:var(--surface); color:var(--secondary); cursor:pointer; }
+  .pick.on { border-color:var(--accent); color:var(--accent); background:var(--bg-focus); }
+  .field { font:inherit; font-size:14px; padding:8px 11px; border:1.5px solid var(--border); border-radius:9px;
+    background:var(--surface); color:var(--ink); outline:none; min-width:260px; flex:1; }
+  .field:focus { border-color:var(--accent); }
+  .btn { font:inherit; font-size:13px; font-weight:750; padding:8px 16px; border:0; border-radius:9px;
+    background:var(--accent); color:var(--surface); cursor:pointer; }
+  .instr { width:100%; font:inherit; font-size:13.5px; padding:10px 12px; border:1.5px solid var(--border);
+    border-radius:9px; background:var(--page); color:var(--ink); outline:none; margin-top:10px; min-height:74px; resize:vertical; }
+
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:14px; }
+  .tip { background:rgba(20,84,79,.07); border:1px solid var(--border); border-radius:10px; padding:11px 14px;
+    font-size:13px; color:var(--secondary); margin-bottom:16px; }
+  .tip b { color:var(--ink); }
+  .handoff { font-size:13.5px; color:var(--secondary); }
+  .handoff li { margin:7px 0 7px 18px; }
+  .handoff code { background:var(--page); border-radius:5px; padding:1px 6px; font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div style="display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px">
+    <div>
+      <h1>Dashboard</h1>
+      <div class="sub" id="dateline"></div>
+    </div>
+    <div class="note">mockup · routines layer</div>
+  </div>
+
+  <div class="tip">
+    <b>What's new here:</b> a Routines strip above This Week — one chip per recurring task due today, tick it in one click,
+    streak on the right. Delegated ones sit on their own line. Nothing else about the board changes.
+  </div>
+
+  <div class="card routines">
+    <h2>Routines — today <span class="rmeta" id="rcount"></span></h2>
+
+    <div class="striplabel">Mine</div>
+    <div class="strip" id="stripMine"></div>
+
+    <div class="striplabel">Claude runs these</div>
+    <div class="strip" id="stripClaude"></div>
+
+    <div class="progress"><i id="bar" style="width:0%"></i></div>
+    <div class="prognote" id="prognote"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Last 7 days</h2>
+      <table id="grid"></table>
+      <div class="note" style="margin-top:10px">Solid = done · empty = missed · dashed = not scheduled that day.</div>
+    </div>
+
+    <div class="card">
+      <h2>Make a task recurring</h2>
+      <div class="note">This is the panel that opens from a task's menu — “Repeat…”.</div>
+      <div class="editrow" style="margin-top:12px">
+        <input class="field" value="Pankeka — check leaderboard backend" readonly>
+      </div>
+      <div class="editrow">
+        <button class="pick on" data-rep>daily</button>
+        <button class="pick" data-rep>weekdays</button>
+        <button class="pick" data-rep>weekly · Mon</button>
+        <button class="pick" data-rep>monthly · 1st</button>
+        <button class="pick" data-rep>none</button>
+      </div>
+      <div class="editrow">
+        <button class="pick on" data-own>owner: me</button>
+        <button class="pick" data-own>owner: Claude</button>
+      </div>
+      <textarea class="instr" placeholder="Instructions for whoever runs it (required before delegating to Claude): repo, command, what 'done' means, what to report back.">ssh anova-vps · check gunicorn on 8000/8001 · if a worker is dead, restart and report the log tail.</textarea>
+      <div class="editrow"><button class="btn">Save routine</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Handoff to Claude — how it runs</h2>
+    <ul class="handoff">
+      <li>Routines marked <b>owner: Claude</b> carry their instructions with them; the chip shows dashed with a <span class="owner">claude</span> tag.</li>
+      <li>Morning scheduled task fires → I read the routines due today, run mine, tick them, sync, and report what happened.</li>
+      <li>Or you say <code>run today's routines</code> here and I do the same on demand.</li>
+      <li>You see the result as green chips — plus a one-line note per routine on anything unusual.</li>
+      <li>Rule I'd keep: a routine can't be delegated until its instructions box is filled in.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(function () {
+  var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var R = [
+    { id:1, name:'Pankeka — leaderboard backend check', sec:'Others', hue:'--h-others', rep:'daily', owner:'me', streak:12, done:false, hist:[1,1,1,1,1,1,0] },
+    { id:2, name:'ANOVA — Instagram post', sec:'ANOVA', hue:'--h-anova', rep:'weekdays', owner:'me', streak:4, done:false, hist:[2,1,1,0,1,1,2] },
+    { id:3, name:'Writing — 30 min on Murray SEL', sec:'Writing', hue:'--h-writing', rep:'daily', owner:'me', streak:0, done:false, miss:3, hist:[1,0,0,0,1,1,1] },
+    { id:4, name:'Screening — inbox triage', sec:'R&E', hue:'--h-rne', rep:'weekdays', owner:'me', streak:7, done:true, hist:[2,1,1,1,1,1,2] },
+    { id:5, name:'anova-vps — health check', sec:'ANOVA', hue:'--h-anova', rep:'daily', owner:'claude', streak:21, done:true, hist:[1,1,1,1,1,1,1] },
+    { id:6, name:'Publications DB — sync new PubMed hits', sec:'R&E', hue:'--h-rne', rep:'daily', owner:'claude', streak:9, done:false, hist:[1,1,1,1,0,1,1] },
+    { id:7, name:'Backup — export board JSON', sec:'Personal', hue:'--h-personal', rep:'weekly · Mon', owner:'claude', streak:3, done:false, hist:[2,1,2,2,2,2,2] }
+  ];
+
+  function chip(r) {
+    return '<span class="chip' + (r.done ? ' done' : '') + (r.owner === 'claude' ? ' mine-claude' : '') + '" data-id="' + r.id + '">' +
+      '<span class="tick"></span>' +
+      '<span class="cdot" style="background:var(' + r.hue + ')"></span>' +
+      '<span class="cname">' + r.name + '</span>' +
+      (r.owner === 'claude' ? '<span class="owner">claude</span>' : '') +
+      '<span class="streak ' + (r.streak >= 5 ? 'hot' : (r.streak === 0 ? 'cold' : '')) + '">' +
+        (r.streak > 0 ? r.streak + 'd' : (r.miss ? 'missed ' + r.miss + 'd' : 'new')) +
+      '</span></span>';
+  }
+
+  function render() {
+    document.getElementById('stripMine').innerHTML = R.filter(function (r) { return r.owner === 'me'; }).map(chip).join('');
+    document.getElementById('stripClaude').innerHTML = R.filter(function (r) { return r.owner === 'claude'; }).map(chip).join('');
+    var done = R.filter(function (r) { return r.done; }).length;
+    document.getElementById('rcount').textContent = done + ' of ' + R.length + ' done today';
+    document.getElementById('bar').style.width = Math.round(done / R.length * 100) + '%';
+    var pend = R.filter(function (r) { return !r.done && r.owner === 'me'; }).length;
+    document.getElementById('prognote').textContent = pend === 0
+      ? 'All of yours are done — the rest is on me.'
+      : pend + ' of yours still pending today.';
+
+    var today = new Date().getDay();
+    var head = '<tr><th>Routine</th>';
+    for (var i = 6; i >= 0; i--) head += '<th class="d">' + DAYS[(today - i + 7) % 7] + '</th>';
+    head += '<th class="d">streak</th></tr>';
+    var body = R.map(function (r) {
+      var cells = r.hist.map(function (v) {
+        return '<td class="d"><span class="' + (v === 1 ? 'cellyes' : v === 0 ? 'cellno' : 'cellskip') + '"></span></td>';
+      }).join('');
+      return '<tr><td><span class="tname">' + r.name.split(' — ')[1] + '</span><br>' +
+        '<span class="tsec">' + r.sec + ' · ' + r.rep + (r.owner === 'claude' ? ' · claude' : '') + '</span></td>' +
+        cells + '<td class="d"><b>' + r.streak + '</b></td></tr>';
+    }).join('');
+    document.getElementById('grid').innerHTML = head + body;
+  }
+
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest('.chip');
+    if (c) {
+      var r = R.filter(function (x) { return x.id === +c.dataset.id; })[0];
+      if (r) { r.done = !r.done; r.streak += r.done ? 1 : -1; if (r.streak < 0) r.streak = 0; if (r.done) r.miss = 0; }
+      render();
+      return;
+    }
+    var pk = e.target.closest('.pick');
+    if (pk) {
+      var attr = pk.hasAttribute('data-rep') ? 'data-rep' : 'data-own';
+      pk.parentNode.querySelectorAll('[' + attr + ']').forEach(function (b) { b.classList.toggle('on', b === pk); });
+    }
+  });
+
+  document.getElementById('dateline').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  render();
+})();
+</script>
+</body>
+</html>
