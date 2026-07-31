@@ -56,9 +56,16 @@
   .chip.mine-claude { border-style:dashed; }
   .owner { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--claude);
     border:1px solid var(--claude); border-radius:4px; padding:0 5px; }
-  .striplabel { font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
-    margin:14px 0 6px; }
-  .striplabel:first-of-type { margin-top:0; }
+  .projgrp { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--hairline); }
+  .projgrp:first-child { margin-top:6px; padding-top:0; border-top:0; }
+  .projhead { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  .projname { font-size:13px; font-weight:800; letter-spacing:.02em; }
+  .projname small { font-weight:650; color:var(--muted); }
+  .projstat { font-size:11px; font-weight:750; border-radius:999px; padding:2px 9px; }
+  .projstat.ok { background:rgba(63,125,97,.14); color:var(--good); }
+  .projstat.pend { background:rgba(150,105,15,.14); color:#7d5a0c; }
+  .projstat.bad { background:rgba(194,64,44,.13); color:var(--hard); }
+  @media (prefers-color-scheme: dark){ .projstat.pend{color:#e2b269} }
   .progress { height:5px; border-radius:3px; background:var(--track); overflow:hidden; margin:14px 0 2px; }
   .progress i { display:block; height:100%; background:var(--good); border-radius:3px; transition:width .35s ease; }
   .prognote { font-size:12px; color:var(--muted); }
@@ -109,18 +116,19 @@
   </div>
 
   <div class="tip">
-    <b>What's new here:</b> a Routines strip above This Week — one chip per recurring task due today, tick it in one click,
-    streak on the right. Delegated ones sit on their own line. Nothing else about the board changes.
+    <b>What's new here:</b> a Routines strip above This Week, <b>grouped by project</b> — each project shows how many of its
+    daily obligations are done, then one chip per routine. Tick in one click; streak on the right; dashed chips are Claude's.
   </div>
 
   <div class="card routines">
     <h2>Routines — today <span class="rmeta" id="rcount"></span></h2>
 
-    <div class="striplabel">Mine</div>
-    <div class="strip" id="stripMine"></div>
-
-    <div class="striplabel">Claude runs these</div>
-    <div class="strip" id="stripClaude"></div>
+    <div class="editrow" style="margin:0 0 6px">
+      <button class="pick on" data-filt="all">All</button>
+      <button class="pick" data-filt="me">Mine</button>
+      <button class="pick" data-filt="claude">Claude</button>
+    </div>
+    <div id="projGroups"></div>
 
     <div class="progress"><i id="bar" style="width:0%"></i></div>
     <div class="prognote" id="prognote"></div>
@@ -171,20 +179,22 @@
 (function () {
   var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var R = [
-    { id:1, name:'Pankeka — leaderboard backend check', sec:'Others', hue:'--h-others', rep:'daily', owner:'me', streak:12, done:false, hist:[1,1,1,1,1,1,0] },
-    { id:2, name:'ANOVA — Instagram post', sec:'ANOVA', hue:'--h-anova', rep:'weekdays', owner:'me', streak:4, done:false, hist:[2,1,1,0,1,1,2] },
-    { id:3, name:'Writing — 30 min on Murray SEL', sec:'Writing', hue:'--h-writing', rep:'daily', owner:'me', streak:0, done:false, miss:3, hist:[1,0,0,0,1,1,1] },
-    { id:4, name:'Screening — inbox triage', sec:'R&E', hue:'--h-rne', rep:'weekdays', owner:'me', streak:7, done:true, hist:[2,1,1,1,1,1,2] },
-    { id:5, name:'anova-vps — health check', sec:'ANOVA', hue:'--h-anova', rep:'daily', owner:'claude', streak:21, done:true, hist:[1,1,1,1,1,1,1] },
-    { id:6, name:'Publications DB — sync new PubMed hits', sec:'R&E', hue:'--h-rne', rep:'daily', owner:'claude', streak:9, done:false, hist:[1,1,1,1,0,1,1] },
-    { id:7, name:'Backup — export board JSON', sec:'Personal', hue:'--h-personal', rep:'weekly · Mon', owner:'claude', streak:3, done:false, hist:[2,1,2,2,2,2,2] }
+    { id:1, task:'leaderboard backend check', sec:'Others', proj:'Pankeka', hue:'--h-others', rep:'daily', owner:'me', streak:12, done:false, hist:[1,1,1,1,1,1,0] },
+    { id:2, task:'fix TLS on apex', sec:'Others', proj:'Pankeka', hue:'--h-others', rep:'weekdays', owner:'me', streak:2, done:false, hist:[2,1,1,0,0,1,2] },
+    { id:3, task:'Instagram post', sec:'ANOVA', proj:'ANOVA / anova autismo', hue:'--h-anova', rep:'weekdays', owner:'me', streak:4, done:false, hist:[2,1,1,0,1,1,2] },
+    { id:4, task:'answer new leads', sec:'ANOVA', proj:'ANOVA / consulting', hue:'--h-anova', rep:'daily', owner:'me', streak:6, done:true, hist:[1,1,1,1,1,1,0] },
+    { id:5, task:'health check (gunicorn, nginx)', sec:'ANOVA', proj:'ANOVA / infra', hue:'--h-anova', rep:'daily', owner:'claude', streak:21, done:true, hist:[1,1,1,1,1,1,1] },
+    { id:6, task:'30 min of writing', sec:'Writing', proj:'Murray SEL', hue:'--h-writing', rep:'daily', owner:'me', streak:0, done:false, miss:3, hist:[1,0,0,0,1,1,1] },
+    { id:7, task:'inbox triage', sec:'R&E', proj:'Oregon / screening', hue:'--h-rne', rep:'weekdays', owner:'me', streak:7, done:true, hist:[2,1,1,1,1,1,2] },
+    { id:8, task:'sync new PubMed hits', sec:'R&E', proj:'Oregon / screening', hue:'--h-rne', rep:'daily', owner:'claude', streak:9, done:false, hist:[1,1,1,1,0,1,1] },
+    { id:9, task:'export board JSON', sec:'Personal', proj:'Backups', hue:'--h-personal', rep:'weekly · Mon', owner:'claude', streak:3, done:false, hist:[2,1,2,2,2,2,2] }
   ];
+  var filt = 'all';
 
   function chip(r) {
     return '<span class="chip' + (r.done ? ' done' : '') + (r.owner === 'claude' ? ' mine-claude' : '') + '" data-id="' + r.id + '">' +
       '<span class="tick"></span>' +
-      '<span class="cdot" style="background:var(' + r.hue + ')"></span>' +
-      '<span class="cname">' + r.name + '</span>' +
+      '<span class="cname">' + r.task + '</span>' +
       (r.owner === 'claude' ? '<span class="owner">claude</span>' : '') +
       '<span class="streak ' + (r.streak >= 5 ? 'hot' : (r.streak === 0 ? 'cold' : '')) + '">' +
         (r.streak > 0 ? r.streak + 'd' : (r.miss ? 'missed ' + r.miss + 'd' : 'new')) +
@@ -192,10 +202,31 @@
   }
 
   function render() {
-    document.getElementById('stripMine').innerHTML = R.filter(function (r) { return r.owner === 'me'; }).map(chip).join('');
-    document.getElementById('stripClaude').innerHTML = R.filter(function (r) { return r.owner === 'claude'; }).map(chip).join('');
+    var vis = R.filter(function (r) { return filt === 'all' || r.owner === filt; });
+    var order = [], byProj = {};
+    vis.forEach(function (r) {
+      if (!byProj[r.proj]) { byProj[r.proj] = []; order.push(r.proj); }
+      byProj[r.proj].push(r);
+    });
+    document.getElementById('projGroups').innerHTML = order.map(function (p) {
+      var list = byProj[p], dn = list.filter(function (r) { return r.done; }).length;
+      var broken = list.some(function (r) { return r.streak === 0; });
+      var cls = dn === list.length ? 'ok' : (broken ? 'bad' : 'pend');
+      var parts = p.split(' / ');
+      var label = parts.length > 1
+        ? '<small>' + parts[0] + ' / </small>' + parts[1]
+        : p;
+      return '<div class="projgrp">' +
+        '<div class="projhead">' +
+          '<span class="cdot" style="background:var(' + list[0].hue + ')"></span>' +
+          '<span class="projname">' + label + '</span>' +
+          '<span class="projstat ' + cls + '">' + dn + '/' + list.length + ' today</span>' +
+        '</div>' +
+        '<div class="strip">' + list.map(chip).join('') + '</div>' +
+      '</div>';
+    }).join('');
     var done = R.filter(function (r) { return r.done; }).length;
-    document.getElementById('rcount').textContent = done + ' of ' + R.length + ' done today';
+    document.getElementById('rcount').textContent = done + ' of ' + R.length + ' done today · ' + order.length + ' projects';
     document.getElementById('bar').style.width = Math.round(done / R.length * 100) + '%';
     var pend = R.filter(function (r) { return !r.done && r.owner === 'me'; }).length;
     document.getElementById('prognote').textContent = pend === 0
@@ -203,14 +234,14 @@
       : pend + ' of yours still pending today.';
 
     var today = new Date().getDay();
-    var head = '<tr><th>Routine</th>';
+    var head = '<tr><th>Project · routine</th>';
     for (var i = 6; i >= 0; i--) head += '<th class="d">' + DAYS[(today - i + 7) % 7] + '</th>';
     head += '<th class="d">streak</th></tr>';
     var body = R.map(function (r) {
       var cells = r.hist.map(function (v) {
         return '<td class="d"><span class="' + (v === 1 ? 'cellyes' : v === 0 ? 'cellno' : 'cellskip') + '"></span></td>';
       }).join('');
-      return '<tr><td><span class="tname">' + r.name.split(' — ')[1] + '</span><br>' +
+      return '<tr><td><span class="tname">' + r.proj + ' · ' + r.task + '</span><br>' +
         '<span class="tsec">' + r.sec + ' · ' + r.rep + (r.owner === 'claude' ? ' · claude' : '') + '</span></td>' +
         cells + '<td class="d"><b>' + r.streak + '</b></td></tr>';
     }).join('');
@@ -222,6 +253,13 @@
     if (c) {
       var r = R.filter(function (x) { return x.id === +c.dataset.id; })[0];
       if (r) { r.done = !r.done; r.streak += r.done ? 1 : -1; if (r.streak < 0) r.streak = 0; if (r.done) r.miss = 0; }
+      render();
+      return;
+    }
+    var fb = e.target.closest('[data-filt]');
+    if (fb) {
+      filt = fb.dataset.filt;
+      document.querySelectorAll('[data-filt]').forEach(function (b) { b.classList.toggle('on', b === fb); });
       render();
       return;
     }
