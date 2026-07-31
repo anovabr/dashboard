@@ -276,6 +276,12 @@
   .workbar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
+  ul.rows li.tdyrow { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 9px; border-top-color: transparent; }
+  ul.rows li.tdyrow .txt::before {
+    content: "TODAY"; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 4px; padding: 0 4px; margin-right: 8px; position: relative; top: -1px;
+  }
+  ul.rows li.tdylast { border-bottom: 2px solid var(--accent); margin-bottom: 7px; padding-bottom: 10px; }
   .workbar.hot i { background: var(--hard); }
   .focus .rowbtn.star.on { opacity: 0; }
   .focus li:hover .rowbtn.star.on { opacity: .9; }
@@ -688,7 +694,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 16:59 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 17:00 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2209,10 +2215,12 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (ad !== bd) return ad - bd;
       return ((b.carried || 0) - (a.carried || 0));
     });
-    el('tdyHdr').textContent = 'Today — ' + today.toLocaleDateString('en-US', { weekday: 'long', month: 'numeric', day: 'numeric' });
-    el('tdyHdr').style.display = tdy.length ? '' : 'none';
-    el('list-tdy').innerHTML = tdy.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
-    el('list-week').innerHTML = rest.map(function (t) { return rowHtml(t, { secMark: true }); }).join('') || (tdy.length ? '' : '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>');
+    el('tdyHdr').style.display = 'none';
+    el('list-tdy').innerHTML = '';
+    var wkHtml = tdy.map(function (t, i) {
+      return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tdyrow' + (i === tdy.length - 1 ? ' tdylast' : '') + ' ');
+    }).join('') + rest.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
+    el('list-week').innerHTML = wkHtml || '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>';
     var wkDone = wk.filter(function (t) { return t.status === 'done'; }).length;
     el('weekCount').textContent = wkDone + ' of ' + wk.length;
     el('ringVal').style.strokeDashoffset = String(107 * (1 - (wk.length ? wkDone / wk.length : 0)));
