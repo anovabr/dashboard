@@ -325,14 +325,6 @@
   .app { transition: margin .42s cubic-bezier(.2,.8,.2,1); }
   #layoutBtn:hover { color: var(--accent); border-color: var(--accent); }
   @media (max-width: 899px) { #layoutBtn { display: none; } }
-  @media (min-width: 900px) {
-    body { transition: padding-left .42s cubic-bezier(.2,.8,.2,1); }
-    body.sidenav { padding-left: 192px; padding-right: 24px; }
-    body.sidenav .app { margin: 0; max-width: none; }
-    body.sidenav #secnav { position: fixed; left: 10px; top: 12px; width: 168px; flex-direction: column; align-items: stretch; margin-bottom: 0; }
-    body.sidenav #navlinks { flex-direction: column; justify-content: flex-start; gap: 2px; }
-    body.sidenav #navlinks a { justify-content: flex-start; }
-  }
   @media (max-width: 640px) {
     #navburger { display: inline-block; }
     #secnav { position: relative; }
@@ -696,7 +688,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 06:29 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 06:39 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2341,33 +2333,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function renderDiag() {}
 
   function applyLayout() {
-    var side = S && S.layout === 'side';
-    document.body.classList.toggle('sidenav', side);
-    var b = el('layoutBtn');
-    if (!b) return;
-    var frame = '<rect x="0.75" y="0.75" width="14.5" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.5" fill="none"/>';
-    var pane = side
-      ? '<rect x="2.6" y="2.6" width="4.4" height="8.8" rx="1" fill="currentColor"/>'
-      : '<rect x="2.6" y="2.6" width="10.8" height="3.4" rx="1" fill="currentColor"/>';
-    b.innerHTML = '<svg width="16" height="14" viewBox="0 0 16 14">' + frame + pane + '</svg>';
-    b.title = side ? 'move menu back to the top' : 'move menu to the side';
+    document.body.classList.remove('sidenav');
+    if (S && S.layout === 'side') { S.layout = 'top'; }
   }
-  function toggleLayout() {
-    var nav = el('secnav');
-    var first = nav.getBoundingClientRect();
-    S.layout = S.layout === 'side' ? 'top' : 'side';
-    applyLayout();
-    var last = nav.getBoundingClientRect();
-    var dx = first.left - last.left, dy = first.top - last.top;
-    var sx = first.width / Math.max(1, last.width), sy = first.height / Math.max(1, last.height);
-    nav.style.transformOrigin = '0 0';
-    nav.animate(
-      [{ transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' },
-       { transform: 'none' }],
-      { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }
-    );
-    scheduleSave();
-  }
+  function toggleLayout() {}
   function applyTheme() {
     var th = (S && S.theme) || 'auto';
     if (th === 'auto') document.documentElement.removeAttribute('data-theme');
