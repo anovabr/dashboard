@@ -399,6 +399,88 @@
     padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.25); width: min(430px, 92vw);
   }
   #tokenbar .hint { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  /* ---------- phone mode ---------- */
+  #mobile { display:none; }
+  body.phone { padding:0 !important; }
+  body.phone .app { display:none; }
+  body.phone #topBtn, body.phone #secnav { display:none !important; }
+  body.phone #mobile { display:flex; flex-direction:column; min-height:100vh; }
+  body.phone { overflow-x:hidden; }
+  .mhead { position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--hairline); padding:12px 14px 8px; }
+  .mtop { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .mtop h1 { font-size:19px; font-weight:800; color:var(--accent); }
+  .mdate { font-size:12px; color:var(--muted); margin-top:1px; }
+  .mstat { display:flex; gap:13px; margin-top:8px; font-size:12px; color:var(--secondary); }
+  .mstat b { color:var(--ink); font-weight:750; }
+  .mtabs { display:flex; gap:5px; padding:9px 10px; background:var(--surface); border-bottom:1px solid var(--hairline);
+    position:sticky; top:0; z-index:19; }
+  .mtab { flex:1; text-align:center; font:inherit; font-size:13px; font-weight:700; padding:9px 4px; border-radius:10px;
+    color:var(--muted); background:transparent; border:0; }
+  .mtab.on { background:var(--accent); color:var(--surface); }
+  .mmain { flex:1; padding:12px 10px 110px; }
+  .mgroup { font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+    margin:14px 4px 7px; display:flex; justify-content:space-between; }
+  .mgroup:first-child { margin-top:0; }
+  .mrow { position:relative; overflow:hidden; border-radius:12px; margin-bottom:8px; border:1px solid var(--border);
+    box-shadow:var(--shadow); background:var(--good); }
+  .mrowin { display:flex; align-items:flex-start; gap:10px; padding:13px; background:var(--surface); transition:transform .18s ease; }
+  .mrow.swiped .mrowin { transform:translateX(80px); }
+  .mswipe { position:absolute; inset:0; display:flex; align-items:center; padding-left:18px; color:#fff; font-weight:800; font-size:14px; }
+  .mbox { flex:none; width:22px; height:22px; border-radius:7px; border:2px solid var(--secondary); margin-top:1px; position:relative; }
+  .mrow.done .mrowin { opacity:.55; }
+  .mrow.done .mbox { background:var(--good); border-color:var(--good); }
+  .mrow.done .mbox::after { content:"✓"; color:#fff; position:absolute; left:4px; top:-4px; font-size:14px; font-weight:800; }
+  .mrow.done .mtext { text-decoration:line-through; color:var(--muted); }
+  .mdot { width:9px; height:9px; border-radius:3px; flex:none; margin-top:6px; }
+  .mtext { flex:1; min-width:0; font-size:15px; line-height:1.35; }
+  .mtext strong { font-weight:750; }
+  .mmeta { display:flex; gap:7px; flex-wrap:wrap; margin-top:5px; }
+  .mchip { font-size:10.5px; font-weight:750; padding:2px 7px; border-radius:5px; background:rgba(0,0,0,.05); color:var(--muted); }
+  .mchip.due { background:rgba(194,64,44,.13); color:var(--hard); }
+  .mchip.aim { background:rgba(111,100,148,.15); color:var(--aim); }
+  .mchip.carr { background:transparent; border:1px solid var(--aim); color:var(--aim); }
+  .msec { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:9px; box-shadow:var(--shadow); overflow:hidden; }
+  .msechead { display:flex; align-items:center; gap:10px; padding:14px; }
+  .msechead h2 { font-size:14px; font-weight:800; flex:1; }
+  .msecct { font-size:12px; font-weight:750; color:var(--muted); }
+  .mcaret { color:var(--muted); font-size:12px; }
+  .msec.open .mcaret { transform:rotate(90deg); }
+  .msecbody { display:none; padding:0 9px 9px; }
+  .msec.open .msecbody { display:block; }
+  .msub { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
+    padding:9px 4px 4px; display:flex; justify-content:space-between; }
+  #mfab { position:fixed; right:16px; bottom:80px; width:58px; height:58px; border-radius:50%; background:var(--accent);
+    color:var(--surface); border:0; font-size:30px; line-height:1; z-index:30; box-shadow:0 8px 20px rgba(0,0,0,.28); display:none; }
+  body.phone #mfab { display:block; }
+  #mnav { position:fixed; left:0; right:0; bottom:0; height:64px; background:var(--surface); border-top:1px solid var(--hairline);
+    z-index:25; display:none; }
+  body.phone #mnav { display:flex; }
+  #mnav button { flex:1; border:0; background:transparent; font:inherit; font-size:11px; font-weight:700; color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+  #mnav button.on { color:var(--accent); }
+  #mnav .ic { font-size:16px; }
+  #mscrim { position:fixed; inset:0; background:rgba(0,0,0,.42); opacity:0; pointer-events:none; transition:opacity .2s; z-index:40; }
+  #mscrim.on { opacity:1; pointer-events:auto; }
+  #msheet { position:fixed; left:0; right:0; bottom:0; background:var(--surface); z-index:50; border-radius:18px 18px 0 0;
+    padding:8px 14px 22px; transform:translateY(105%); transition:transform .26s cubic-bezier(.2,.8,.2,1); max-height:84%; overflow-y:auto; }
+  #msheet.on { transform:translateY(0); }
+  .mgrab { width:40px; height:4px; border-radius:2px; background:var(--hairline); margin:6px auto 12px; }
+  .msht { font-size:15px; font-weight:750; margin-bottom:3px; }
+  .mshs { font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+  .mact { display:flex; align-items:center; gap:12px; width:100%; padding:14px 6px; border:0; background:transparent;
+    font:inherit; font-size:15px; color:var(--ink); text-align:left; border-top:1px solid var(--hairline); }
+  .mact .ic { width:22px; text-align:center; color:var(--muted); }
+  .mact.danger, .mact.danger .ic { color:var(--hard); }
+  .mfield { width:100%; font:inherit; font-size:16px; padding:13px; border:1.5px solid var(--border); border-radius:11px;
+    background:var(--page); color:var(--ink); outline:none; }
+  .mfield:focus { border-color:var(--accent); }
+  .mpicks { display:flex; gap:7px; flex-wrap:wrap; margin:10px 0 2px; }
+  .mpick { font:inherit; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; border:1px solid var(--border);
+    background:var(--surface); color:var(--secondary); display:flex; align-items:center; gap:6px; }
+  .mpick.on { border-color:var(--accent); color:var(--accent); background:var(--bg-focus); }
+  .mprimary { width:100%; margin-top:14px; padding:14px; border:0; border-radius:11px; background:var(--accent);
+    color:var(--surface); font:inherit; font-size:15px; font-weight:750; }
+  .mempty { text-align:center; color:var(--muted); font-size:13.5px; padding:34px 10px; }
   #gate {
     position: fixed; inset: 0; z-index: 999; display: none;
     background: linear-gradient(165deg, #0b201e 0%, #08161c 55%, #061019 100%);
@@ -564,8 +646,33 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 02:23 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 02:45 UTC</div>
 </div>
+
+<div id="mobile">
+  <div class="mhead">
+    <div class="mtop">
+      <div><h1>Dashboard</h1><div class="mdate" id="mdate"></div></div>
+      <span class="pill chip" id="msync">sync</span>
+    </div>
+    <div class="mstat" id="mstat"></div>
+  </div>
+  <div class="mtabs">
+    <button class="mtab on" data-mtab="today">Today</button>
+    <button class="mtab" data-mtab="week">This Week</button>
+    <button class="mtab" data-mtab="board">Board</button>
+  </div>
+  <div class="mmain" id="mmain"></div>
+</div>
+<button id="mfab">+</button>
+<nav id="mnav">
+  <button class="on" data-mtab="today"><span class="ic">◉</span>Today</button>
+  <button data-mtab="week"><span class="ic">▤</span>Week</button>
+  <button data-mtab="board"><span class="ic">▦</span>Board</button>
+  <button data-mtab="done"><span class="ic">✓</span>Done</button>
+</nav>
+<div id="mscrim"></div>
+<div id="msheet"></div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
 
@@ -2027,6 +2134,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   var STATUS_ORDER = { now: 0, working: 1, planning: 2, waiting: 3 };
   function renderAll() {
     rebuildSecMeta();
+    if (isPhone()) { renderMobile(); renderSyncPill(); return; }
     var today = new Date();
     el('metaline').textContent = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -2345,6 +2453,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
   }
   function setSyncStatus(txt, bad) {
+    var mb = el('msync');
+    if (mb) { mb.textContent = txt; mb.style.color = bad ? 'var(--hard)' : ''; mb.style.borderColor = bad ? 'var(--hard)' : ''; }
     var b = el('syncBtn');
     b.textContent = txt;
     b.style.color = bad ? 'var(--hard)' : '';
@@ -2581,6 +2691,287 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     return h;
   }
+
+  // ---------- phone mode ----------
+  var MQ = window.matchMedia('(max-width: 760px)');
+  var mtab = 'today', mOpen = {}, mNewSec = null, mMoveSec = null, mMoveSub = null;
+  function isPhone() { return MQ.matches; }
+  function applyMode() { document.body.classList.toggle('phone', isPhone()); }
+  try { MQ.addEventListener('change', function () { applyMode(); renderAll(); }); }
+  catch (e) { MQ.addListener(function () { applyMode(); renderAll(); }); }
+
+  function leafOf(t) { return t.proj ? String(t.proj).split('/').pop().trim() : ''; }
+  function mRow(t, showSec) {
+    var sec = SECMETA[t.sec];
+    var cls = 'mrow' + ((t.status === 'done' || t.status === 'archived') ? ' done' : '');
+    var meta = '';
+    if (showSec && sec) meta += '<span class="mchip">' + esc(sec.title) + (leafOf(t) ? ' / ' + esc(leafOf(t)) : '') + '</span>';
+    var d = t.date || {};
+    if (d.label && d.kind === 'hard') meta += '<span class="mchip due">' + esc(d.label) + '</span>';
+    else if (d.label && d.kind === 'aim') meta += '<span class="mchip aim">' + esc(d.label) + '</span>';
+    if (t.big) meta += '<span class="mchip">BIG</span>';
+    if (t.carried) meta += '<span class="mchip carr">carried ×' + t.carried + '</span>';
+    if ((t.worked || []).length) meta += '<span class="mchip">' + t.worked.length + 'd worked</span>';
+    return '<div class="' + cls + '" data-mid="' + t.id + '">' +
+      '<div class="mswipe">✓ done</div><div class="mrowin">' +
+      (sec && sec.hue ? '<span class="mdot" style="background:var(--h-' + sec.hue + ')"></span>' : '') +
+      '<span class="mbox"></span><span class="mtext">' +
+      (t.proj && !showSec ? '<strong>' + esc(leafOf(t)) + '</strong> — ' : (t.proj ? '<strong>' + esc(leafOf(t)) + '</strong> — ' : '')) +
+      esc(t.text) + (meta ? '<span class="mmeta">' + meta + '</span>' : '') +
+      '</span></div></div>';
+  }
+
+  function renderMobile() {
+    var live = S.tasks.filter(function (t) { return t.status !== 'gone' && t.status !== 'archived'; });
+    var h = '';
+    if (mtab === 'today') {
+      var td = live.filter(function (t) { return t.today && t.status !== 'done'; });
+      h += '<div class="mgroup"><span>Today · ' + td.length + '</span></div>';
+      h += td.length ? td.map(function (t) { return mRow(t, true); }).join('')
+        : '<div class="mempty">Nothing picked for today.<br>Open This Week and tap “Do it today”.</div>';
+      var dn = live.filter(function (t) { return t.status === 'done' && sameLocalDay(t.doneAt, new Date()); });
+      if (dn.length) h += '<div class="mgroup"><span>Done today · ' + dn.length + '</span></div>' +
+        dn.map(function (t) { return mRow(t, true); }).join('');
+    } else if (mtab === 'week') {
+      var wk = live.filter(function (t) { return t.week; });
+      var tdy = wk.filter(function (t) { return t.today && t.status !== 'done'; });
+      var rest = wk.filter(function (t) { return !(t.today && t.status !== 'done'); });
+      rest.sort(function (a, b) {
+        var ad = a.status === 'done' ? 1 : 0, bd = b.status === 'done' ? 1 : 0;
+        if (ad !== bd) return ad - bd;
+        return (b.carried || 0) - (a.carried || 0);
+      });
+      if (tdy.length) h += '<div class="mgroup"><span>Today</span></div>' + tdy.map(function (t) { return mRow(t, true); }).join('');
+      h += '<div class="mgroup"><span>Rest of the week · ' + rest.length + '</span></div>';
+      h += rest.length ? rest.map(function (t) { return mRow(t, true); }).join('')
+        : '<div class="mempty">Nothing else pinned this week.</div>';
+    } else if (mtab === 'board') {
+      secOrder().forEach(function (sc) {
+        var ts = live.filter(function (t) { return t.sec === sc.id && t.status !== 'done'; });
+        h += '<div class="msec' + (mOpen[sc.id] ? ' open' : '') + '" data-msec="' + sc.id + '">' +
+          '<div class="msechead"><span class="mdot" style="background:var(--h-' + sc.hue + ')"></span>' +
+          '<h2>' + esc(sc.title) + '</h2><span class="msecct">' + ts.length + '</span><span class="mcaret">▸</span></div>' +
+          '<div class="msecbody">';
+        var loose = ts.filter(function (t) { return !leafOf(t) || leafOf(t).toLowerCase() === sc.title.toLowerCase(); });
+        h += loose.map(function (t) { return mRow(t, false); }).join('');
+        subprojectsOf(sc.id).forEach(function (sp) {
+          var sts = ts.filter(function (t) { return leafOf(t) === sp.leaf; });
+          h += '<div class="msub"><span>' + esc(sp.leaf) + '</span><span>' + sts.length + '</span></div>';
+          h += sts.map(function (t) { return mRow(t, false); }).join('');
+        });
+        if (!ts.length) h += '<div class="mempty" style="padding:16px">Empty</div>';
+        h += '</div></div>';
+      });
+    } else {
+      var arch = S.tasks.filter(function (t) { return t.status === 'archived' || t.status === 'done'; });
+      arch.sort(function (a, b) { return (b.doneAt || '') < (a.doneAt || '') ? -1 : 1; });
+      h += '<div class="mgroup"><span>Done · ' + arch.length + '</span></div>';
+      h += arch.length ? arch.slice(0, 80).map(function (t) { return mRow(t, true); }).join('')
+        : '<div class="mempty">Nothing completed yet.</div>';
+    }
+    el('mmain').innerHTML = h;
+    el('mdate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    var todayN = live.filter(function (t) { return t.today && t.status !== 'done'; }).length;
+    var weekN = live.filter(function (t) { return t.week; }).length;
+    var openN = live.filter(function (t) { return t.status !== 'done'; }).length;
+    el('mstat').innerHTML = '<span><b>' + todayN + '</b> today</span><span><b>' + weekN + '</b> this week</span><span><b>' + openN + '</b> open</span>';
+    document.querySelectorAll('.mtab, #mnav button').forEach(function (b) { b.classList.toggle('on', b.dataset.mtab === mtab); });
+  }
+
+  function mOpenSheet(html) { el('msheet').innerHTML = '<div class="mgrab"></div>' + html; el('msheet').classList.add('on'); el('mscrim').classList.add('on'); }
+  function mCloseSheet() { el('msheet').classList.remove('on'); el('mscrim').classList.remove('on'); }
+
+  function mTaskSheet(t) {
+    var sec = SECMETA[t.sec];
+    var done = t.status === 'done' || t.status === 'archived';
+    var wkd = (t.worked || []).indexOf(dayStr()) !== -1;
+    mOpenSheet('<div class="msht">' + (t.proj ? esc(leafOf(t)) + ' — ' : '') + esc(t.text) + '</div>' +
+      '<div class="mshs">' + esc(sec ? sec.title : '') + '</div>' +
+      '<button class="mact" data-mact="done"><span class="ic">✓</span>' + (done ? 'Mark not done' : 'Complete') + '</button>' +
+      (done ? '' :
+        '<button class="mact" data-mact="today"><span class="ic">◉</span>' + (t.today ? 'Remove from Today' : 'Do it today') + '</button>' +
+        '<button class="mact" data-mact="week"><span class="ic">★</span>' + (t.week ? 'Unpin from This Week' : 'Pin to This Week') + '</button>' +
+        '<button class="mact" data-mact="worked"><span class="ic">▤</span>' + (wkd ? 'Worked today ✓' : 'Worked on it today') + '</button>' +
+        '<button class="mact" data-mact="edit"><span class="ic">✎</span>Edit text</button>' +
+        '<button class="mact" data-mact="move"><span class="ic">→</span>Move to…</button>') +
+      '<button class="mact danger" data-mact="del"><span class="ic">✕</span>Delete</button>');
+    el('msheet').dataset.mid = t.id;
+  }
+
+  function mSubPicks(secId, t) {
+    var sc = SECMETA[secId];
+    var h = '<div class="mshs" style="margin-top:14px">' + esc(sc ? sc.title : secId) + ' →</div><div class="mpicks" id="msubs">' +
+      '<button class="mpick' + (!mMoveSub ? ' on' : '') + '" data-msub="">top level</button>';
+    subprojectsOf(secId).forEach(function (sp) {
+      h += '<button class="mpick' + (mMoveSub === sp.leaf ? ' on' : '') + '" data-msub="' + esc(sp.leaf) + '">' + esc(sp.leaf) + '</button>';
+    });
+    h += '</div><button class="mprimary" data-mact="movego">Move here</button>';
+    return h;
+  }
+  function mMoveSheet(t) {
+    mMoveSec = t.sec; mMoveSub = leafOf(t) || null;
+    var h = '<div class="msht">Move</div><div class="mshs">Section, then subsection</div><div class="mpicks">';
+    secOrder().forEach(function (sc) {
+      h += '<button class="mpick' + (sc.id === mMoveSec ? ' on' : '') + '" data-msec2="' + sc.id + '">' +
+        '<span class="mdot" style="background:var(--h-' + sc.hue + ')"></span>' + esc(sc.title) + '</button>';
+    });
+    h += '</div><div id="msubbox">' + mSubPicks(mMoveSec, t) + '</div>';
+    mOpenSheet(h);
+    el('msheet').dataset.mid = t.id;
+  }
+
+  function mAddSheet() {
+    mNewSec = (secOrder()[0] || {}).id;
+    var h = '<div class="msht">New task</div>' +
+      '<input class="mfield" id="mnewtext" placeholder="Project - task" autocomplete="off">' +
+      '<div class="mshs" style="margin-top:14px">Section</div><div class="mpicks">';
+    secOrder().forEach(function (sc) {
+      h += '<button class="mpick' + (sc.id === mNewSec ? ' on' : '') + '" data-mnewsec="' + sc.id + '">' +
+        '<span class="mdot" style="background:var(--h-' + sc.hue + ')"></span>' + esc(sc.title) + '</button>';
+    });
+    h += '</div><div class="mpicks">' +
+      '<button class="mpick on" data-mtog="week">★ This week</button>' +
+      '<button class="mpick" data-mtog="today">◉ Today</button>' +
+      '<button class="mpick" data-mtog="big">BIG</button></div>' +
+      '<button class="mprimary" data-mact="create">Add task</button>';
+    mOpenSheet(h);
+    setTimeout(function () { var f = el('mnewtext'); if (f) f.focus(); }, 280);
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!isPhone()) return;
+    var tb = e.target.closest('.mtab, #mnav button');
+    if (tb && tb.dataset.mtab) { mtab = tb.dataset.mtab; renderMobile(); return; }
+    if (e.target.closest('#mfab')) { mAddSheet(); return; }
+    if (e.target.id === 'mscrim') { mCloseSheet(); return; }
+    if (e.target.id === 'msync') { doSync(); return; }
+
+    var sh = e.target.closest('.msechead');
+    if (sh) { var sid = sh.parentNode.dataset.msec; mOpen[sid] = !mOpen[sid]; renderMobile(); return; }
+
+    var p2 = e.target.closest('[data-msec2]');
+    if (p2) {
+      mMoveSec = p2.dataset.msec2; mMoveSub = null;
+      el('msheet').querySelectorAll('[data-msec2]').forEach(function (b) { b.classList.toggle('on', b === p2); });
+      el('msubbox').innerHTML = mSubPicks(mMoveSec, task(el('msheet').dataset.mid) || {});
+      return;
+    }
+    var ps = e.target.closest('[data-msub]');
+    if (ps) {
+      mMoveSub = ps.dataset.msub || null;
+      el('msheet').querySelectorAll('[data-msub]').forEach(function (b) { b.classList.toggle('on', b === ps); });
+      return;
+    }
+    var pn = e.target.closest('[data-mnewsec]');
+    if (pn) {
+      mNewSec = pn.dataset.mnewsec;
+      el('msheet').querySelectorAll('[data-mnewsec]').forEach(function (b) { b.classList.toggle('on', b === pn); });
+      return;
+    }
+    var pt = e.target.closest('[data-mtog]');
+    if (pt) { pt.classList.toggle('on'); return; }
+
+    var ma = e.target.closest('[data-mact]');
+    if (ma) {
+      var a = ma.dataset.mact;
+      if (a === 'create') {
+        var v = (el('mnewtext') || {}).value || '';
+        if (!v.trim()) return;
+        pushUndo();
+        var m = v.trim().match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
+        var nt = {
+          id: uid(), sec: mNewSec, proj: m ? m[1] : null, text: m ? m[2] : v.trim(),
+          status: 'planning', date: { kind: 'plain', label: 'added ' + new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) },
+          addedAt: nowIso(), updatedAt: nowIso()
+        };
+        el('msheet').querySelectorAll('[data-mtog].on').forEach(function (b) {
+          if (b.dataset.mtog === 'week') { nt.week = true; nt.status = 'now'; }
+          if (b.dataset.mtog === 'today') { nt.today = true; nt.todayOn = dayStr(); nt.week = true; nt.status = 'now'; }
+          if (b.dataset.mtog === 'big') nt.big = true;
+        });
+        S.tasks.push(nt);
+        logChange('Added to ' + (SECMETA[nt.sec] ? SECMETA[nt.sec].title : nt.sec) + ': ' + v.trim());
+        mCloseSheet(); scheduleSave(); renderMobile();
+        return;
+      }
+      var mt = task(el('msheet').dataset.mid);
+      if (!mt) { mCloseSheet(); return; }
+      if (a === 'move') { mMoveSheet(mt); return; }
+      if (a === 'edit') {
+        mOpenSheet('<div class="msht">Edit</div><input class="mfield" id="medtext" value="' +
+          esc((mt.proj ? mt.proj + ' — ' : '') + mt.text) + '"><button class="mprimary" data-mact="editgo">Save</button>');
+        el('msheet').dataset.mid = mt.id;
+        setTimeout(function () { var f = el('medtext'); if (f) f.focus(); }, 280);
+        return;
+      }
+      pushUndo();
+      if (a === 'done') {
+        if (mt.status === 'done' || mt.status === 'archived') { mt.status = mt.prevStatus || 'working'; delete mt.doneAt; logChange('Not done after all: ' + taskLabel(mt)); }
+        else { mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso(); mt.today = false; delete mt.carried; logChange('Done: ' + taskLabel(mt)); }
+      } else if (a === 'today') {
+        if (mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
+        else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; logChange('Today: ' + taskLabel(mt)); }
+      } else if (a === 'week') {
+        mt.week = !mt.week; if (!mt.week) mt.today = false;
+        logChange((mt.week ? 'Pinned to This Week: ' : 'Unpinned: ') + taskLabel(mt));
+      } else if (a === 'worked') {
+        mt.worked = mt.worked || [];
+        var ix = mt.worked.indexOf(dayStr());
+        if (ix === -1) { mt.worked.push(dayStr()); logChange('Worked on today: ' + taskLabel(mt)); }
+        else { mt.worked.splice(ix, 1); logChange('Unmarked worked-today: ' + taskLabel(mt)); }
+      } else if (a === 'del') {
+        mt.status = 'gone'; logChange('Removed: ' + taskLabel(mt));
+      } else if (a === 'editgo') {
+        var ev2 = (el('medtext') || {}).value || '';
+        var em = ev2.trim().match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
+        if (em) { mt.proj = em[1]; mt.text = em[2]; } else { mt.proj = null; mt.text = ev2.trim(); }
+        logChange('Edited: ' + taskLabel(mt));
+      } else if (a === 'movego') {
+        mt.sec = mMoveSec; delete mt.grp;
+        if (mMoveSub) mt.proj = (SECMETA[mMoveSec] ? SECMETA[mMoveSec].title : mMoveSec) + '/' + mMoveSub;
+        logChange('Moved to ' + (SECMETA[mMoveSec] ? SECMETA[mMoveSec].title : mMoveSec) + (mMoveSub ? ' / ' + mMoveSub : '') + ': ' + taskLabel(mt));
+      }
+      touch(mt); mCloseSheet(); scheduleSave(); renderMobile();
+      return;
+    }
+
+    var mr = e.target.closest('.mrow');
+    if (mr) {
+      if (mr.classList.contains('swiped')) { mr.classList.remove('swiped'); return; }
+      var t3 = task(mr.dataset.mid);
+      if (t3) mTaskSheet(t3);
+    }
+  });
+
+  var msx = 0, msy = 0, mrow = null;
+  document.addEventListener('touchstart', function (e) {
+    if (!isPhone()) return;
+    mrow = e.target.closest ? e.target.closest('.mrow') : null;
+    if (!mrow) return;
+    msx = e.touches[0].clientX; msy = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!mrow) return;
+    var dx = e.touches[0].clientX - msx, dy = Math.abs(e.touches[0].clientY - msy);
+    if (dy > 26) { mrow.classList.remove('swiped'); mrow = null; return; }
+    if (dx > 44) mrow.classList.add('swiped');
+    else if (dx < -10) mrow.classList.remove('swiped');
+  }, { passive: true });
+  document.addEventListener('touchend', function () {
+    if (mrow && mrow.classList.contains('swiped')) {
+      var t4 = task(mrow.dataset.mid);
+      setTimeout(function () {
+        if (t4) {
+          pushUndo();
+          if (t4.status === 'done' || t4.status === 'archived') { t4.status = t4.prevStatus || 'working'; delete t4.doneAt; }
+          else { t4.prevStatus = t4.status; t4.status = 'done'; t4.doneAt = nowIso(); t4.today = false; delete t4.carried; logChange('Done: ' + taskLabel(t4)); }
+          touch(t4); scheduleSave();
+        }
+        renderMobile();
+      }, 170);
+    }
+    mrow = null;
+  });
 
   // ---------- interactions ----------
   document.addEventListener('click', function (e) {
@@ -3278,6 +3669,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
   // ---------- boot ----------
   scanInjected();
+  applyMode();
   buildNav();
   detectEngine(function (eng) {
     engine = eng;
