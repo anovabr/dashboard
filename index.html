@@ -415,7 +415,29 @@
     50% { box-shadow: 0 0 0 3px var(--accent), 0 0 18px rgba(20,84,79,0.35); }
   }
   .card.flashnew { animation: newflash .52s ease 4; }
-  .card.seccard > h2 { cursor: grab; }
+  .card.seccard > h2 { cursor: grab; display: flex; align-items: center; }
+  .card.seccard > h2 .loadwrap { flex: none; }
+  .seccolor { width: 13px; height: 13px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.14); padding: 0;
+    cursor: pointer; margin-left: 8px; flex: none; opacity: .85; }
+  .seccolor:hover { opacity: 1; transform: scale(1.15); box-shadow: 0 0 0 3px var(--hue-bg); }
+  .notebtn { border: 0; background: transparent; cursor: pointer; font-size: 14px; padding: 0 3px; margin-left: 6px;
+    color: var(--muted); opacity: .3; line-height: 1; }
+  .card:hover .notebtn, .micro:hover .notebtn { opacity: .6; }
+  .notebtn.has { opacity: .95 !important; }
+  .notebtn:hover { opacity: 1 !important; }
+  .notepanel { position: fixed; z-index: 90; width: 330px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 14px 40px rgba(20,25,40,0.20); padding: 10px; }
+  .notepanel .nphead { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); margin: 2px 2px 7px; }
+  .notepanel textarea { width: 100%; box-sizing: border-box; min-height: 150px; resize: vertical; font: inherit; font-size: 13.5px;
+    line-height: 1.5; color: var(--ink); background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+    padding: 8px 9px; outline: none; }
+  .notepanel textarea:focus { border-color: var(--accent); }
+  .notepanel .nprow { display: flex; gap: 7px; align-items: center; margin-top: 8px; }
+  .notepanel button { font: inherit; font-size: 13px; font-weight: 650; border-radius: 8px; padding: 5px 11px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--secondary); }
+  .notepanel button.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .notepanel button.dgr { margin-left: auto; border-color: transparent; color: var(--hard); }
   .swrap { padding: 4px 8px 8px; }
   .swrap .swlbl { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
   .sws { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
@@ -761,7 +783,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 21:13 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 21:19 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2214,6 +2236,48 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     for (var i = 0; i < HUES.length; i++) if (!used[HUES[i]]) return HUES[i];
     return HUES[allSections().length % HUES.length];
   }
+  function noteGet(key) { return (S.notes && S.notes[key]) || ''; }
+  function noteBtn(key, label) {
+    var has = noteGet(key) ? ' has' : '';
+    return '<button class="notebtn' + has + '" data-note="' + esc(key) + '" data-notelbl="' + esc(label) +
+      '" title="' + (has ? 'notes saved - click to open' : 'add a note') + '">✎</button>';
+  }
+  var notePanel = null;
+  function closeNote() { if (notePanel) { notePanel.remove(); notePanel = null; } }
+  function openNote(key, label, x, y) {
+    closeNote();
+    var m = document.createElement('div');
+    m.className = 'notepanel';
+    m.innerHTML = '<div class="nphead"></div>' +
+      '<textarea spellcheck="false" placeholder="Logins, client names, links, anything you need to remember for this project."></textarea>' +
+      '<div class="nprow"><button class="pri" data-nsave="1">Save</button>' +
+      '<button data-ncancel="1">Cancel</button>' +
+      '<button class="dgr" data-ndel="1">Delete note</button></div>';
+    document.body.appendChild(m);
+    m.querySelector('.nphead').textContent = label;
+    m.dataset.key = key;
+    m.querySelector('textarea').value = noteGet(key);
+    var px = Math.min(x, window.innerWidth - m.offsetWidth - 8);
+    var py = Math.min(y + 6, window.innerHeight - m.offsetHeight - 8);
+    m.style.left = Math.max(6, px) + 'px';
+    m.style.top = Math.max(6, py) + 'px';
+    notePanel = m;
+    m.querySelector('textarea').focus();
+  }
+  function noteClickInPanel(e) {
+    var nkey = notePanel.dataset.key;
+    var nlbl = notePanel.querySelector('.nphead').textContent;
+    var nta = notePanel.querySelector('textarea');
+    if (e.target.closest('[data-nsave]')) { var v = nta.value.trim(); closeNote(); saveNote(nkey, v, nlbl); }
+    else if (e.target.closest('[data-ncancel]')) closeNote();
+    else if (e.target.closest('[data-ndel]')) { closeNote(); saveNote(nkey, '', nlbl); }
+  }
+  function saveNote(key, val, label) {
+    S.notes = S.notes || {};
+    if (val) S.notes[key] = val; else delete S.notes[key];
+    logChange((val ? 'Updated' : 'Cleared') + ' note: ' + label);
+    scheduleSave(); renderAll();
+  }
   function setSecHue(id, hue) {
     S.secHue = S.secHue || {};
     S.secHue[id] = hue;
@@ -2364,11 +2428,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       html += '<h2>' + esc(sec.title) +
         '<span class="loadwrap"><span class="loadbar"><i style="width:' + (allN ? Math.min(100, Math.round(wkN / allN * 100)) : 0) +
         '%;background:var(--h-' + sec.hue + ')"></i></span>' + allN + '</span>' +
+        '<button class="seccolor" data-seccolor="' + sec.id + '" style="background:var(--h-' + sec.hue + ')" title="change section color"></button>' +
+        noteBtn(sec.id, sec.title) +
         '<button class="secdel" data-secdel="' + sec.id + '" title="delete section and its tasks">✕</button></h2>';
       if (sec.groups && sec.groups.length) {
         sec.groups.forEach(function (g) {
           var gts = ts.filter(function (t) { return (t.grp || sec.groups[0]) === g; });
-          html += '<div class="micro">' + esc(g) + '</div><ul class="rows">' + gts.map(function (t) { return rowHtml(t); }).join('') + '</ul>';
+          html += '<div class="micro">' + esc(g) + noteBtn(sec.id + '/' + g, sec.title + ' / ' + g) + '</div><ul class="rows">' + gts.map(function (t) { return rowHtml(t); }).join('') + '</ul>';
         });
       } else {
         var empty = '<li class="waiting"><span class="txt">Nothing here right now.</span></li>';
@@ -2396,6 +2462,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
             html += '<div class="micro subhead" draggable="true" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="click to fold/unfold · drag to reorder or move">' +
               (isF ? '▸ ' : '▾ ') + esc(p) +
               (isF && byP[p].length ? '<span class="subct">' + byP[p].length + '</span>' : '') +
+              noteBtn(sec.id + '/' + p, sec.title + ' / ' + p) +
               (deletable ? '<button class="subdel" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="remove empty subsection">✕</button>' : '') +
               '</div>';
             if (!isF) {
@@ -2661,6 +2728,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var rmNow = removedSet();
     S.customSections = (S.customSections || []).filter(function (c) { return !rmNow[c.id]; });
     if (S.secOrder) S.secOrder = S.secOrder.filter(function (id) { return !rmNow[id]; });
+    if (remote.notes && (remote.savedAt || '') > (S.savedAt || '')) {
+      S.notes = S.notes || {};
+      Object.keys(remote.notes).forEach(function (k) { S.notes[k] = remote.notes[k]; });
+    }
     if (remote.secHue && (remote.savedAt || '') > (S.savedAt || '')) {
       S.secHue = S.secHue || {};
       Object.keys(remote.secHue).forEach(function (k) { S.secHue[k] = remote.secHue[k]; });
@@ -2782,19 +2853,29 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     m.style.left = Math.max(4, px) + 'px';
     m.style.top = Math.max(4, py) + 'px';
   }
-  function openSecMenu(sid, x, y) {
-    var cnt = S.tasks.filter(function (t) { return t.sec === sid && t.status !== 'gone'; }).length;
+  function swatchHtml(sid) {
     var cur = SECMETA[sid] ? SECMETA[sid].hue : '';
-    clearPendMenu();
-    var dm = document.createElement('div');
-    dm.className = 'actmenu'; dm.dataset.level = '1';
     var sw = '';
     HUES.forEach(function (h) {
       sw += '<button class="sw' + (h === cur ? ' on' : '') + '" data-swhue="' + h + '" data-swsec="' + sid +
         '" style="background:var(--h-' + h + ')" title="' + h + '"></button>';
     });
+    return '<div class="swrap"><div class="swlbl">Color</div><div class="sws">' + sw + '</div></div>';
+  }
+  function openColorMenu(sid, x, y) {
+    clearPendMenu();
+    var m = document.createElement('div');
+    m.className = 'actmenu'; m.dataset.level = '1';
+    m.innerHTML = '<span class="selct">' + esc(SECMETA[sid] ? SECMETA[sid].title : sid) + '</span>' + swatchHtml(sid);
+    placeMenu(m, x, y);
+  }
+  function openSecMenu(sid, x, y) {
+    var cnt = S.tasks.filter(function (t) { return t.sec === sid && t.status !== 'gone'; }).length;
+    clearPendMenu();
+    var dm = document.createElement('div');
+    dm.className = 'actmenu'; dm.dataset.level = '1';
     dm.innerHTML = '<span class="selct">' + esc(SECMETA[sid] ? SECMETA[sid].title : sid) + '</span>' +
-      '<div class="swrap"><div class="swlbl">Color</div><div class="sws">' + sw + '</div></div>' +
+      swatchHtml(sid) +
       '<div class="msep"></div>' +
       '<button class="danger" data-act="secdel2" data-sec="' + sid + '"><span class="mi">🗑️</span><span class="ml">Delete section + ' + cnt + ' task' + (cnt === 1 ? '' : 's') + '</span></button>' +
       '<div class="msep"></div>' +
@@ -2994,7 +3075,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         var ts = live.filter(function (t) { return t.sec === sc.id && t.status !== 'done'; });
         h += '<div class="msec' + (mOpen[sc.id] ? ' open' : '') + '" data-msec="' + sc.id + '">' +
           '<div class="msechead"><span class="mdot" style="background:var(--h-' + sc.hue + ')"></span>' +
-          '<h2>' + esc(sc.title) + '</h2><span class="msecct">' + ts.length + '</span><span class="mcaret">▸</span></div>' +
+          '<h2>' + esc(sc.title) + '</h2>' + (noteGet(sc.id) ? '<button class="notebtn has" data-note="' + esc(sc.id) + '" data-notelbl="' + esc(sc.title) + '">✎</button>' : '') +
+          '<span class="msecct">' + ts.length + '</span><span class="mcaret">▸</span></div>' +
           '<div class="msecbody">';
         var loose = ts.filter(function (t) { return !leafOf(t) || leafOf(t).toLowerCase() === sc.title.toLowerCase(); });
         h += loose.map(function (t) { return mRow(t, false); }).join('');
@@ -3091,6 +3173,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
   document.addEventListener('click', function (e) {
     if (!isPhone()) return;
+    if (notePanel && notePanel.contains(e.target)) { noteClickInPanel(e); return; }
+    var mnb = e.target.closest('.notebtn');
+    if (mnb) { openNote(mnb.dataset.note, mnb.dataset.notelbl, 10, e.clientY); return; }
+    closeNote();
     var tb = e.target.closest('.mtab, #mnav button');
     if (tb && tb.dataset.mtab) { mtab = tb.dataset.mtab; renderMobile(); return; }
     if (e.target.closest('#mfab')) { mAddSheet(); return; }
@@ -3241,6 +3327,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   document.addEventListener('click', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+    if (notePanel && notePanel.contains(e.target)) { noteClickInPanel(e); return; }
+    var scb = e.target.closest ? e.target.closest('.seccolor') : null;
+    if (scb) { openColorMenu(scb.dataset.seccolor, e.clientX, e.clientY); return; }
+    var nb = e.target.closest ? e.target.closest('.notebtn') : null;
+    if (nb) { openNote(nb.dataset.note, nb.dataset.notelbl, e.clientX, e.clientY); return; }
+    closeNote();
+
     var swb = e.target.closest ? e.target.closest('.sw[data-swhue]') : null;
     if (swb) { var swsec = swb.dataset.swsec; clearPendMenu(); setSecHue(swsec, swb.dataset.swhue); return; }
 
@@ -3344,7 +3437,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var onBox = !!(e.target.closest && e.target.closest('li[data-id]') && e.target.closest('.box'));
     if (!onBox && document.querySelector('.actmenu')) clearPendMenu();
 
-    var hh = e.target.closest('.secdel') ? null : e.target.closest('h2');
+    var hh = (e.target.closest('.secdel') || e.target.closest('.notebtn') || e.target.closest('.seccolor')) ? null : e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
       var card = hh.parentNode;
       var fkey = card.dataset.sec || (card.id === 'sec-week' ? 'week' : null);
@@ -3582,6 +3675,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (e.target.id === 'btnImport' || e.target.id === 'localLoad') { el('importFile').click(); return; }
     if (e.target.id === 'btnCopyState') { copyText('Full board state:\n' + JSON.stringify(S, null, 1), el('diagCopied')); return; }
   });
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNote(); });
 
   document.addEventListener('contextmenu', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
