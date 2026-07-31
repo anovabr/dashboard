@@ -564,7 +564,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-30 23:01 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 02:23 UTC</div>
 </div>
 
 <button id="topBtn" aria-label="back to top">↑</button>
@@ -2028,7 +2028,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function renderAll() {
     rebuildSecMeta();
     var today = new Date();
-    el('metaline').textContent = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ' · weekly review Mondays 9 AM';
+    el('metaline').textContent = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
     var live = S.tasks.filter(function (t) { return t.status !== 'gone' && t.status !== 'archived'; });
 
