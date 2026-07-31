@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dashboard — phone mockup</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:#eef3f2; --surface:#fff; --ink:#1b2130; --secondary:#3f4453; --muted:#6b7280;
+    --hairline:#e2e8e6; --border:rgba(27,33,48,.11); --accent:#14544f; --hard:#c2402c;
+    --aim:#6f6494; --good:#3f7d61; --shadow:0 1px 3px rgba(27,33,48,.07);
+    --h-writing:#b03352; --h-anova:#a83f28; --h-rne:#6f6494; --h-puc:#3a7860; --h-personal:#5d5a6e; --h-others:#5d6a78;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --page:#14161c; --surface:#1d2027; --ink:#f0f1f4; --secondary:#c6c9d2; --muted:#8f93a1;
+      --hairline:#2b2f39; --border:rgba(255,255,255,.10); --accent:#7cc6b8; --hard:#ef8a70;
+      --aim:#b3a8d6; --good:#7fc39f; --shadow:none; }
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:#0c0f12; color:var(--ink);
+    display:flex; align-items:center; justify-content:center; min-height:100vh; padding:18px; }
+  .phone { width:min(412px,100%); height:min(880px,94vh); background:var(--page); border-radius:30px;
+    overflow:hidden; position:relative; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+  @media (max-width:520px) { body{padding:0} .phone{width:100%;height:100vh;border-radius:0} }
+
+  header { padding:14px 16px 10px; background:var(--surface); border-bottom:1px solid var(--hairline); flex:none; }
+  .htop { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  h1 { font-size:19px; font-weight:800; color:var(--accent); letter-spacing:-.01em; }
+  .syncpill { font-size:11px; font-weight:750; padding:4px 10px; border-radius:999px;
+    background:rgba(63,125,97,.14); color:var(--good); }
+  .hsub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .stat { display:flex; gap:14px; margin-top:9px; font-size:12px; color:var(--secondary); }
+  .stat b { color:var(--ink); font-weight:750; }
+
+  .tabs { display:flex; gap:6px; padding:10px 12px; background:var(--surface); border-bottom:1px solid var(--hairline); flex:none; }
+  .tab { flex:1; text-align:center; font-size:13px; font-weight:700; padding:9px 4px; border-radius:10px;
+    color:var(--muted); background:transparent; border:0; font-family:inherit; }
+  .tab.on { background:var(--accent); color:var(--surface); }
+
+  main { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 12px 96px; }
+  .grouphead { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); margin:14px 4px 7px; display:flex; justify-content:space-between; }
+  .grouphead:first-child { margin-top:2px; }
+
+  .row { position:relative; overflow:hidden; border-radius:12px; margin-bottom:8px; background:var(--surface);
+    border:1px solid var(--border); box-shadow:var(--shadow); }
+  .rowin { display:flex; align-items:flex-start; gap:11px; padding:13px 13px; background:var(--surface);
+    position:relative; transition:transform .18s ease; }
+  .row.swiped .rowin { transform:translateX(76px); }
+  .row.done .rowin { opacity:.55; }
+  .swipebg { position:absolute; inset:0; display:flex; align-items:center; padding-left:18px;
+    background:var(--good); color:#fff; font-weight:800; font-size:14px; }
+  .box { flex:none; width:22px; height:22px; border-radius:7px; border:2px solid var(--secondary); margin-top:1px; }
+  .row.done .box { background:var(--good); border-color:var(--good); position:relative; }
+  .row.done .box::after { content:"✓"; color:#fff; position:absolute; left:4px; top:-3px; font-size:14px; font-weight:800; }
+  .rtext { flex:1; min-width:0; font-size:15px; line-height:1.35; }
+  .row.done .rtext { text-decoration:line-through; color:var(--muted); }
+  .rproj { font-weight:750; }
+  .rmeta { display:flex; gap:8px; align-items:center; margin-top:5px; flex-wrap:wrap; }
+  .chip { font-size:10.5px; font-weight:750; letter-spacing:.04em; padding:2px 7px; border-radius:5px;
+    background:rgba(0,0,0,.05); color:var(--muted); }
+  @media (prefers-color-scheme: dark){ .chip{background:rgba(255,255,255,.07)} }
+  .chip.due { background:rgba(194,64,44,.13); color:var(--hard); }
+  .chip.aim { background:rgba(111,100,148,.15); color:var(--aim); }
+  .chip.carried { background:transparent; border:1px solid var(--aim); color:var(--aim); }
+  .secdot { width:9px; height:9px; border-radius:3px; flex:none; margin-top:6px; }
+
+  .seccard { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:9px;
+    box-shadow:var(--shadow); overflow:hidden; }
+  .sechead { display:flex; align-items:center; gap:10px; padding:14px 14px; }
+  .sechead h2 { font-size:14px; font-weight:800; flex:1; letter-spacing:.02em; }
+  .seccount { font-size:12px; font-weight:750; color:var(--muted); }
+  .caret { color:var(--muted); font-size:12px; transition:transform .18s; }
+  .seccard.open .caret { transform:rotate(90deg); }
+  .secbody { display:none; padding:0 10px 10px; }
+  .seccard.open .secbody { display:block; }
+  .subhead { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); padding:8px 4px 4px; display:flex; justify-content:space-between; }
+
+  .fab { position:absolute; right:16px; bottom:78px; width:58px; height:58px; border-radius:50%;
+    background:var(--accent); color:var(--surface); border:0; font-size:30px; font-weight:300; line-height:1;
+    box-shadow:0 8px 20px rgba(0,0,0,.28); z-index:30; }
+
+  nav { position:absolute; left:0; right:0; bottom:0; height:64px; display:flex; background:var(--surface);
+    border-top:1px solid var(--hairline); z-index:25; }
+  nav button { flex:1; border:0; background:transparent; font-family:inherit; font-size:11px; font-weight:700;
+    color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+  nav button.on { color:var(--accent); }
+  nav .ic { font-size:17px; }
+
+  .scrim { position:absolute; inset:0; background:rgba(0,0,0,.42); opacity:0; pointer-events:none;
+    transition:opacity .2s; z-index:40; }
+  .scrim.on { opacity:1; pointer-events:auto; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:var(--surface); z-index:50;
+    border-radius:18px 18px 0 0; padding:8px 14px calc(18px + env(safe-area-inset-bottom));
+    transform:translateY(105%); transition:transform .26s cubic-bezier(.2,.8,.2,1); max-height:82%; overflow-y:auto; }
+  .sheet.on { transform:translateY(0); }
+  .grab { width:40px; height:4px; border-radius:2px; background:var(--hairline); margin:6px auto 12px; }
+  .sheettitle { font-size:15px; font-weight:750; margin-bottom:3px; }
+  .sheetsub { font-size:12.5px; color:var(--muted); margin-bottom:12px; }
+  .act { display:flex; align-items:center; gap:12px; width:100%; padding:14px 8px; border:0; background:transparent;
+    font-family:inherit; font-size:15px; color:var(--ink); text-align:left; border-top:1px solid var(--hairline); }
+  .act:first-of-type { border-top:0; }
+  .act .ic { width:24px; text-align:center; color:var(--muted); font-size:15px; }
+  .act.danger { color:var(--hard); }
+  .act.danger .ic { color:var(--hard); }
+
+  .field { width:100%; font:inherit; font-size:16px; padding:13px 13px; border:1.5px solid var(--border);
+    border-radius:11px; background:var(--page); color:var(--ink); outline:none; }
+  .field:focus { border-color:var(--accent); }
+  .pickrow { display:flex; gap:7px; flex-wrap:wrap; margin:12px 0 4px; }
+  .pick { font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; border:1px solid var(--border);
+    background:var(--surface); color:var(--secondary); font-family:inherit; display:flex; align-items:center; gap:6px; }
+  .pick.on { border-color:var(--accent); color:var(--accent); background:rgba(20,84,79,.07); }
+  .togglerow { display:flex; gap:8px; margin:12px 0 6px; }
+  .primary { width:100%; margin-top:14px; padding:14px; border:0; border-radius:11px; background:var(--accent);
+    color:var(--surface); font-family:inherit; font-size:15px; font-weight:750; }
+
+  .tipbar { background:rgba(20,84,79,.08); border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+    font-size:12.5px; color:var(--secondary); line-height:1.5; margin-bottom:12px; }
+  .tipbar b { color:var(--ink); }
+  .empty { text-align:center; color:var(--muted); font-size:13.5px; padding:34px 10px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="htop">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="hsub" id="dateline">Friday, July 31</div>
+      </div>
+      <span class="syncpill" id="syncpill">synced</span>
+    </div>
+    <div class="stat">
+      <span><b id="s1">3</b> today</span>
+      <span><b id="s2">7</b> this week</span>
+      <span><b id="s3">21</b> open</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="today">Today</button>
+    <button class="tab" data-tab="week">This Week</button>
+    <button class="tab" data-tab="board">Board</button>
+  </div>
+
+  <main id="main"></main>
+
+  <button class="fab" id="fab">+</button>
+
+  <nav>
+    <button class="on" data-tab="today"><span class="ic">◉</span>Today</button>
+    <button data-tab="week"><span class="ic">▤</span>Week</button>
+    <button data-tab="board"><span class="ic">▦</span>Board</button>
+    <button data-tab="archive"><span class="ic">✓</span>Done</button>
+  </nav>
+
+  <div class="scrim" id="scrim"></div>
+
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+(function () {
+  var SECS = [
+    { id:'writing', title:'Writing', hue:'--h-writing', subs:['Manuscripts','Grants'] },
+    { id:'anova', title:'ANOVA', hue:'--h-anova', subs:['anova autismo','anova saude','consulting'] },
+    { id:'rne', title:'Research & Evaluation', hue:'--h-rne', subs:['Oregon'] },
+    { id:'puc', title:'PUC-Rio', hue:'--h-puc', subs:[] },
+    { id:'personal', title:'Personal', hue:'--h-personal', subs:[] },
+    { id:'others', title:'Others', hue:'--h-others', subs:['Pankeka'] }
+  ];
+  var T = [
+    { id:1, sec:'writing', sub:'Manuscripts', proj:'Murray SEL', text:'finish and submit', today:true, week:true, due:'due today', big:true },
+    { id:2, sec:'writing', sub:'Manuscripts', proj:'Suicide across countries', text:'reply to Jonathan', today:true, week:true, carried:2 },
+    { id:3, sec:'anova', sub:'anova autismo', proj:'RABESP', text:'freemium tier copy', today:true, week:true },
+    { id:4, sec:'rne', sub:'Oregon', proj:'Screening', text:'crosswalk data pull', week:true, aim:'aim Fri' },
+    { id:5, sec:'others', sub:'Pankeka', proj:'Pankeka', text:'fix TLS on apex', week:true },
+    { id:6, sec:'writing', sub:'Grants', proj:'LEGO grant', text:'application draft', week:true },
+    { id:7, sec:'puc', proj:'PUC-Rio', text:'grade pipeline', week:true, done:true },
+    { id:8, sec:'anova', sub:'anova saude', proj:'educacao', text:'course page copy' },
+    { id:9, sec:'personal', proj:'O-1A', text:'collect letters' },
+    { id:10, sec:'anova', sub:'consulting', proj:'Consulting', text:'first page' }
+  ];
+  var tab = 'today', openSec = {};
+  var main = document.getElementById('main'), sheet = document.getElementById('sheet'), scrim = document.getElementById('scrim');
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function secOf(id){ for (var i=0;i<SECS.length;i++) if (SECS[i].id===id) return SECS[i]; return null; }
+  function task(id){ for (var i=0;i<T.length;i++) if (T[i].id===+id) return T[i]; return null; }
+
+  function rowHtml(t, opts) {
+    opts = opts || {};
+    var sec = secOf(t.sec);
+    var meta = '';
+    if (opts.showSec && sec) meta += '<span class="chip">' + esc(sec.title) + (t.sub ? ' / ' + esc(t.sub) : '') + '</span>';
+    if (t.due) meta += '<span class="chip due">' + esc(t.due) + '</span>';
+    if (t.aim) meta += '<span class="chip aim">' + esc(t.aim) + '</span>';
+    if (t.big) meta += '<span class="chip">BIG</span>';
+    if (t.carried) meta += '<span class="chip carried">carried ×' + t.carried + '</span>';
+    return '<div class="row' + (t.done ? ' done' : '') + '" data-id="' + t.id + '">' +
+      '<div class="swipebg">✓ done</div>' +
+      '<div class="rowin">' +
+        (sec ? '<span class="secdot" style="background:var(' + sec.hue + ')"></span>' : '') +
+        '<span class="box"></span>' +
+        '<span class="rtext">' + (t.proj ? '<span class="rproj">' + esc(t.proj) + '</span> — ' : '') + esc(t.text) +
+          (meta ? '<span class="rmeta">' + meta + '</span>' : '') +
+        '</span>' +
+      '</div></div>';
+  }
+
+  function render() {
+    var h = '';
+    if (tab === 'today') {
+      h += '<div class="tipbar"><b>Tap</b> a row for actions · <b>swipe right</b> to complete · <b>+</b> to add. ' +
+           'Everything else lives one tab away.</div>';
+      var td = T.filter(function(t){ return t.today && !t.done; });
+      h += '<div class="grouphead"><span>Today · ' + td.length + '</span></div>';
+      h += td.length ? td.map(function(t){ return rowHtml(t, {showSec:true}); }).join('')
+                     : '<div class="empty">Nothing picked for today.<br>Open This Week and tap “Today”.</div>';
+      var dn = T.filter(function(t){ return t.done; });
+      if (dn.length) {
+        h += '<div class="grouphead"><span>Done today · ' + dn.length + '</span></div>';
+        h += dn.map(function(t){ return rowHtml(t, {showSec:true}); }).join('');
+      }
+    } else if (tab === 'week') {
+      var wk = T.filter(function(t){ return t.week; });
+      var tdy = wk.filter(function(t){ return t.today && !t.done; });
+      var rest = wk.filter(function(t){ return !(t.today && !t.done); });
+      if (tdy.length) {
+        h += '<div class="grouphead"><span>Today</span></div>' + tdy.map(function(t){ return rowHtml(t, {showSec:true}); }).join('');
+      }
+      h += '<div class="grouphead"><span>Rest of the week</span></div>';
+      h += rest.map(function(t){ return rowHtml(t, {showSec:true}); }).join('');
+    } else if (tab === 'board') {
+      h += '<div class="tipbar">Sections collapse by default — tap one to open. Moving a task is a <b>picker</b>, not a drag.</div>';
+      SECS.forEach(function (sc) {
+        var ts = T.filter(function(t){ return t.sec === sc.id && !t.done; });
+        h += '<div class="seccard' + (openSec[sc.id] ? ' open' : '') + '" data-sec="' + sc.id + '">' +
+          '<div class="sechead"><span class="secdot" style="background:var(' + sc.hue + ')"></span>' +
+          '<h2>' + esc(sc.title) + '</h2><span class="seccount">' + ts.length + '</span><span class="caret">▸</span></div>' +
+          '<div class="secbody">';
+        var loose = ts.filter(function(t){ return !t.sub; });
+        h += loose.map(function(t){ return rowHtml(t); }).join('');
+        sc.subs.forEach(function (sb) {
+          var sts = ts.filter(function(t){ return t.sub === sb; });
+          h += '<div class="subhead"><span>' + esc(sb) + '</span><span>' + sts.length + '</span></div>';
+          h += sts.map(function(t){ return rowHtml(t); }).join('');
+        });
+        h += '</div></div>';
+      });
+    } else {
+      var done = T.filter(function(t){ return t.done; });
+      h += '<div class="grouphead"><span>Archive</span></div>';
+      h += done.length ? done.map(function(t){ return rowHtml(t, {showSec:true}); }).join('')
+                       : '<div class="empty">Nothing completed yet.</div>';
+    }
+    main.innerHTML = h;
+    document.getElementById('s1').textContent = T.filter(function(t){ return t.today && !t.done; }).length;
+    document.getElementById('s2').textContent = T.filter(function(t){ return t.week; }).length;
+    document.getElementById('s3').textContent = T.filter(function(t){ return !t.done; }).length;
+    document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+    document.querySelectorAll('nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+  }
+
+  // ---------- sheets ----------
+  function openSheet(html) { sheet.innerHTML = '<div class="grab"></div>' + html; sheet.classList.add('on'); scrim.classList.add('on'); }
+  function closeSheet() { sheet.classList.remove('on'); scrim.classList.remove('on'); }
+  scrim.addEventListener('click', closeSheet);
+
+  function taskSheet(t) {
+    var sec = secOf(t.sec);
+    openSheet(
+      '<div class="sheettitle">' + (t.proj ? esc(t.proj) + ' — ' : '') + esc(t.text) + '</div>' +
+      '<div class="sheetsub">' + esc(sec ? sec.title : '') + (t.sub ? ' / ' + esc(t.sub) : '') + '</div>' +
+      '<button class="act" data-act="done"><span class="ic">✓</span>' + (t.done ? 'Mark not done' : 'Complete') + '</button>' +
+      '<button class="act" data-act="today"><span class="ic">◉</span>' + (t.today ? 'Remove from Today' : 'Do it today') + '</button>' +
+      '<button class="act" data-act="worked"><span class="ic">▤</span>Worked on it today</button>' +
+      '<button class="act" data-act="edit"><span class="ic">✎</span>Edit text</button>' +
+      '<button class="act" data-act="move"><span class="ic">→</span>Move to…</button>' +
+      '<button class="act danger" data-act="del"><span class="ic">✕</span>Delete</button>'
+    );
+    sheet.dataset.id = t.id;
+  }
+
+  function moveSheet(t) {
+    var h = '<div class="sheettitle">Move</div><div class="sheetsub">Pick a section, then a subsection</div><div class="pickrow">';
+    SECS.forEach(function (sc) {
+      h += '<button class="pick' + (sc.id === t.sec ? ' on' : '') + '" data-mv="' + sc.id + '">' +
+        '<span class="secdot" style="background:var(' + sc.hue + ')"></span>' + esc(sc.title) + '</button>';
+    });
+    h += '</div><div id="submv"></div>';
+    openSheet(h);
+    sheet.dataset.id = t.id;
+    renderSubPicks(t.sec, t);
+  }
+  function renderSubPicks(secId, t) {
+    var sc = secOf(secId), box = document.getElementById('submv');
+    if (!box || !sc) return;
+    var h = '<div class="sheetsub" style="margin-top:14px">' + esc(sc.title) + ' →</div><div class="pickrow">' +
+      '<button class="pick' + (!t.sub ? ' on' : '') + '" data-sub="">top level</button>';
+    sc.subs.forEach(function (sb) {
+      h += '<button class="pick' + (t.sub === sb && t.sec === secId ? ' on' : '') + '" data-sub="' + esc(sb) + '">' + esc(sb) + '</button>';
+    });
+    h += '<button class="pick" data-sub="__new">+ new</button></div>' +
+      '<button class="primary" data-act="mvdone">Move here</button>';
+    box.innerHTML = h;
+    box.dataset.sec = secId;
+  }
+
+  function addSheet() {
+    var h = '<div class="sheettitle">New task</div>' +
+      '<input class="field" id="newtext" placeholder="What needs doing?" autocomplete="off">' +
+      '<div class="sheetsub" style="margin-top:14px">Section</div><div class="pickrow" id="newsecs">';
+    SECS.forEach(function (sc, i) {
+      h += '<button class="pick' + (i === 0 ? ' on' : '') + '" data-newsec="' + sc.id + '">' +
+        '<span class="secdot" style="background:var(' + sc.hue + ')"></span>' + esc(sc.title) + '</button>';
+    });
+    h += '</div><div class="togglerow">' +
+      '<button class="pick on" data-tog="week">★ This week</button>' +
+      '<button class="pick" data-tog="today">◉ Today</button>' +
+      '<button class="pick" data-tog="big">BIG</button>' +
+      '</div><button class="primary" data-act="create">Add task</button>';
+    openSheet(h);
+    setTimeout(function () { var f = document.getElementById('newtext'); if (f) f.focus(); }, 260);
+  }
+
+  // ---------- interactions ----------
+  document.addEventListener('click', function (e) {
+    var tb = e.target.closest('.tab, nav button');
+    if (tb && tb.dataset.tab) { tab = tb.dataset.tab; render(); return; }
+
+    if (e.target.closest('#fab')) { addSheet(); return; }
+
+    var sh = e.target.closest('.sechead');
+    if (sh) { var id = sh.parentNode.dataset.sec; openSec[id] = !openSec[id]; render(); return; }
+
+    var act = e.target.closest('[data-act]');
+    if (act) {
+      var t = task(sheet.dataset.id);
+      var a = act.dataset.act;
+      if (a === 'create') {
+        var txt = (document.getElementById('newtext') || {}).value || '';
+        if (!txt.trim()) return;
+        var secBtn = sheet.querySelector('[data-newsec].on');
+        var nt = { id: Date.now(), sec: secBtn ? secBtn.dataset.newsec : 'others', text: txt.trim() };
+        sheet.querySelectorAll('[data-tog].on').forEach(function (b) { nt[b.dataset.tog] = true; });
+        T.unshift(nt); closeSheet(); render(); flashSync(); return;
+      }
+      if (!t) return;
+      if (a === 'done') { t.done = !t.done; if (t.done) t.today = false; }
+      else if (a === 'today') { t.today = !t.today; if (t.today) t.week = true; }
+      else if (a === 'worked') { t.worked = (t.worked || 0) + 1; }
+      else if (a === 'del') { T = T.filter(function (x) { return x.id !== t.id; }); }
+      else if (a === 'edit') {
+        openSheet('<div class="sheettitle">Edit</div>' +
+          '<input class="field" id="edtext" value="' + esc((t.proj ? t.proj + ' — ' : '') + t.text) + '">' +
+          '<button class="primary" data-act="editdone">Save</button>');
+        sheet.dataset.id = t.id; return;
+      }
+      else if (a === 'editdone') {
+        var v = (document.getElementById('edtext') || {}).value || '';
+        var m = v.split(/\s+—\s+|\s+-\s+/);
+        if (m.length > 1) { t.proj = m[0]; t.text = m.slice(1).join(' — '); } else { t.proj = null; t.text = v; }
+      }
+      else if (a === 'move') { moveSheet(t); return; }
+      else if (a === 'mvdone') {
+        var box = document.getElementById('submv');
+        var sub = sheet.querySelector('[data-sub].on');
+        t.sec = box.dataset.sec;
+        t.sub = sub && sub.dataset.sub && sub.dataset.sub !== '__new' ? sub.dataset.sub : null;
+      }
+      closeSheet(); render(); flashSync(); return;
+    }
+
+    var mv = e.target.closest('[data-mv]');
+    if (mv) {
+      sheet.querySelectorAll('[data-mv]').forEach(function (b) { b.classList.toggle('on', b === mv); });
+      renderSubPicks(mv.dataset.mv, task(sheet.dataset.id) || {});
+      return;
+    }
+    var sb = e.target.closest('[data-sub]');
+    if (sb) { sheet.querySelectorAll('[data-sub]').forEach(function (b) { b.classList.toggle('on', b === sb); }); return; }
+    var ns = e.target.closest('[data-newsec]');
+    if (ns) { sheet.querySelectorAll('[data-newsec]').forEach(function (b) { b.classList.toggle('on', b === ns); }); return; }
+    var tg = e.target.closest('[data-tog]');
+    if (tg) { tg.classList.toggle('on'); return; }
+
+    var row = e.target.closest('.row');
+    if (row) {
+      if (row.classList.contains('swiped')) { row.classList.remove('swiped'); return; }
+      var t2 = task(row.dataset.id);
+      if (t2) taskSheet(t2);
+    }
+  });
+
+  // swipe right = complete
+  var sx = 0, sy = 0, srow = null;
+  document.addEventListener('touchstart', function (e) {
+    srow = e.target.closest ? e.target.closest('.row') : null;
+    if (!srow) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!srow) return;
+    var dx = e.touches[0].clientX - sx, dy = Math.abs(e.touches[0].clientY - sy);
+    if (dy > 26) { srow = null; return; }
+    if (dx > 42) srow.classList.add('swiped');
+    else if (dx < -10) srow.classList.remove('swiped');
+  }, { passive: true });
+  document.addEventListener('touchend', function () {
+    if (srow && srow.classList.contains('swiped')) {
+      var t = task(srow.dataset.id);
+      setTimeout(function () {
+        if (t) { t.done = !t.done; t.today = false; }
+        render(); flashSync();
+      }, 170);
+    }
+    srow = null;
+  });
+
+  function flashSync() {
+    var p = document.getElementById('syncpill');
+    p.textContent = 'saving…';
+    setTimeout(function () { p.textContent = 'synced'; }, 700);
+  }
+
+  document.getElementById('dateline').textContent =
+    new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  render();
+})();
+</script>
+</body>
+</html>
