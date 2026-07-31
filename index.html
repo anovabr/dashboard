@@ -41,6 +41,14 @@
     --h-rewards: #a83f28; --bg-rewards: rgba(242,102,82,0.07);
     --h-other: #3a7860;   --bg-other: rgba(79,148,120,0.10);
     --h-others: #5d6a78; --bg-others: rgba(93,106,120,0.09);
+    --h-ocean: #1f5f8b;   --bg-ocean: rgba(31,95,139,0.09);
+    --h-moss: #55702a;    --bg-moss: rgba(85,112,42,0.10);
+    --h-clay: #9a5b33;    --bg-clay: rgba(154,91,51,0.10);
+    --h-plum: #7c3f6d;    --bg-plum: rgba(124,63,109,0.09);
+    --h-steel: #3f6a72;   --bg-steel: rgba(63,106,114,0.10);
+    --h-berry: #a33350;   --bg-berry: rgba(163,51,80,0.08);
+    --h-indigo: #4a4d95;  --bg-indigo: rgba(74,77,149,0.09);
+    --h-sand: #8a7320;    --bg-sand: rgba(138,115,32,0.11);
     --st-now: #c2402c;
     --st-working: #96690f;
     --st-planning: #6f6494;
@@ -75,6 +83,14 @@
       --h-rewards: #ef9077; --bg-rewards: rgba(239,144,119,0.08);
       --h-other: #7fc39f;   --bg-other: rgba(127,195,159,0.08);
       --h-others: #9aa7b6; --bg-others: rgba(154,167,182,0.09);
+      --h-ocean: #7fb6dd;   --bg-ocean: rgba(127,182,221,0.09);
+      --h-moss: #a9c470;    --bg-moss: rgba(169,196,112,0.09);
+      --h-clay: #e0a07a;    --bg-clay: rgba(224,160,122,0.09);
+      --h-plum: #d193c2;    --bg-plum: rgba(209,147,194,0.09);
+      --h-steel: #8fbcc4;   --bg-steel: rgba(143,188,196,0.09);
+      --h-berry: #e88aa0;   --bg-berry: rgba(232,138,160,0.08);
+      --h-indigo: #9a9de8;  --bg-indigo: rgba(154,157,232,0.09);
+      --h-sand: #d6c06a;    --bg-sand: rgba(214,192,106,0.10);
       --st-now: #ef8a70;
       --st-working: #e2b269;
       --st-planning: #b3a8d6;
@@ -109,6 +125,14 @@
       --h-rewards: #ef9077; --bg-rewards: rgba(239,144,119,0.08);
       --h-other: #7fc39f;   --bg-other: rgba(127,195,159,0.08);
       --h-others: #9aa7b6; --bg-others: rgba(154,167,182,0.09);
+      --h-ocean: #7fb6dd;   --bg-ocean: rgba(127,182,221,0.09);
+      --h-moss: #a9c470;    --bg-moss: rgba(169,196,112,0.09);
+      --h-clay: #e0a07a;    --bg-clay: rgba(224,160,122,0.09);
+      --h-plum: #d193c2;    --bg-plum: rgba(209,147,194,0.09);
+      --h-steel: #8fbcc4;   --bg-steel: rgba(143,188,196,0.09);
+      --h-berry: #e88aa0;   --bg-berry: rgba(232,138,160,0.08);
+      --h-indigo: #9a9de8;  --bg-indigo: rgba(154,157,232,0.09);
+      --h-sand: #d6c06a;    --bg-sand: rgba(214,192,106,0.10);
       --st-now: #ef8a70;
       --st-working: #e2b269;
       --st-planning: #b3a8d6;
@@ -392,6 +416,12 @@
   }
   .card.flashnew { animation: newflash .52s ease 4; }
   .card.seccard > h2 { cursor: grab; }
+  .swrap { padding: 4px 8px 8px; }
+  .swrap .swlbl { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .sws { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+  .sw { width: 20px; height: 20px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  .sw:hover { transform: scale(1.12); }
+  .sw.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--surface) inset; }
   .secdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 8px; opacity: 0; }
   .card:hover .secdel { opacity: .55; }
   .secdel:hover { opacity: 1 !important; color: var(--hard); }
@@ -2151,7 +2181,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
 
   // ---------- rendering ----------
-  var HUES = ['writing', 'rne', 'river', 'other', 'personal', 'others', 'rewards', 'focus'];
+  var HUES = ['writing', 'rne', 'river', 'other', 'personal', 'others', 'rewards', 'focus',
+    'ocean', 'moss', 'clay', 'plum', 'steel', 'berry', 'indigo', 'sand'];
   function removedSet() {
     var out = {};
     ((S && S.removedSections) || []).forEach(function (id) { out[id] = 1; });
@@ -2172,12 +2203,28 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     return out;
   }
   function rebuildSecMeta() {
-    allSections().forEach(function (sc) { SECMETA[sc.id] = sc; });
+    allSections().forEach(function (sc) {
+      if (S && S.secHue && S.secHue[sc.id]) sc.hue = S.secHue[sc.id];
+      SECMETA[sc.id] = sc;
+    });
+  }
+  function freeHue() {
+    var used = {};
+    allSections().forEach(function (sc) { used[sc.hue] = 1; });
+    for (var i = 0; i < HUES.length; i++) if (!used[HUES[i]]) return HUES[i];
+    return HUES[allSections().length % HUES.length];
+  }
+  function setSecHue(id, hue) {
+    S.secHue = S.secHue || {};
+    S.secHue[id] = hue;
+    if (SECMETA[id]) SECMETA[id].hue = hue;
+    logChange('Recolored section: ' + (SECMETA[id] ? SECMETA[id].title : id));
+    scheduleSave(); renderAll();
   }
   function addSection(title) {
     S.customSections = S.customSections || [];
     var id = 'c' + Date.now().toString(36);
-    var hue = HUES[(SEED.sections.length + S.customSections.length) % HUES.length];
+    var hue = freeHue();
     S.customSections.push({ id: id, title: title, hue: hue, groups: [] });
     S.secOrder = secOrder().map(function (sc) { return sc.id; });
     if (S.secOrder.indexOf(id) === -1) S.secOrder.push(id);
@@ -2614,6 +2661,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var rmNow = removedSet();
     S.customSections = (S.customSections || []).filter(function (c) { return !rmNow[c.id]; });
     if (S.secOrder) S.secOrder = S.secOrder.filter(function (id) { return !rmNow[id]; });
+    if (remote.secHue && (remote.savedAt || '') > (S.savedAt || '')) {
+      S.secHue = S.secHue || {};
+      Object.keys(remote.secHue).forEach(function (k) { S.secHue[k] = remote.secHue[k]; });
+    }
     if (remote.folders) {
       S.folders = S.folders || {};
       Object.keys(remote.folders).forEach(function (k) {
@@ -2730,6 +2781,25 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var py = Math.min(y + 4, window.innerHeight - m.offsetHeight - 8);
     m.style.left = Math.max(4, px) + 'px';
     m.style.top = Math.max(4, py) + 'px';
+  }
+  function openSecMenu(sid, x, y) {
+    var cnt = S.tasks.filter(function (t) { return t.sec === sid && t.status !== 'gone'; }).length;
+    var cur = SECMETA[sid] ? SECMETA[sid].hue : '';
+    clearPendMenu();
+    var dm = document.createElement('div');
+    dm.className = 'actmenu'; dm.dataset.level = '1';
+    var sw = '';
+    HUES.forEach(function (h) {
+      sw += '<button class="sw' + (h === cur ? ' on' : '') + '" data-swhue="' + h + '" data-swsec="' + sid +
+        '" style="background:var(--h-' + h + ')" title="' + h + '"></button>';
+    });
+    dm.innerHTML = '<span class="selct">' + esc(SECMETA[sid] ? SECMETA[sid].title : sid) + '</span>' +
+      '<div class="swrap"><div class="swlbl">Color</div><div class="sws">' + sw + '</div></div>' +
+      '<div class="msep"></div>' +
+      '<button class="danger" data-act="secdel2" data-sec="' + sid + '"><span class="mi">🗑️</span><span class="ml">Delete section + ' + cnt + ' task' + (cnt === 1 ? '' : 's') + '</span></button>' +
+      '<div class="msep"></div>' +
+      '<button data-act="seccancel"><span class="mi">↩️</span><span class="ml">Cancel</span></button>';
+    placeMenu(dm, x, y);
   }
   function openRowMenu(li, t, x, y) {
     var m = document.createElement('div');
@@ -3171,6 +3241,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   document.addEventListener('click', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+    var swb = e.target.closest ? e.target.closest('.sw[data-swhue]') : null;
+    if (swb) { var swsec = swb.dataset.swsec; clearPendMenu(); setSecHue(swsec, swb.dataset.swhue); return; }
+
     var act = e.target.closest('.actmenu button');
     if (act && act.dataset.act === 'seccancel') { clearPendMenu(); return; }
     if (act && act.dataset.act === 'secdel2') {
@@ -3350,19 +3423,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
 
     var sdel = e.target.closest('.secdel');
-    if (sdel) {
-      var sid2 = sdel.dataset.secdel;
-      var cnt = S.tasks.filter(function (t) { return t.sec === sid2 && t.status !== 'gone'; }).length;
-      clearPendMenu();
-      var dm = document.createElement('div');
-      dm.className = 'actmenu'; dm.dataset.level = '1';
-      dm.innerHTML = '<span class="selct">' + esc(SECMETA[sid2] ? SECMETA[sid2].title : sid2) + '</span>' +
-        '<button class="danger" data-act="secdel2" data-sec="' + sid2 + '"><span class="mi">🗑️</span><span class="ml">Delete section + ' + cnt + ' task' + (cnt === 1 ? '' : 's') + '</span></button>' +
-        '<div class="msep"></div>' +
-        '<button data-act="seccancel"><span class="mi">↩️</span><span class="ml">Cancel</span></button>';
-      placeMenu(dm, e.clientX, e.clientY);
-      return;
-    }
+    if (sdel) { openSecMenu(sdel.dataset.secdel, e.clientX, e.clientY); return; }
     var dstrip = e.target.closest('.donestrip');
     if (dstrip) {
       S.doneOpen = S.doneOpen || {};
@@ -3524,6 +3585,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
   document.addEventListener('contextmenu', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    var sh2 = e.target.closest ? e.target.closest('.seccard > h2') : null;
+    if (sh2) {
+      var scard = sh2.parentNode;
+      if (scard && scard.dataset.sec) { e.preventDefault(); openSecMenu(scard.dataset.sec, e.clientX, e.clientY); return; }
+    }
     var li = e.target.closest ? e.target.closest('li[data-id]') : null;
     if (!li) return;
     var t = task(li.dataset.id);
