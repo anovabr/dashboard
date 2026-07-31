@@ -264,11 +264,22 @@
   .card.folded > h2::after { content: " ▸"; }
   .card.folded > *:not(h2) { display: none !important; }
   li.dragging { opacity: .45; }
-  .actmenu { position: fixed; z-index: 120; display: flex; flex-direction: column; gap: 1px; min-width: 168px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
-  .actmenu button { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: inherit; font-size: 13px; font-weight: 550; background: transparent; color: var(--ink); border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; text-align: left; white-space: nowrap; }
+  .actmenu { position: fixed; z-index: 120; display: flex; flex-direction: column; gap: 1px; min-width: 210px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 5px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.12); }
+  .actmenu button { display: flex; align-items: center; gap: 10px; font: inherit; font-size: 13.5px; font-weight: 550;
+    background: transparent; color: var(--ink); border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer;
+    text-align: left; white-space: nowrap; }
   .actmenu button:hover { background: var(--bg-focus); color: var(--accent); }
-  .actmenu .sub-arrow { color: var(--muted); font-size: 11px; }
-  .selct { font-size: 11.5px; font-weight: 750; color: var(--muted); padding: 4px 10px 2px; }
+  .actmenu button .mi { width: 19px; flex: none; text-align: center; font-size: 13.5px; line-height: 1; }
+  .actmenu button .ml { flex: 1; }
+  .actmenu button .sub-arrow { color: var(--muted); font-size: 11px; margin-left: 4px; }
+  .actmenu button.danger { color: var(--hard); }
+  .actmenu button.danger:hover { background: rgba(194,64,44,0.10); color: var(--hard); }
+  .actmenu .msep { height: 1px; background: var(--hairline); margin: 4px 6px; }
+  .actmenu .secdotm { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  .selct { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    padding: 6px 10px 4px; }
   .carried { font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase;
     border: 1px solid var(--aim); color: var(--aim); border-radius: 4px; padding: 0 5px; margin-left: 7px; }
   .carried.hot { border-color: var(--hard); color: var(--hard); }
@@ -706,7 +717,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:22 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:23 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2708,7 +2719,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function openRowMenu(li, t, x, y) {
     var m = document.createElement('div');
     m.className = 'actmenu'; m.dataset.ids = t.id; m.dataset.level = '1';
-    m.innerHTML = '<button data-act="undo">not done after all</button><button data-act="del">✕ delete</button>';
+    m.innerHTML = '<button data-act="undo"><span class="mi">↩️</span><span class="ml">Not done after all</span></button>' +
+      '<div class="msep"></div>' +
+      '<button class="danger" data-act="del"><span class="mi">🗑️</span><span class="ml">Delete</span></button>';
     placeMenu(m, x, y);
   }
   function spawnSub(anchor, html, level, ids, tsec) {
@@ -2758,7 +2771,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var one = ids.length === 1 ? task(ids[0]) : null;
     var head = ids.length > 1 ? '<span class="selct">' + ids.length + ' selected</span>' : '';
     var wkd = one && (one.worked || []).indexOf(dayStr()) !== -1;
-    return head + '<button data-act="done">✓ complete</button><button data-act="work">' + (wkd ? 'worked today ✓' : 'worked on it') + '</button><button data-act="focus">' + (one && one.today ? 'Today ✓' : 'Today') + '</button><button data-act="tmr">' + (one && one.tomorrow ? 'Tomorrow ✓' : 'Tomorrow') + '</button><button data-act="move">move<span class="sub-arrow">▸</span></button><button data-act="del">✕ delete</button>';
+    return head +
+      '<button data-act="done"><span class="mi">✅</span><span class="ml">Complete</span></button>' +
+      '<button data-act="work"><span class="mi">🕒</span><span class="ml">' + (wkd ? 'Worked today ✓' : 'Worked on it') + '</span></button>' +
+      '<div class="msep"></div>' +
+      '<button data-act="focus"><span class="mi">🔆</span><span class="ml">' + (one && one.today ? 'Today ✓' : 'Do it today') + '</span></button>' +
+      '<button data-act="tmr"><span class="mi">🌙</span><span class="ml">' + (one && one.tomorrow ? 'Tomorrow ✓' : 'Plan for tomorrow') + '</span></button>' +
+      '<button data-act="move"><span class="mi">📂</span><span class="ml">Move to…</span><span class="sub-arrow">▸</span></button>' +
+      '<div class="msep"></div>' +
+      '<button class="danger" data-act="del"><span class="mi">🗑️</span><span class="ml">Delete</span></button>';
   }
   function openSelMenu(ids, x, y) {
     var m = document.createElement('div');
@@ -2783,11 +2804,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     return out;
   }
   function moveTargetsHtml() {
-    var h = '<button data-act="mvnew">+ new section…</button><button data-act="mv2" data-tgt="week">★ This Week</button>';
+    var h = '<span class="selct">Move to</span>' +
+      '<button data-act="mv2" data-tgt="week"><span class="mi">⭐</span><span class="ml">This Week</span></button>' +
+      '<div class="msep"></div>';
     secOrder().forEach(function (sc) {
       var has = subprojectsOf(sc.id).length;
-      h += '<button data-act="mv2" data-tgt="' + sc.id + '">' + esc(sc.title) + (has ? '<span class="sub-arrow">▸</span>' : '') + '</button>';
+      h += '<button data-act="mv2" data-tgt="' + sc.id + '">' +
+        '<span class="mi"><span class="secdotm" style="background:var(--h-' + sc.hue + ')"></span></span>' +
+        '<span class="ml">' + esc(sc.title) + '</span>' + (has ? '<span class="sub-arrow">▸</span>' : '') + '</button>';
     });
+    h += '<div class="msep"></div><button data-act="mvnew"><span class="mi">➕</span><span class="ml">New section…</span></button>';
     return h;
   }
 
@@ -2889,15 +2915,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var wkd = (t.worked || []).indexOf(dayStr()) !== -1;
     mOpenSheet('<div class="msht">' + (t.proj ? esc(leafOf(t)) + ' — ' : '') + esc(t.text) + '</div>' +
       '<div class="mshs">' + esc(sec ? sec.title : '') + '</div>' +
-      '<button class="mact" data-mact="done"><span class="ic">✓</span>' + (done ? 'Mark not done' : 'Complete') + '</button>' +
+      '<button class="mact" data-mact="done"><span class="ic">✅</span>' + (done ? 'Mark not done' : 'Complete') + '</button>' +
       (done ? '' :
-        '<button class="mact" data-mact="today"><span class="ic">◉</span>' + (t.today ? 'Remove from Today' : 'Do it today') + '</button>' +
-        '<button class="mact" data-mact="tmr"><span class="ic">→</span>' + (t.tomorrow ? 'Unplan tomorrow' : 'Plan for tomorrow') + '</button>' +
-        '<button class="mact" data-mact="week"><span class="ic">★</span>' + (t.week ? 'Unpin from This Week' : 'Pin to This Week') + '</button>' +
-        '<button class="mact" data-mact="worked"><span class="ic">▤</span>' + (wkd ? 'Worked today ✓' : 'Worked on it today') + '</button>' +
-        '<button class="mact" data-mact="edit"><span class="ic">✎</span>Edit text</button>' +
-        '<button class="mact" data-mact="move"><span class="ic">→</span>Move to…</button>') +
-      '<button class="mact danger" data-mact="del"><span class="ic">✕</span>Delete</button>');
+        '<button class="mact" data-mact="today"><span class="ic">🔆</span>' + (t.today ? 'Remove from Today' : 'Do it today') + '</button>' +
+        '<button class="mact" data-mact="tmr"><span class="ic">🌙</span>' + (t.tomorrow ? 'Unplan tomorrow' : 'Plan for tomorrow') + '</button>' +
+        '<button class="mact" data-mact="week"><span class="ic">⭐</span>' + (t.week ? 'Unpin from This Week' : 'Pin to This Week') + '</button>' +
+        '<button class="mact" data-mact="worked"><span class="ic">🕒</span>' + (wkd ? 'Worked today ✓' : 'Worked on it today') + '</button>' +
+        '<button class="mact" data-mact="edit"><span class="ic">✏️</span>Edit text</button>' +
+        '<button class="mact" data-mact="move"><span class="ic">📂</span>Move to…</button>') +
+      '<button class="mact danger" data-mact="del"><span class="ic">🗑️</span>Delete</button>');
     el('msheet').dataset.mid = t.id;
   }
 
@@ -3126,8 +3152,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         if (tgt2 !== 'week') {
           var subs = subprojectsOf(tgt2);
           if (subs.length) {
-            var bs = '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + '</span><button data-act="mv3" data-proj="">top level</button>';
-            subs.forEach(function (sp) { bs += '<button data-act="mv3" data-proj="' + esc(sp.proj) + '">' + esc(sp.leaf) + '</button>'; });
+            var bs = '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + '</span>' +
+              '<button data-act="mv3" data-proj=""><span class="mi">•</span><span class="ml">Top level</span></button>';
+            subs.forEach(function (sp) {
+              bs += '<button data-act="mv3" data-proj="' + esc(sp.proj) + '"><span class="mi">📁</span><span class="ml">' + esc(sp.leaf) + '</span></button>';
+            });
             spawnSub(act, bs, level + 1, menuEl.dataset.ids, tgt2);
             return;
           }
@@ -3263,8 +3292,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var dm = document.createElement('div');
       dm.className = 'actmenu'; dm.dataset.level = '1';
       dm.innerHTML = '<span class="selct">' + esc(SECMETA[sid2] ? SECMETA[sid2].title : sid2) + '</span>' +
-        '<button data-act="secdel2" data-sec="' + sid2 + '">✕ delete section + ' + cnt + ' task' + (cnt === 1 ? '' : 's') + '</button>' +
-        '<button data-act="seccancel">cancel</button>';
+        '<button class="danger" data-act="secdel2" data-sec="' + sid2 + '"><span class="mi">🗑️</span><span class="ml">Delete section + ' + cnt + ' task' + (cnt === 1 ? '' : 's') + '</span></button>' +
+        '<div class="msep"></div>' +
+        '<button data-act="seccancel"><span class="mi">↩️</span><span class="ml">Cancel</span></button>';
       placeMenu(dm, e.clientX, e.clientY);
       return;
     }
