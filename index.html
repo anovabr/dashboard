@@ -731,7 +731,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 19:25 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 21:03 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2843,6 +2843,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     stF.forEach(function (fn) {
       if (!seen[fn]) { seen[fn] = 1; out.push({ leaf: fn, proj: (sec ? sec.title : secId) + '/' + fn }); }
     });
+    ((sec && sec.groups) || []).forEach(function (gn) {
+      if (!seen[gn]) { seen[gn] = 1; out.push({ leaf: gn, grp: gn }); }
+    });
     out.sort(function (a, b) { return a.leaf.toLowerCase() < b.leaf.toLowerCase() ? -1 : 1; });
     return out;
   }
@@ -2981,7 +2984,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var h = '<div class="mshs" style="margin-top:14px">' + esc(sc ? sc.title : secId) + ' →</div><div class="mpicks" id="msubs">' +
       '<button class="mpick' + (!mMoveSub ? ' on' : '') + '" data-msub="">top level</button>';
     subprojectsOf(secId).forEach(function (sp) {
-      h += '<button class="mpick' + (mMoveSub === sp.leaf ? ' on' : '') + '" data-msub="' + esc(sp.leaf) + '">' + esc(sp.leaf) + '</button>';
+      h += '<button class="mpick' + (mMoveSub === sp.leaf ? ' on' : '') + '" data-msub="' + esc(sp.leaf) + '" data-mgrp="' + (sp.grp ? '1' : '') + '">' + esc(sp.leaf) + '</button>';
     });
     h += '</div><button class="mprimary" data-mact="movego">Move here</button>';
     return h;
@@ -3117,7 +3120,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         logChange('Edited: ' + taskLabel(mt));
       } else if (a === 'movego') {
         mt.sec = mMoveSec; delete mt.grp;
-        if (mMoveSub) mt.proj = (SECMETA[mMoveSec] ? SECMETA[mMoveSec].title : mMoveSec) + '/' + mMoveSub;
+        var isGrp = (subprojectsOf(mMoveSec).filter(function (sp) { return sp.leaf === mMoveSub; })[0] || {}).grp;
+        if (mMoveSub && isGrp) mt.grp = mMoveSub;
+        else if (mMoveSub) mt.proj = (SECMETA[mMoveSec] ? SECMETA[mMoveSec].title : mMoveSec) + '/' + mMoveSub;
         logChange('Moved to ' + (SECMETA[mMoveSec] ? SECMETA[mMoveSec].title : mMoveSec) + (mMoveSub ? ' / ' + mMoveSub : '') + ': ' + taskLabel(mt));
       }
       touch(mt); mCloseSheet(); scheduleSave(); renderMobile();
@@ -3212,7 +3217,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
             var bs = '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + '</span>' +
               '<button data-act="mv3" data-proj=""><span class="mi">•</span><span class="ml">Top level</span></button>';
             subs.forEach(function (sp) {
-              bs += '<button data-act="mv3" data-proj="' + esc(sp.proj) + '"><span class="mi">📁</span><span class="ml">' + esc(sp.leaf) + '</span></button>';
+              bs += '<button data-act="mv3" data-proj="' + esc(sp.proj || '') + '" data-grp="' + esc(sp.grp || '') + '">' +
+                '<span class="mi">📁</span><span class="ml">' + esc(sp.leaf) + '</span></button>';
             });
             spawnSub(act, bs, level + 1, menuEl.dataset.ids, tgt2);
             return;
@@ -3251,9 +3257,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         } else if (a === 'mv3') {
           var tsec = menuEl.dataset.tsec;
           mt.sec = tsec; delete mt.grp;
-          var np = act.dataset.proj;
-          if (np) mt.proj = np;
-          logChange('Moved to ' + (SECMETA[tsec] ? SECMETA[tsec].title : tsec) + (np ? ' / ' + np.split('/').pop() : '') + ': ' + taskLabel(mt));
+          var np = act.dataset.proj, ng = act.dataset.grp;
+          if (ng) mt.grp = ng;
+          else if (np) mt.proj = np;
+          logChange('Moved to ' + (SECMETA[tsec] ? SECMETA[tsec].title : tsec) +
+            (ng ? ' / ' + ng : (np ? ' / ' + np.split('/').pop() : '')) + ': ' + taskLabel(mt));
         }
         touch(mt);
       });
