@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — desktop redesign mockup</title>
 <style>
+  :root[data-theme="dark"] { color-scheme: dark; }
+  :root[data-theme="light"] { color-scheme: light; }
   :root {
     color-scheme: light;
     --page:#eef2f1; --surface:#fff; --raise:#f7faf9; --ink:#161b26; --secondary:#3d4453; --muted:#6b7280;
@@ -15,11 +17,15 @@
     --r:12px;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --page:#101318; --surface:#191d24; --raise:#1f242c; --ink:#eef0f4; --secondary:#c3c8d2; --muted:#8b909d;
+    :root:where(:not([data-theme="light"])) { --page:#101318; --surface:#191d24; --raise:#1f242c; --ink:#eef0f4; --secondary:#c3c8d2; --muted:#8b909d;
       --hairline:#272c35; --border:rgba(255,255,255,.09); --accent:#7cc6b8; --accent-soft:rgba(124,198,184,.10);
       --hard:#ef8a70; --aim:#b3a8d6; --good:#7fc39f; --warn:#e2b269; --track:#2a2f38;
       --shadow:0 1px 2px rgba(0,0,0,.4); }
   }
+  :root[data-theme="dark"] { --page:#101318; --surface:#191d24; --raise:#1f242c; --ink:#eef0f4; --secondary:#c3c8d2; --muted:#8b909d;
+      --hairline:#272c35; --border:rgba(255,255,255,.09); --accent:#7cc6b8; --accent-soft:rgba(124,198,184,.10);
+      --hard:#ef8a70; --aim:#b3a8d6; --good:#7fc39f; --warn:#e2b269; --track:#2a2f38;
+      --shadow:0 1px 2px rgba(0,0,0,.4); }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--page); color:var(--ink);
     font-size:14.5px; line-height:1.5; }
@@ -179,6 +185,7 @@
   <div class="search"><span class="mag">⌕</span><input id="q" placeholder="Search tasks, projects…  (/)"></div>
   <div class="topact">
     <span class="synced"><i></i>synced 9:41</span>
+    <button class="gbtn" id="theme" title="light / dark / auto">◐ auto</button>
     <button class="gbtn" id="foldall">fold all</button>
     <button class="gbtn">⋯</button>
     <button class="gbtn primary" id="addbtn">+ Add task <span style="opacity:.7;font-weight:600">N</span></button>
@@ -511,6 +518,20 @@
     var pc = e.target.closest('.pchip');
     if (pc) { pc.classList.toggle('on'); return; }
   });
+
+  var themeMode = 'auto';
+  function applyTheme() {
+    if (themeMode === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', themeMode);
+    $('theme').textContent = (themeMode === 'auto' ? '◐ auto' : themeMode === 'dark' ? '☾ dark' : '☀ light');
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#theme')) return;
+    var order = ['auto', 'light', 'dark'];
+    themeMode = order[(order.indexOf(themeMode) + 1) % 3];
+    applyTheme();
+  });
+  applyTheme();
 
   $('dateline').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
   render();
