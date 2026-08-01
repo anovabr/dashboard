@@ -444,6 +444,11 @@
   .card.flashnew { animation: newflash .52s ease 4; }
   .card.seccard > h2 { cursor: grab; display: flex; align-items: center; }
   .card.seccard > h2 .loadwrap { flex: none; }
+  .secfold { border: 0; background: transparent; cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px;
+    margin-left: 8px; color: var(--muted); opacity: .45; }
+  .card:hover .secfold { opacity: .8; }
+  .secfold:hover { opacity: 1 !important; color: var(--accent); }
+  .grouphead { cursor: pointer; }
   .seccolor { width: 13px; height: 13px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.14); padding: 0;
     cursor: pointer; margin-left: 8px; flex: none; opacity: .85; }
   .seccolor:hover { opacity: 1; transform: scale(1.15); box-shadow: 0 0 0 3px var(--hue-bg); }
@@ -831,7 +836,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 20:38 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 20:42 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2300,6 +2305,15 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var i = fl.indexOf(name);
     if (i !== -1) fl.splice(i, 1);
   }
+  function subNamesOf(sec) {
+    if (sec.groups && sec.groups.length) return sec.groups.slice();
+    return subprojectsOf(sec.id).map(function (sp) { return sp.leaf; });
+  }
+  function allSubFolded(sec) {
+    var names = subNamesOf(sec);
+    if (!names.length) return false;
+    return names.every(function (n) { return S.subFolded && S.subFolded[sec.id + '/' + n]; });
+  }
   function applyDaySplit() {
     var dc = el('daycols');
     if (!dc) return;
@@ -2514,14 +2528,20 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       html += '<h2>' + esc(sec.title) +
         '<span class="loadwrap"><span class="loadbar"><i style="width:' + (allN ? Math.min(100, Math.round(wkN / allN * 100)) : 0) +
         '%;background:var(--h-' + sec.hue + ')"></i></span>' + allN + '</span>' +
+        (subNamesOf(sec).length ? '<button class="secfold" data-secfold="' + sec.id + '" title="fold / unfold this section\u2019s subsections">' +
+          (allSubFolded(sec) ? '\u2913' : '\u2912') + '</button>' : '') +
         '<button class="seccolor" data-seccolor="' + sec.id + '" style="background:var(--h-' + sec.hue + ')" title="change section color"></button>' +
         noteBtn(sec.id, sec.title) +
         '<button class="secdel" data-secdel="' + sec.id + '" title="delete section and its tasks">✕</button></h2>';
       if (sec.groups && sec.groups.length) {
         sec.groups.forEach(function (g) {
           var gts = ts.filter(function (t) { return (t.grp || sec.groups[0]) === g; });
-          html += '<div class="micro grouphead" data-sec="' + sec.id + '" data-grp="' + esc(g) + '">' + esc(g) +
-            noteBtn(sec.id + '/' + g, sec.title + ' / ' + g) + '</div><ul class="rows">' + gts.map(function (t) { return rowHtml(t); }).join('') + '</ul>';
+          var gF = S.subFolded && S.subFolded[sec.id + '/' + g];
+          html += '<div class="micro grouphead" data-sec="' + sec.id + '" data-grp="' + esc(g) + '" title="click to fold/unfold">' +
+            (gF ? '▸ ' : '▾ ') + esc(g) +
+            (gF && gts.length ? '<span class="subct">' + gts.length + '</span>' : '') +
+            noteBtn(sec.id + '/' + g, sec.title + ' / ' + g) + '</div>' +
+            (gF ? '' : '<ul class="rows">' + gts.map(function (t) { return rowHtml(t); }).join('') + '</ul>');
         });
       } else {
         var empty = '<li class="waiting"><span class="txt">Nothing here right now.</span></li>';
@@ -3564,7 +3584,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var onBox = !!(e.target.closest && e.target.closest('li[data-id]') && e.target.closest('.box'));
     if (!onBox && document.querySelector('.actmenu')) clearPendMenu();
 
-    var hh = (e.target.closest('.secdel') || e.target.closest('.notebtn') || e.target.closest('.seccolor')) ? null : e.target.closest('h2');
+    var hh = (e.target.closest('.secdel') || e.target.closest('.notebtn') || e.target.closest('.seccolor') || e.target.closest('.secfold')) ? null : e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
       var card = hh.parentNode;
       var fkey = card.dataset.sec || (card.id === 'sec-week' ? 'week' : null);
@@ -3657,6 +3677,26 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (arch) { arch.open = true; arch.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       return;
     }
+    var sfb = e.target.closest('.secfold');
+    if (sfb) {
+      var sfid = sfb.dataset.secfold, sfSec = SECMETA[sfid];
+      var names = subNamesOf(sfSec), close = !allSubFolded(sfSec);
+      S.subFolded = S.subFolded || {};
+      names.forEach(function (n) {
+        if (close) S.subFolded[sfid + '/' + n] = true;
+        else delete S.subFolded[sfid + '/' + n];
+      });
+      scheduleSave(); renderAll();
+      return;
+    }
+    var ghc = e.target.closest('.grouphead');
+    if (ghc && !e.target.closest('.notebtn')) {
+      S.subFolded = S.subFolded || {};
+      var gk = ghc.dataset.sec + '/' + ghc.dataset.grp;
+      S.subFolded[gk] = !S.subFolded[gk];
+      scheduleSave(); renderAll();
+      return;
+    }
     var shc = e.target.closest('.subhead');
     if (shc && !e.target.closest('.subdel')) {
       S.subFolded = S.subFolded || {};
@@ -3702,7 +3742,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         S.folded.week = true;
         secs.forEach(function (sc) {
           S.folded[sc.id] = true;
-          ((S.folders && S.folders[sc.id]) || []).forEach(function (fn) { S.subFolded[sc.id + '/' + fn] = true; });
+          subNamesOf(sc).forEach(function (fn) { S.subFolded[sc.id + '/' + fn] = true; });
         });
       } else {
         S.folded = {};
