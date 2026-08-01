@@ -312,6 +312,22 @@
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
   ul.rows li.tdyrow { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 9px; border-top-color: transparent; }
+  .daycols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 4px 0 6px; }
+  @media (max-width: 1080px) { .daycols { grid-template-columns: 1fr; gap: 6px; } }
+  .daycol { border-radius: 10px; padding: 6px 10px 4px; }
+  .daycol.tdy { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); }
+  .daycol.tmr { background: rgba(111,100,148,0.10); box-shadow: inset 3px 0 0 0 var(--aim); }
+  .daycol ul.rows li { border-top-color: rgba(0,0,0,0.06); }
+  .daycol ul.rows li:first-child { border-top: 0; }
+  .daycol .dayempty { font-size: 12.5px; color: var(--muted); font-style: italic; padding: 6px 0 8px; }
+  .dayhdr { display: flex; align-items: center; gap: 8px; padding: 4px 0 4px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+  .dayhdr .dn { font-size: 11px; font-weight: 800; letter-spacing: 0; color: var(--surface);
+    background: var(--accent); border-radius: 20px; padding: 1px 7px; }
+  .dayhdr em { font-style: normal; font-size: 11px; font-weight: 600; letter-spacing: 0;
+    text-transform: none; color: var(--muted); }
+  .dayhdr.tmr { color: var(--aim); }
+  .dayhdr.tmr .dn { background: var(--aim); }
   ul.rows li.dayhdr { display: flex; align-items: center; gap: 8px; border: 0; padding: 13px 0 5px;
     font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
   ul.rows li.dayhdr:first-child { padding-top: 2px; }
@@ -753,6 +769,10 @@
     <div class="planbar" id="planbar" style="display:none"></div>
     <div class="micro" id="tdyHdr" style="display:none">Today</div>
     <ul class="rows" id="list-tdy"></ul>
+    <div class="daycols" id="daycols">
+      <div class="daycol tmr" id="col-tmr"><div class="dayhdr tmr">Tomorrow<span class="dn" id="tmrN">0</span></div><ul class="rows" id="list-tmr"></ul></div>
+      <div class="daycol tdy" id="col-tdy"><div class="dayhdr tdy">Today<span class="dn" id="tdyN">0</span></div><ul class="rows" id="list-today"></ul></div>
+    </div>
     <ul class="rows" id="list-week"></ul>
     <div class="addrow" data-add="week">+ add task</div>
     <div class="addrow" id="clearDone" style="display:none">✓ archive completed from view</div>
@@ -789,7 +809,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 03:42 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 06:49 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2388,17 +2408,17 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('list-tdy').innerHTML = '';
     var tmr = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
     var rest2 = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
-    var wkHtml = (tdy.length ? '<li class="dayhdr tdy">Today<span class="dn">' + tdy.length + '</span></li>' : '') +
-      tdy.map(function (t, i) {
-        return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tdyrow' + (i === tdy.length - 1 && !tmr.length ? ' tdylast' : '') + ' ');
-      }).join('') +
-      (tmr.length ? '<li class="dayhdr tmr">Tomorrow<span class="dn">' + tmr.length + '</span><em>becomes Today automatically</em></li>' : '') +
-      tmr.map(function (t, i) {
-        return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tmrrow' + (i === tmr.length - 1 ? ' tdylast' : '') + ' ');
-      }).join('') +
-      ((tdy.length || tmr.length) && rest2.length ? '<li class="dayhdr rest">Rest of the week<span class="dn">' + rest2.length + '</span></li>' : '') +
+    el('daycols').style.display = (tdy.length || tmr.length) ? '' : 'none';
+    el('tdyN').textContent = tdy.length;
+    el('tmrN').textContent = tmr.length;
+    el('list-today').innerHTML = tdy.map(function (t) { return rowHtml(t, { secMark: true }); }).join('')
+      || '<li class="dayempty">Nothing picked for today.</li>';
+    el('list-tmr').innerHTML = tmr.map(function (t) { return rowHtml(t, { secMark: true }); }).join('')
+      || '<li class="dayempty">Nothing planned yet — right-click a task and choose “Tomorrow”.</li>';
+    var wkHtml = ((tdy.length || tmr.length) && rest2.length ? '<li class="dayhdr rest">Rest of the week<span class="dn">' + rest2.length + '</span></li>' : '') +
       rest2.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
-    el('list-week').innerHTML = wkHtml || '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>';
+    el('list-week').innerHTML = wkHtml ||
+      ((tdy.length || tmr.length) ? '' : '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>');
     var planEl = el('planbar');
     if (planEl) {
       if (tmr.length) {
