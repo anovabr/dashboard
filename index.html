@@ -314,8 +314,13 @@
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
   ul.rows li.tdyrow { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 9px; border-top-color: transparent; }
-  .daycols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 4px 0 6px; }
-  @media (max-width: 1080px) { .daycols { grid-template-columns: 1fr; gap: 6px; } }
+  .daycols { display: grid; grid-template-columns: 70% 10px 1fr; gap: 6px; margin: 4px 0 6px; align-items: start; }
+  @media (max-width: 1080px) { .daycols { grid-template-columns: 1fr !important; gap: 6px; } .daysplit { display: none; } }
+  .daysplit { align-self: stretch; min-height: 40px; cursor: col-resize; border-radius: 3px; position: relative; }
+  .daysplit::before { content: ""; position: absolute; left: 50%; top: 6px; bottom: 6px; width: 2px;
+    transform: translateX(-50%); background: var(--border); border-radius: 2px; transition: background .15s, width .15s; }
+  .daysplit:hover::before, body.splitting .daysplit::before { background: var(--accent); width: 3px; }
+  body.splitting { cursor: col-resize; user-select: none; }
   .daycol { border-radius: 10px; padding: 6px 10px 4px; }
   .daycol.tdy { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); }
   .daycol.tmr { background: rgba(111,100,148,0.10); box-shadow: inset 3px 0 0 0 var(--aim); }
@@ -788,6 +793,7 @@
     <ul class="rows" id="list-tdy"></ul>
     <div class="daycols" id="daycols">
       <div class="daycol tdy" id="col-tdy"><div class="dayhdr tdy">Today<span class="dn" id="tdyN">0</span></div><ul class="rows" id="list-today"></ul></div>
+      <div class="daysplit" id="daysplit" title="drag to resize · double-click to reset"></div>
       <div class="daycol tmr" id="col-tmr"><div class="dayhdr tmr">Tomorrow<span class="dn" id="tmrN">0</span></div><ul class="rows" id="list-tmr"></ul></div>
     </div>
     <ul class="rows" id="list-week"></ul>
@@ -825,7 +831,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 20:04 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 20:38 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2294,6 +2300,35 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var i = fl.indexOf(name);
     if (i !== -1) fl.splice(i, 1);
   }
+  function applyDaySplit() {
+    var dc = el('daycols');
+    if (!dc) return;
+    var pct = Math.min(85, Math.max(25, (S && S.daySplit) || 70));
+    dc.style.gridTemplateColumns = pct + '% 10px 1fr';
+  }
+  function initDaySplit() {
+    var h = el('daysplit'), dc = el('daycols');
+    if (!h || !dc) return;
+    h.addEventListener('dblclick', function () { S.daySplit = 70; applyDaySplit(); scheduleSave(); });
+    h.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      document.body.classList.add('splitting');
+      var move = function (ev) {
+        var r = dc.getBoundingClientRect();
+        var pct = Math.round((ev.clientX - r.left) / r.width * 100);
+        S.daySplit = Math.min(85, Math.max(25, pct));
+        applyDaySplit();
+      };
+      var up = function () {
+        document.body.classList.remove('splitting');
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        scheduleSave();
+      };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
   function noteGet(key) { return (S.notes && S.notes[key]) || ''; }
   function noteBtn(key, label) {
     var has = noteGet(key) ? ' has' : '';
@@ -2441,6 +2476,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var tmr = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
     var rest2 = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
     el('daycols').style.display = (tdy.length || tmr.length) ? '' : 'none';
+    applyDaySplit();
     el('tdyN').textContent = tdy.length;
     el('tmrN').textContent = tmr.length;
     el('list-today').innerHTML = tdy.map(function (t) { return rowHtml(t, { secMark: true }); }).join('')
@@ -2791,6 +2827,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       S.notes = S.notes || {};
       Object.keys(remote.notes).forEach(function (k) { S.notes[k] = remote.notes[k]; });
     }
+    if (remote.daySplit && (remote.savedAt || '') > (S.savedAt || '')) S.daySplit = remote.daySplit;
     if (remote.secHue && (remote.savedAt || '') > (S.savedAt || '')) {
       S.secHue = S.secHue || {};
       Object.keys(remote.secHue).forEach(function (k) { S.secHue[k] = remote.secHue[k]; });
@@ -4214,6 +4251,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       renderModePill(verified);
       applyTheme();
       applyLayout();
+      initDaySplit();
       setSyncStatus('sync');
       renderDiag();
       rolloverToday();
