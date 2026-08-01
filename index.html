@@ -825,7 +825,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 19:03 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 20:04 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2278,6 +2278,22 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     for (var i = 0; i < HUES.length; i++) if (!used[HUES[i]]) return HUES[i];
     return HUES[allSections().length % HUES.length];
   }
+  function foldKey(sec, name) { return sec + '/' + name; }
+  function foldRemoved(sec, name) {
+    return ((S && S.removedFolders) || []).indexOf(foldKey(sec, name)) !== -1;
+  }
+  function reviveFold(sec, name) {
+    if (!S.removedFolders) return;
+    var i = S.removedFolders.indexOf(foldKey(sec, name));
+    if (i !== -1) S.removedFolders.splice(i, 1);
+  }
+  function killFold(sec, name) {
+    S.removedFolders = S.removedFolders || [];
+    if (S.removedFolders.indexOf(foldKey(sec, name)) === -1) S.removedFolders.push(foldKey(sec, name));
+    var fl = (S.folders && S.folders[sec]) || [];
+    var i = fl.indexOf(name);
+    if (i !== -1) fl.splice(i, 1);
+  }
   function noteGet(key) { return (S.notes && S.notes[key]) || ''; }
   function noteBtn(key, label) {
     var has = noteGet(key) ? ' has' : '';
@@ -2481,8 +2497,11 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         });
         S.folders = S.folders || {};
         var ord = S.folders[sec.id] = S.folders[sec.id] || [];
-        Object.keys(byP).forEach(function (lf) { if (ord.indexOf(lf) === -1) ord.push(lf); });
-        var pn = ord.slice();
+        Object.keys(byP).forEach(function (lf) {
+          reviveFold(sec.id, lf);
+          if (ord.indexOf(lf) === -1) ord.push(lf);
+        });
+        var pn = ord.filter(function (fn) { return !foldRemoved(sec.id, fn); });
         pn.forEach(function (fn) {
           if (!byP[fn]) byP[fn] = [];
           if (!pathOf[fn]) pathOf[fn] = sec.title + '/' + fn;
@@ -2492,7 +2511,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         } else {
           if (loose.length) html += '<ul class="rows">' + loose.map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
           pn.forEach(function (p) {
-            var deletable = !byP[p].length;
+            var deletable = true;
             var isF = S.subFolded && S.subFolded[sec.id + '/' + p];
             html += '<div class="micro subhead" draggable="true" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="click to fold/unfold · drag to reorder or move">' +
               (isF ? '▸ ' : '▾ ') + esc(p) +
@@ -2776,6 +2795,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       S.secHue = S.secHue || {};
       Object.keys(remote.secHue).forEach(function (k) { S.secHue[k] = remote.secHue[k]; });
     }
+    S.removedFolders = S.removedFolders || [];
+    (remote.removedFolders || []).forEach(function (k) {
+      if (S.removedFolders.indexOf(k) === -1) S.removedFolders.push(k);
+    });
     if (remote.folders) {
       S.folders = S.folders || {};
       Object.keys(remote.folders).forEach(function (k) {
@@ -2783,6 +2806,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         (remote.folders[k] || []).forEach(function (n) { if (loc.indexOf(n) === -1) loc.push(n); });
       });
     }
+    Object.keys(S.folders || {}).forEach(function (k) {
+      S.folders[k] = S.folders[k].filter(function (n) { return !foldRemoved(k, n); });
+    });
     if ((remote.savedAt || '') > (S.savedAt || '')) {
       if (remote.nextUp) S.nextUp = remote.nextUp;
       if (remote.theme) S.theme = remote.theme;
@@ -2791,6 +2817,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (remote.folded) S.folded = remote.folded;
     }
   }
+  window.__dbg = { merge: function (r) { mergeRemote(r); renderAll(); }, state: function () { return S; } };
   var syncing = false;
   function doSync(auto) {
     var tok = getToken(), pw = getPw();
@@ -3032,6 +3059,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     var stF = (S.folders && S.folders[secId]) || [];
     stF.forEach(function (fn) {
+      if (foldRemoved(secId, fn)) return;
       if (!seen[fn]) { seen[fn] = 1; out.push({ leaf: fn, proj: (sec ? sec.title : secId) + '/' + fn }); }
     });
     ((sec && sec.groups) || []).forEach(function (gn) {
@@ -3382,6 +3410,23 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
     var act = e.target.closest('.actmenu button');
     if (act && act.dataset.act === 'seccancel') { clearPendMenu(); return; }
+    if (act && (act.dataset.act === 'folddrop' || act.dataset.act === 'foldkill')) {
+      var fsec3 = act.dataset.sec, fname3 = act.dataset.fold, kill = act.dataset.act === 'foldkill';
+      pushUndo();
+      var n3 = 0;
+      S.tasks.forEach(function (t) {
+        if (t.sec !== fsec3 || t.status === 'gone' || !t.proj) return;
+        if (String(t.proj).split('/').pop().trim() !== fname3) return;
+        if (kill) t.status = 'gone'; else delete t.proj;
+        touch(t); n3++;
+      });
+      killFold(fsec3, fname3);
+      logChange((kill ? 'Deleted subsection ' : 'Removed subsection ') + fname3 + ' (' + n3 + ' task' + (n3 === 1 ? '' : 's') +
+        (kill ? ' deleted)' : ' kept)'));
+      clearPendMenu();
+      scheduleSave(); renderAll();
+      return;
+    }
     if (act && act.dataset.act === 'secdel2') {
       var did = act.dataset.sec;
       pushUndo();
@@ -3585,9 +3630,30 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
     var sd = e.target.closest('.subdel');
     if (sd) {
-      var fl = (S.folders && S.folders[sd.dataset.sec]) || [];
-      var fi = fl.indexOf(sd.dataset.fold);
-      if (fi !== -1) { fl.splice(fi, 1); logChange('Removed subsection: ' + sd.dataset.fold); scheduleSave(); renderAll(); }
+      var fsec2 = sd.dataset.sec, fname2 = sd.dataset.fold;
+      var inside = S.tasks.filter(function (t) {
+        return t.sec === fsec2 && t.status !== 'gone' && t.proj &&
+          String(t.proj).split('/').pop().trim() === fname2;
+      });
+      if (!inside.length) {
+        pushUndo();
+        killFold(fsec2, fname2);
+        logChange('Removed subsection: ' + fname2);
+        scheduleSave(); renderAll();
+        return;
+      }
+      clearPendMenu();
+      var fm = document.createElement('div');
+      fm.className = 'actmenu'; fm.dataset.level = '1';
+      fm.innerHTML = '<span class="selct">' + esc(fname2) + '</span>' +
+        '<button data-act="folddrop" data-sec="' + esc(fsec2) + '" data-fold="' + esc(fname2) + '">' +
+        '<span class="mi">\u{1F4C2}</span><span class="ml">Remove subsection, keep ' + inside.length + ' task' + (inside.length === 1 ? '' : 's') + '</span></button>' +
+        '<div class="msep"></div>' +
+        '<button class="danger" data-act="foldkill" data-sec="' + esc(fsec2) + '" data-fold="' + esc(fname2) + '">' +
+        '<span class="mi">\u{1F5D1}\uFE0F</span><span class="ml">Delete subsection + ' + inside.length + ' task' + (inside.length === 1 ? '' : 's') + '</span></button>' +
+        '<div class="msep"></div>' +
+        '<button data-act="seccancel"><span class="mi">\u21A9\uFE0F</span><span class="ml">Cancel</span></button>';
+      placeMenu(fm, e.clientX, e.clientY);
       return;
     }
     if (e.target.id === 'foldAllBtn') {
@@ -3645,6 +3711,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           var nm = finp.value.trim();
           S.folders = S.folders || {};
           S.folders[fsec] = S.folders[fsec] || [];
+          reviveFold(fsec, nm);
           if (S.folders[fsec].indexOf(nm) === -1) S.folders[fsec].push(nm);
           logChange('Created subsection ' + nm + ' in ' + (SECMETA[fsec] ? SECMETA[fsec].title : fsec));
           scheduleSave(); renderAll();
@@ -3906,6 +3973,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
     if (si !== -1) srcOrd.splice(si, 1);
     S.folders[destSec] = S.folders[destSec] || [];
+    reviveFold(destSec, src.name);
     if (S.folders[destSec].indexOf(src.name) === -1) S.folders[destSec].push(src.name);
     logChange('Moved subsection ' + src.name + ' (' + moved + ' task' + (moved === 1 ? '' : 's') + ') to ' + destTitle);
     scheduleSave(); renderAll();
