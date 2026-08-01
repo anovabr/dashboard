@@ -478,6 +478,8 @@
   .micro.drophint::after { content: " drop here"; font-size: 9.5px; letter-spacing: .1em; opacity: .8; margin-left: 6px; }
   #sec-week.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
   .card.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; background-color: var(--bg-focus); }
+  .seccard.drophint > h2::after { content: " — drop here for no subsection"; font-size: 10px; font-weight: 700;
+    letter-spacing: .06em; color: var(--accent); text-transform: none; margin-left: 6px; }
 
 
   details.mini { margin: 0 2px 6px; }
@@ -823,7 +825,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 18:56 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 19:03 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2592,18 +2594,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function dropDest(node) {
     if (!node || !node.closest) return null;
     var head = node.closest('.subhead');
-    if (head) return { sec: head.dataset.sec, fold: head.dataset.fold };
+    if (head) return { sec: head.dataset.sec, fold: head.dataset.fold, root: false };
     var ghead = node.closest('.grouphead');
-    if (ghead) return { sec: ghead.dataset.sec, grp: ghead.dataset.grp };
+    if (ghead) return { sec: ghead.dataset.sec, grp: ghead.dataset.grp, root: false };
     if (node.closest('#sec-week')) return { week: true };
     var card = node.closest('.card[data-sec]');
     if (!card) return null;
-    var d = { sec: card.dataset.sec, fold: null, grp: null };
+    var d = { sec: card.dataset.sec, fold: null, grp: null, root: true };
     var li = node.closest('li[data-id]');
     if (li && li.parentNode) {
       var p = li.parentNode.previousElementSibling;
       while (p && !(p.classList && p.classList.contains('micro'))) p = p.previousElementSibling;
       if (p) {
+        d.root = false;
         if (p.classList.contains('subhead')) d.fold = p.dataset.fold;
         else d.grp = p.dataset.grp || p.textContent.trim();
       }
@@ -3421,7 +3424,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           var subs = subprojectsOf(tgt2);
           if (subs.length) {
             var bs = '<span class="selct">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + '</span>' +
-              '<button data-act="mv3" data-proj=""><span class="mi">•</span><span class="ml">Top level</span></button>';
+              '<button data-act="mv3" data-proj=""><span class="mi">📂</span><span class="ml">' + esc(SECMETA[tgt2] ? SECMETA[tgt2].title : tgt2) + ' (no subsection)</span></button>' +
+              '<div class="msep"></div>';
             subs.forEach(function (sp) {
               bs += '<button data-act="mv3" data-proj="' + esc(sp.proj || '') + '" data-grp="' + esc(sp.grp || '') + '">' +
                 '<span class="mi">📁</span><span class="ml">' + esc(sp.leaf) + '</span></button>';
@@ -3459,13 +3463,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         } else if (a === 'mv2') {
           var tgt = act.dataset.tgt;
           if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
-          else { mt.sec = tgt; delete mt.grp; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
+          else { mt.sec = tgt; delete mt.grp; delete mt.proj; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
         } else if (a === 'mv3') {
           var tsec = menuEl.dataset.tsec;
           mt.sec = tsec; delete mt.grp;
           var np = act.dataset.proj, ng = act.dataset.grp;
           if (ng) mt.grp = ng;
           else if (np) mt.proj = np;
+          else delete mt.proj;
           logChange('Moved to ' + (SECMETA[tsec] ? SECMETA[tsec].title : tsec) +
             (ng ? ' / ' + ng : (np ? ' / ' + np.split('/').pop() : '')) + ': ' + taskLabel(mt));
         }
@@ -3804,7 +3809,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (!dst) return;
     var t0 = task(dragId);
     if (!t0) return;
-    if (dst.week ? t0.week : (dst.sec === t0.sec && !dst.fold && !dst.grp)) return;
+    if (dst.week ? t0.week
+      : (dst.sec === t0.sec && !dst.fold && !dst.grp && !(dst.root && (t0.proj || t0.grp)))) return;
     e.preventDefault();
     var hintEl = e.target.closest('.subhead') || e.target.closest('.grouphead');
     if (!hintEl) {
@@ -3848,7 +3854,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         mt2.week = true;
         logChange('Pinned to This Week: ' + taskLabel(mt2));
       } else {
-        if (dst2.sec === mt2.sec && !dst2.fold && !dst2.grp) return;
+        if (dst2.sec === mt2.sec && !dst2.fold && !dst2.grp && !(dst2.root && (mt2.proj || mt2.grp))) return;
         pushUndo();
         mt2.sec = dst2.sec;
         if (dst2.fold) {
@@ -3856,12 +3862,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           delete mt2.grp;
         } else if (dst2.grp) {
           mt2.grp = dst2.grp;
+          delete mt2.proj;
         } else {
           delete mt2.grp;
+          delete mt2.proj;
         }
         if (dst2.ord) mt2.ord = dst2.ord - 1;
         logChange('Moved to ' + (SECMETA[dst2.sec] ? SECMETA[dst2.sec].title : dst2.sec) +
-          (dst2.fold ? ' / ' + dst2.fold : (dst2.grp ? ' / ' + dst2.grp : '')) + ': ' + taskLabel(mt2));
+          (dst2.fold ? ' / ' + dst2.fold : (dst2.grp ? ' / ' + dst2.grp : ' (no subsection)')) + ': ' + taskLabel(mt2));
       }
       touch(mt2);
       dragId = null;
