@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Card design — options</title>
+<style>
+:root{
+  --page:#f6f5f2; --surface:#fff; --ink:#1b2130; --secondary:#4a5266; --muted:#666b7a;
+  --border:#e3e0da; --track:#eceae5; --accent:#14544f; --bg-focus:rgba(20,84,79,.06);
+  --hard:#c2402c; --aim:#6f6494; --good:#3f7d61;
+  --h-writing:#b03352; --bg-writing:rgba(201,58,92,.07);
+  --h-anova:#8f6312; --bg-anova:rgba(245,180,92,.13);
+  --h-puc:#3a7860; --bg-puc:rgba(79,148,120,.10);
+}
+@media (prefers-color-scheme: dark){:root{
+  --page:#14161b; --surface:#1c1f26; --ink:#e8e9ec; --secondary:#b3b7c0; --muted:#8a90a0;
+  --border:#2c3039; --track:#2a2e37; --accent:#7cc6b8; --bg-focus:rgba(124,198,184,.08);
+  --hard:#e5806c; --aim:#b3a8d6; --good:#7fc39f;
+  --h-writing:#e58aa2; --bg-writing:rgba(229,138,162,.09);
+  --h-anova:#e2b269; --bg-anova:rgba(226,178,105,.10);
+  --h-puc:#7fc39f; --bg-puc:rgba(127,195,159,.08);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+  font-family:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;line-height:1.5;padding:30px 26px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:23px;font-weight:800;letter-spacing:-.01em;color:var(--accent);margin:0 0 4px}
+.lede{color:var(--secondary);font-size:14.5px;margin:0 0 26px;max-width:70ch}
+.opt{margin:0 0 34px;border-top:1px solid var(--border);padding-top:20px}
+.opt h2{font-size:12px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0 0 3px}
+.opt .why{font-size:14px;color:var(--secondary);margin:0 0 14px;max-width:76ch}
+.opt .why b{color:var(--ink);font-weight:750}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px;align-items:start}
+
+/* ---------- shared card chrome ---------- */
+.card{background:linear-gradient(var(--hue-bg),var(--hue-bg)),var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--hue);border-radius:12px;padding:15px 16px 13px;box-shadow:0 1px 3px rgba(27,33,48,.06)}
+.w{--hue:var(--h-writing);--hue-bg:var(--bg-writing)}
+.a{--hue:var(--h-anova);--hue-bg:var(--bg-anova)}
+.p{--hue:var(--h-puc);--hue-bg:var(--bg-puc)}
+.hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.hd .t{font-size:13.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--hue)}
+.hd .t::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;background:var(--hue);margin-right:8px;position:relative;top:0}
+.sp{margin-left:auto}
+.ctl{border:0;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;padding:1px 3px;opacity:.4}
+.card:hover .ctl{opacity:.72}
+.ctl:hover{opacity:1;color:var(--accent)}
+.sw{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.14);background:var(--hue);cursor:pointer}
+.badge{font-size:10.5px;font-weight:800;color:var(--surface);background:var(--hue);border-radius:20px;padding:1px 6px}
+.bar{width:44px;height:4px;border-radius:2px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--hue);border-radius:2px}
+.n{font-size:11.5px;font-weight:750;color:var(--muted)}
+.sub{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;display:flex;align-items:center;gap:6px}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-top:1px solid var(--border);font-size:14.5px}
+li:first-child{border-top:0}
+.box{flex:none;width:15px;height:15px;border-radius:4px;border:1.6px solid var(--border);margin-top:3px}
+.dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--aim);margin-top:8px}
+.txt{flex:1}
+.txt b{font-weight:750}
+.due{font-size:13px;font-weight:750;color:var(--hard);white-space:nowrap}
+.aim{font-size:13px;font-style:italic;color:var(--aim);white-space:nowrap}
+
+/* ---------- A: quiet header ---------- */
+.optA .hd .ctl,.optA .hd .sw{opacity:0}
+.optA .card:hover .hd .ctl,.optA .card:hover .hd .sw{opacity:.75}
+.optA .more{font-size:13px}
+
+/* ---------- B: rail + density ---------- */
+.optB li{padding:5px 0;font-size:14px}
+.optB .sub{margin:11px 0 3px;border-left:2px solid var(--hue);padding-left:8px;border-top:0}
+.optB .card{padding:13px 14px 11px}
+.optB .chip{font-size:10.5px;font-weight:750;letter-spacing:0;text-transform:none;color:var(--secondary);
+  background:var(--track);border-radius:20px;padding:1px 8px}
+
+/* ---------- C: status stripe ---------- */
+.optC li{border-top:0;padding:6px 9px;border-radius:8px;margin-bottom:2px}
+.optC li.now{background:var(--bg-focus);box-shadow:inset 3px 0 0 0 var(--hard)}
+.optC li.work{box-shadow:inset 3px 0 0 0 var(--h-anova)}
+.optC li.wait{box-shadow:inset 3px 0 0 0 var(--border);color:var(--muted);font-style:italic}
+.optC .k{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-right:7px}
+
+/* ---------- D: summary strip ---------- */
+.optD .strip{display:flex;align-items:center;gap:14px;font-size:11.5px;color:var(--muted);
+  background:var(--track);border-radius:8px;padding:5px 10px;margin-bottom:10px}
+.optD .strip b{color:var(--ink);font-weight:800}
+.optD .strip .s{display:flex;align-items:center;gap:5px}
+.note{font-size:13px;color:var(--muted);font-style:italic;margin-top:22px;border-top:1px solid var(--border);padding-top:14px}
+kbd{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--track);border-radius:5px;padding:1px 5px}
+</style></head><body><div class="wrap">
+
+<h1>Card design — four directions</h1>
+<p class="lede">Same content in every card. Only the chrome changes. Pick one, or mix: A and D compose, B and C compose.</p>
+
+<!-- A -->
+<section class="opt optA">
+  <h2>A · Quiet header</h2>
+  <p class="why">Controls are invisible until you hover the card, and the rare ones (rename, delete) move behind <b>⋯</b>. The header keeps only what you read: name, progress, note count. <b>Best if</b> the four icons feel busy now.</p>
+  <div class="grid">
+    <div class="card w">
+      <div class="hd"><span class="t">Writing</span><span class="sp"></span>
+        <span class="bar"><i style="width:35%"></i></span><span class="n">17</span>
+        <button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎<span style="font-size:10px;font-weight:800">3</span></button><button class="ctl more">⋯</button>
+      </div>
+      <div class="sub">▾ Manuscripts</div>
+      <ul>
+        <li><span class="box"></span><span class="txt"><b>classroom climate SEL</b> — Murray — finish and submit</span><span class="due">due this week</span></li>
+        <li><span class="box"></span><span class="txt"><b>Autism &amp; comorbidities</b> — Knowles</span><span class="aim">aim August</span></li>
+        <li><span class="box"></span><span class="txt"><b>ASQ</b> — network analysis</span></li>
+      </ul>
+      <div class="sub">▾ Grants <span class="badge">1</span></div>
+      <ul><li><span class="box"></span><span class="txt"><b>CNPq</b> — application</span></li></ul>
+    </div>
+    <div class="card a">
+      <div class="hd"><span class="t">ANOVA</span><span class="sp"></span>
+        <span class="bar"><i style="width:60%"></i></span><span class="n">12</span>
+        <button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎</button><button class="ctl more">⋯</button>
+      </div>
+      <ul>
+        <li><span class="box"></span><span class="txt">nota fiscal Adriana</span></li>
+        <li><span class="box"></span><span class="txt">contrato com Chris</span></li>
+      </ul>
+      <div class="sub">▾ Anova Saude</div>
+      <ul><li><span class="box"></span><span class="txt">educacao — logo, syllabi, PubMed</span></li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- B -->
+<section class="opt optB">
+  <h2>B · Tighter rows, subsections as rails</h2>
+  <p class="why">Row padding drops from 7px to 5px and the hairline between rows goes away — the subsection gets a coloured rail instead, so the eye groups by block rather than by line. <b>Best if</b> your long cards (Writing, ANOVA) feel like scrolling.</p>
+  <div class="grid">
+    <div class="card w">
+      <div class="hd"><span class="t">Writing</span><span class="sp"></span><span class="bar"><i style="width:35%"></i></span><span class="n">17</span><button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎</button><button class="ctl">✕</button></div>
+      <div class="sub">Manuscripts <span class="chip">12</span></div>
+      <ul>
+        <li><span class="box"></span><span class="txt"><b>classroom climate SEL</b> — Murray</span><span class="due">due this week</span></li>
+        <li><span class="box"></span><span class="txt"><b>Autism &amp; comorbidities</b> — Knowles</span><span class="aim">aim August</span></li>
+        <li><span class="box"></span><span class="txt"><b>ASQ</b> — network analysis</span></li>
+        <li><span class="box"></span><span class="txt"><b>Genios-Brief SEL</b> — sequential design</span></li>
+      </ul>
+      <div class="sub">Grants <span class="chip">1</span></div>
+      <ul><li><span class="box"></span><span class="txt"><b>CNPq</b> — application</span></li></ul>
+    </div>
+    <div class="card p">
+      <div class="hd"><span class="t">PUC-Rio</span><span class="sp"></span><span class="bar"><i style="width:20%"></i></span><span class="n">6</span><button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎<span style="font-size:10px;font-weight:800">2</span></button><button class="ctl">✕</button></div>
+      <div class="sub">Teaching <span class="chip">3</span></div>
+      <ul>
+        <li><span class="box"></span><span class="txt">syllabus — psicometria</span></li>
+        <li><span class="box"></span><span class="txt">grade final</span></li>
+      </ul>
+      <div class="sub">Lab <span class="chip">3</span></div>
+      <ul><li><span class="box"></span><span class="txt">testetea.com.br — DNS</span></li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- C -->
+<section class="opt optC">
+  <h2>C · Status you can see without reading</h2>
+  <p class="why">Each row gets a left stripe by state — red = now, amber = in progress, grey = waiting on someone else — and the coloured dot disappears. <b>Best if</b> you want "what is actually moving" answerable at a glance. Costs a little calm.</p>
+  <div class="grid">
+    <div class="card w">
+      <div class="hd"><span class="t">Writing</span><span class="sp"></span><span class="bar"><i style="width:35%"></i></span><span class="n">17</span><button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎</button><button class="ctl">✕</button></div>
+      <div class="sub">▾ Manuscripts</div>
+      <ul>
+        <li class="now"><span class="box"></span><span class="txt"><b>classroom climate SEL</b> — finish and submit</span><span class="due">due this week</span></li>
+        <li class="work"><span class="box"></span><span class="txt"><b>ASQ</b> — network analysis</span></li>
+        <li class="wait"><span class="box"></span><span class="txt"><span class="k">waiting</span><b>Parenting profiles</b> — editor</span></li>
+        <li><span class="box"></span><span class="txt"><b>Genios-Brief SEL</b> — sequential design</span></li>
+      </ul>
+    </div>
+    <div class="card a">
+      <div class="hd"><span class="t">ANOVA</span><span class="sp"></span><span class="bar"><i style="width:60%"></i></span><span class="n">12</span><button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎</button><button class="ctl">✕</button></div>
+      <ul>
+        <li class="now"><span class="box"></span><span class="txt">nota fiscal Adriana</span><span class="due">today</span></li>
+        <li class="wait"><span class="box"></span><span class="txt"><span class="k">waiting</span>contrato com Chris</span></li>
+        <li class="work"><span class="box"></span><span class="txt">vídeo regulamentação</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- D -->
+<section class="opt optD">
+  <h2>D · One-line summary strip</h2>
+  <p class="why">A thin strip under the title: open / this week / done this week / last touched. It answers "is this project stalling?" without opening anything — the thing a progress bar alone cannot say. <b>Best if</b> you care about which projects went quiet.</p>
+  <div class="grid">
+    <div class="card w">
+      <div class="hd"><span class="t">Writing</span><span class="sp"></span><button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎<span style="font-size:10px;font-weight:800">3</span></button><button class="ctl">✕</button></div>
+      <div class="strip"><span class="s"><b>17</b> open</span><span class="s"><b>3</b> this week</span><span class="s"><b>2</b> done</span><span class="s" style="margin-left:auto">touched 2d ago</span></div>
+      <div class="sub">▾ Manuscripts</div>
+      <ul>
+        <li><span class="box"></span><span class="txt"><b>classroom climate SEL</b> — Murray</span><span class="due">due this week</span></li>
+        <li><span class="box"></span><span class="txt"><b>Autism &amp; comorbidities</b> — Knowles</span><span class="aim">aim August</span></li>
+      </ul>
+    </div>
+    <div class="card p">
+      <div class="hd"><span class="t">PUC-Rio</span><span class="sp"></span><button class="ctl">⤒</button><button class="sw"></button><button class="ctl">✎<span style="font-size:10px;font-weight:800">2</span></button><button class="ctl">✕</button></div>
+      <div class="strip"><span class="s"><b>6</b> open</span><span class="s"><b>0</b> this week</span><span class="s"><b>0</b> done</span><span class="s" style="margin-left:auto;color:var(--hard)">touched 19d ago</span></div>
+      <div class="sub">▾ Lab</div>
+      <ul><li><span class="box"></span><span class="txt">testetea.com.br — DNS</span></li></ul>
+    </div>
+  </div>
+</section>
+
+<p class="note">Note badge is in all four: <b>✎ 3</b> = three lines saved. Rename is already live — double-click a section, subsection or group title, or use the menu. Tell me a letter (or a mix, e.g. <kbd>A + D</kbd>) and I'll build it.</p>
+</div></body></html>
