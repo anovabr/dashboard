@@ -465,6 +465,10 @@
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,0,0,0); }
   }
   .notebtn.flash { animation: notesaved .6s ease 2; }
+  .notebtn .nct { font-size: 10px; font-weight: 800; margin-left: 3px; letter-spacing: 0; }
+  .renameinp { font: inherit; font-size: inherit; font-weight: inherit; letter-spacing: inherit;
+    text-transform: none; color: var(--ink); background: var(--surface); border: 1.5px solid var(--accent);
+    border-radius: 7px; padding: 2px 7px; outline: none; min-width: 160px; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 120;
     background: var(--ink); color: var(--page); font-size: 13px; font-weight: 650; padding: 8px 16px;
     border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); opacity: 0; pointer-events: none;
@@ -849,7 +853,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 20:46 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 21:01 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2293,6 +2297,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function rebuildSecMeta() {
     allSections().forEach(function (sc) {
       if (S && S.secHue && S.secHue[sc.id]) sc.hue = S.secHue[sc.id];
+      if (S && S.secTitle && S.secTitle[sc.id]) sc.title = S.secTitle[sc.id];
+      if (S && S.secGroups && S.secGroups[sc.id]) sc.groups = S.secGroups[sc.id].slice();
       SECMETA[sc.id] = sc;
     });
   }
@@ -2317,6 +2323,99 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var fl = (S.folders && S.folders[sec]) || [];
     var i = fl.indexOf(name);
     if (i !== -1) fl.splice(i, 1);
+  }
+  function moveKey(map, from, to) {
+    if (!map || !(from in map)) return;
+    map[to] = map[from]; delete map[from];
+  }
+  function renameSection(id, title) {
+    title = String(title || '').trim();
+    var sec = SECMETA[id];
+    if (!sec || !title || title === sec.title) return;
+    var oldTitle = sec.title;
+    S.secTitle = S.secTitle || {};
+    S.secTitle[id] = title;
+    (S.customSections || []).forEach(function (c) { if (c.id === id) c.title = title; });
+    S.tasks.forEach(function (t) {
+      if (t.sec !== id || !t.proj) return;
+      var parts = String(t.proj).split('/');
+      if (parts.length > 1 && parts[0].trim() === oldTitle) { parts[0] = title; t.proj = parts.join('/'); touch(t); }
+    });
+    sec.title = title;
+    logChange('Renamed section ' + oldTitle + ' to ' + title);
+    scheduleSave(); renderAll();
+  }
+  function renameFold(secId, from, to) {
+    to = String(to || '').trim();
+    if (!to || to === from) return;
+    var sec = SECMETA[secId], title = sec ? sec.title : secId;
+    var fl = (S.folders && S.folders[secId]) || [];
+    var i = fl.indexOf(from);
+    if (i !== -1) fl[i] = to; else { S.folders = S.folders || {}; (S.folders[secId] = S.folders[secId] || []).push(to); }
+    S.tasks.forEach(function (t) {
+      if (t.sec !== secId || !t.proj) return;
+      if (String(t.proj).split('/').pop().trim() !== from) return;
+      t.proj = title + '/' + to; touch(t);
+    });
+    moveKey(S.subFolded, secId + '/' + from, secId + '/' + to);
+    moveKey(S.notes, secId + '/' + from, secId + '/' + to);
+    reviveFold(secId, to);
+    logChange('Renamed subsection ' + from + ' to ' + to);
+    scheduleSave(); renderAll();
+  }
+  function renameGroup(secId, from, to) {
+    to = String(to || '').trim();
+    var sec = SECMETA[secId];
+    if (!sec || !to || to === from || !sec.groups) return;
+    S.secGroups = S.secGroups || {};
+    var gs = (S.secGroups[secId] || sec.groups).slice();
+    var i = gs.indexOf(from);
+    if (i === -1) return;
+    gs[i] = to;
+    S.secGroups[secId] = gs;
+    sec.groups = gs.slice();
+    S.tasks.forEach(function (t) {
+      if (t.sec !== secId) return;
+      if ((t.grp || sec.groups[0]) !== from) return;
+      t.grp = to; touch(t);
+    });
+    moveKey(S.subFolded, secId + '/' + from, secId + '/' + to);
+    moveKey(S.notes, secId + '/' + from, secId + '/' + to);
+    logChange('Renamed group ' + from + ' to ' + to);
+    scheduleSave(); renderAll();
+  }
+  var lastHit = { k: '', t: 0 };
+  function isDbl(k) {
+    var now = +new Date();
+    var d = (lastHit.k === k && now - lastHit.t < 420);
+    lastHit = { k: d ? '' : k, t: now };
+    return d;
+  }
+  function inlineRename(node, current, done) {
+    if (node.querySelector('input')) return;
+    var keep = node.innerHTML;
+    node.innerHTML = '';
+    var inp = document.createElement('input');
+    inp.className = 'renameinp';
+    inp.value = current;
+    node.appendChild(inp);
+    inp.focus(); inp.select();
+    var closed = false;
+    var finish = function (save) {
+      if (closed) return;
+      closed = true;
+      var v = inp.value;
+      node.innerHTML = keep;
+      if (save) done(v);
+    };
+    inp.addEventListener('keydown', function (ev) {
+      ev.stopPropagation();
+      if (ev.key === 'Enter') finish(true);
+      else if (ev.key === 'Escape') finish(false);
+    });
+    inp.addEventListener('blur', function () { finish(false); });
+    inp.addEventListener('click', function (ev) { ev.stopPropagation(); });
+    inp.addEventListener('dblclick', function (ev) { ev.stopPropagation(); });
   }
   function subNamesOf(sec) {
     if (sec.groups && sec.groups.length) return sec.groups.slice();
@@ -2357,10 +2456,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     });
   }
   function noteGet(key) { return (S.notes && S.notes[key]) || ''; }
+  function noteLines(key) {
+    return noteGet(key).split('\n').filter(function (l) { return l.trim(); }).length;
+  }
   function noteBtn(key, label) {
-    var has = noteGet(key) ? ' has' : '';
-    return '<button class="notebtn' + has + '" data-note="' + esc(key) + '" data-notelbl="' + esc(label) +
-      '" title="' + (has ? 'notes saved - click to open' : 'add a note') + '">✎</button>';
+    var n = noteLines(key);
+    return '<button class="notebtn' + (n ? ' has' : '') + '" data-note="' + esc(key) + '" data-notelbl="' + esc(label) +
+      '" title="' + (n ? n + ' note line' + (n === 1 ? '' : 's') + ' — click to open' : 'add a note') + '">✎' +
+      (n ? '<span class="nct">' + n + '</span>' : '') + '</button>';
   }
   var notePanel = null;
   function closeNote() { if (notePanel) { notePanel.remove(); notePanel = null; } }
@@ -2682,10 +2785,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
 
   function shortTitle(tt) {
-    if (tt.length <= 10) return tt;
-    var ws = tt.split(/\s+/).filter(function (w) { return w !== '&'; });
-    if (ws.length < 2) return tt.slice(0, 10);
-    return ws.map(function (w) { return w.charAt(0).toUpperCase(); }).join('&');
+    tt = String(tt || '');
+    return tt.length <= 16 ? tt : tt.slice(0, 15).trim() + '…';
   }
   function buildNav() {
     var items = [{ id: 'sec-week', label: 'This Week', hue: 'focus', full: 'This Week' }];
@@ -2879,6 +2980,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       Object.keys(remote.notes).forEach(function (k) { S.notes[k] = remote.notes[k]; });
     }
     if (remote.daySplit && (remote.savedAt || '') > (S.savedAt || '')) S.daySplit = remote.daySplit;
+    if (remote.secTitle && (remote.savedAt || '') > (S.savedAt || '')) {
+      S.secTitle = S.secTitle || {};
+      Object.keys(remote.secTitle).forEach(function (k) { S.secTitle[k] = remote.secTitle[k]; });
+    }
+    if (remote.secGroups && (remote.savedAt || '') > (S.savedAt || '')) {
+      S.secGroups = S.secGroups || {};
+      Object.keys(remote.secGroups).forEach(function (k) { S.secGroups[k] = remote.secGroups[k]; });
+    }
     if (remote.secHue && (remote.savedAt || '') > (S.savedAt || '')) {
       S.secHue = S.secHue || {};
       Object.keys(remote.secHue).forEach(function (k) { S.secHue[k] = remote.secHue[k]; });
@@ -3030,6 +3139,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var dm = document.createElement('div');
     dm.className = 'actmenu'; dm.dataset.level = '1';
     dm.innerHTML = '<span class="selct">' + esc(SECMETA[sid] ? SECMETA[sid].title : sid) + '</span>' +
+      '<button data-act="secrename" data-sec="' + sid + '"><span class="mi">\u270F\uFE0F</span><span class="ml">Rename section</span></button>' +
+      '<div class="msep"></div>' +
       swatchHtml(sid) +
       '<div class="msep"></div>' +
       '<button class="danger" data-act="secdel2" data-sec="' + sid + '"><span class="mi">🗑️</span><span class="ml">Delete section + ' + cnt + ' task' + (cnt === 1 ? '' : 's') + '</span></button>' +
@@ -3498,6 +3609,20 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
 
     var act = e.target.closest('.actmenu button');
     if (act && act.dataset.act === 'seccancel') { clearPendMenu(); return; }
+    if (act && act.dataset.act === 'foldrename') {
+      var frs = act.dataset.sec, frn = act.dataset.fold;
+      clearPendMenu();
+      var fh = document.querySelector('#sec-' + frs + ' .subhead[data-fold="' + frn.replace(/"/g, '\\"') + '"]');
+      if (fh) inlineRename(fh, frn, function (v) { renameFold(frs, frn, v); });
+      return;
+    }
+    if (act && act.dataset.act === 'secrename') {
+      var rid = act.dataset.sec;
+      clearPendMenu();
+      var rh2 = document.querySelector('#sec-' + rid + ' > h2');
+      if (rh2) inlineRename(rh2, SECMETA[rid] ? SECMETA[rid].title : rid, function (v) { renameSection(rid, v); });
+      return;
+    }
     if (act && (act.dataset.act === 'folddrop' || act.dataset.act === 'foldkill')) {
       var fsec3 = act.dataset.sec, fname3 = act.dataset.fold, kill = act.dataset.act === 'foldkill';
       pushUndo();
@@ -3621,6 +3746,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var fkey = card.dataset.sec || (card.id === 'sec-week' ? 'week' : null);
       if (fkey) {
         S.folded = S.folded || {};
+        if (card.dataset.sec && isDbl('sec:' + fkey)) {
+          S.folded[fkey] = !S.folded[fkey];   // undo the fold from the first click
+          renderAll();
+          var rh = document.querySelector('#sec-' + fkey + ' > h2');
+          if (rh) inlineRename(rh, SECMETA[fkey] ? SECMETA[fkey].title : fkey,
+            function (v) { renameSection(fkey, v); });
+          return;
+        }
         S.folded[fkey] = !S.folded[fkey];
         scheduleSave(); renderAll();
         return;
@@ -3723,15 +3856,29 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var ghc = e.target.closest('.grouphead');
     if (ghc && !e.target.closest('.notebtn')) {
       S.subFolded = S.subFolded || {};
-      var gk = ghc.dataset.sec + '/' + ghc.dataset.grp;
+      var gsec = ghc.dataset.sec, gnm = ghc.dataset.grp, gk = gsec + '/' + gnm;
+      if (isDbl('grp:' + gk)) {
+        S.subFolded[gk] = !S.subFolded[gk];
+        renderAll();
+        var gh2 = document.querySelector('#sec-' + gsec + ' .grouphead[data-grp="' + gnm.replace(/"/g, '\\"') + '"]');
+        if (gh2) inlineRename(gh2, gnm, function (v) { renameGroup(gsec, gnm, v); });
+        return;
+      }
       S.subFolded[gk] = !S.subFolded[gk];
       scheduleSave(); renderAll();
       return;
     }
     var shc = e.target.closest('.subhead');
-    if (shc && !e.target.closest('.subdel')) {
+    if (shc && !e.target.closest('.subdel') && !e.target.closest('.notebtn')) {
       S.subFolded = S.subFolded || {};
-      var k2 = shc.dataset.sec + '/' + shc.dataset.fold;
+      var fsecX = shc.dataset.sec, fnmX = shc.dataset.fold, k2 = fsecX + '/' + fnmX;
+      if (isDbl('fold:' + k2)) {
+        S.subFolded[k2] = !S.subFolded[k2];
+        renderAll();
+        var sh2 = document.querySelector('#sec-' + fsecX + ' .subhead[data-fold="' + fnmX.replace(/"/g, '\\"') + '"]');
+        if (sh2) inlineRename(sh2, fnmX, function (v) { renameFold(fsecX, fnmX, v); });
+        return;
+      }
       S.subFolded[k2] = !S.subFolded[k2];
       scheduleSave(); renderAll();
       return;
@@ -3754,6 +3901,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var fm = document.createElement('div');
       fm.className = 'actmenu'; fm.dataset.level = '1';
       fm.innerHTML = '<span class="selct">' + esc(fname2) + '</span>' +
+        '<button data-act="foldrename" data-sec="' + esc(fsec2) + '" data-fold="' + esc(fname2) + '">' +
+        '<span class="mi">\u270F\uFE0F</span><span class="ml">Rename</span></button>' +
+        '<div class="msep"></div>' +
         '<button data-act="folddrop" data-sec="' + esc(fsec2) + '" data-fold="' + esc(fname2) + '">' +
         '<span class="mi">\u{1F4C2}</span><span class="ml">Remove subsection, keep ' + inside.length + ' task' + (inside.length === 1 ? '' : 's') + '</span></button>' +
         '<div class="msep"></div>' +
