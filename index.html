@@ -418,7 +418,10 @@
     margin: 12px 0 2px;
   }
   .micro:first-of-type { margin-top: 0; }
-  .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px; opacity: .6; }
+  .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px;
+    opacity: 0; transition: opacity .16s ease; }
+  .card:hover .micro .subdel { opacity: .5; }
+  @media (hover: none) { .micro .subdel { opacity: .5; } }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
   .donestrip { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 7px 8px; border-radius: 8px;
@@ -444,17 +447,23 @@
   .card.flashnew { animation: newflash .52s ease 4; }
   .card.seccard > h2 { cursor: grab; display: flex; align-items: center; }
   .card.seccard > h2 .loadwrap { flex: none; }
-  .secfold { border: 0; background: transparent; cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px;
-    margin-left: 8px; color: var(--muted); opacity: .45; }
-  .card:hover .secfold { opacity: .8; }
-  .secfold:hover { opacity: 1 !important; color: var(--accent); }
+  .secfold { border: 0; background: transparent; cursor: pointer; font-size: 9px; letter-spacing: -1px; line-height: 1;
+    padding: 0 3px; margin-left: 8px; color: var(--muted); }
+  .secmore { border: 0; background: transparent; cursor: pointer; font-size: 14px; font-weight: 800; line-height: 1;
+    letter-spacing: 1px; padding: 0 4px; margin-left: 4px; color: var(--muted); border-radius: 6px; }
+  .secfold, .seccolor, .secmore { opacity: 0; transition: opacity .16s ease; }
+  .card:hover .secfold, .card:hover .seccolor, .card:hover .secmore { opacity: .72; }
+  .secfold:hover, .secmore:hover { opacity: 1 !important; color: var(--accent); }
+  .secmore:hover { background: var(--bg-focus); }
+  @media (hover: none) { .secfold, .seccolor, .secmore { opacity: .6; } }
   .grouphead { cursor: pointer; }
   .seccolor { width: 13px; height: 13px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.14); padding: 0;
-    cursor: pointer; margin-left: 8px; flex: none; opacity: .85; }
-  .seccolor:hover { opacity: 1; transform: scale(1.15); box-shadow: 0 0 0 3px var(--hue-bg); }
+    cursor: pointer; margin-left: 8px; flex: none; }
+  .seccolor:hover { opacity: 1 !important; transform: scale(1.15); box-shadow: 0 0 0 3px var(--hue-bg); }
   .notebtn { border: 0; background: transparent; cursor: pointer; font-size: 13px; padding: 0 4px; margin-left: 6px;
-    color: var(--muted); opacity: .32; line-height: 1; border-radius: 5px; }
-  .card:hover .notebtn, .micro:hover .notebtn { opacity: .55; }
+    color: var(--muted); opacity: 0; line-height: 1; border-radius: 5px; transition: opacity .16s ease; }
+  .card:hover .notebtn, .micro:hover .notebtn { opacity: .5; }
+  @media (hover: none) { .notebtn { opacity: .45; } }
   .notebtn:hover { opacity: 1 !important; color: var(--accent); background: var(--bg-focus); }
   .notebtn.has { opacity: 1 !important; color: var(--surface); background: var(--hue, var(--accent));
     font-weight: 800; padding: 1px 5px; }
@@ -853,7 +862,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 21:01 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 22:24 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2663,10 +2672,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         '<span class="loadwrap"><span class="loadbar"><i style="width:' + (allN ? Math.min(100, Math.round(wkN / allN * 100)) : 0) +
         '%;background:var(--h-' + sec.hue + ')"></i></span>' + allN + '</span>' +
         (subNamesOf(sec).length ? '<button class="secfold" data-secfold="' + sec.id + '" title="fold / unfold this section\u2019s subsections">' +
-          (allSubFolded(sec) ? '\u2913' : '\u2912') + '</button>' : '') +
+          (allSubFolded(sec) ? '\u25BE\u25BE' : '\u25B4\u25B4') + '</button>' : '') +
         '<button class="seccolor" data-seccolor="' + sec.id + '" style="background:var(--h-' + sec.hue + ')" title="change section color"></button>' +
         noteBtn(sec.id, sec.title) +
-        '<button class="secdel" data-secdel="' + sec.id + '" title="delete section and its tasks">✕</button></h2>';
+        '<button class="secmore" data-secdel="' + sec.id + '" title="rename, recolour, delete">\u00B7\u00B7\u00B7</button></h2>';
       if (sec.groups && sec.groups.length) {
         sec.groups.forEach(function (g) {
           var gts = ts.filter(function (t) { return (t.grp || sec.groups[0]) === g; });
@@ -3740,7 +3749,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var onBox = !!(e.target.closest && e.target.closest('li[data-id]') && e.target.closest('.box'));
     if (!onBox && document.querySelector('.actmenu')) clearPendMenu();
 
-    var hh = (e.target.closest('.secdel') || e.target.closest('.notebtn') || e.target.closest('.seccolor') || e.target.closest('.secfold')) ? null : e.target.closest('h2');
+    var hh = (e.target.closest('.secdel') || e.target.closest('.secmore') || e.target.closest('.notebtn') || e.target.closest('.seccolor') || e.target.closest('.secfold')) ? null : e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
       var card = hh.parentNode;
       var fkey = card.dataset.sec || (card.id === 'sec-week' ? 'week' : null);
@@ -3826,7 +3835,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
 
-    var sdel = e.target.closest('.secdel');
+    var sdel = e.target.closest('.secdel') || e.target.closest('.secmore');
     if (sdel) { openSecMenu(sdel.dataset.secdel, e.clientX, e.clientY); return; }
     var dstrip = e.target.closest('.donestrip');
     if (dstrip) {
