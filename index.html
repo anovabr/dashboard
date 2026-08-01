@@ -312,16 +312,20 @@
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
   ul.rows li.tdyrow { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 9px; border-top-color: transparent; }
-  ul.rows li.tdyrow .txt::before {
-    content: "TODAY"; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; color: var(--accent);
-    border: 1px solid var(--accent); border-radius: 4px; padding: 0 4px; margin-right: 8px; position: relative; top: -1px;
-  }
+  ul.rows li.dayhdr { display: flex; align-items: center; gap: 8px; border: 0; padding: 13px 0 5px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+  ul.rows li.dayhdr:first-child { padding-top: 2px; }
+  ul.rows li.dayhdr .dn { font-size: 11px; font-weight: 800; letter-spacing: 0; color: var(--surface);
+    background: var(--accent); border-radius: 20px; padding: 1px 7px; }
+  ul.rows li.dayhdr em { font-style: normal; font-size: 11px; font-weight: 600; letter-spacing: 0;
+    text-transform: none; color: var(--muted); }
+  ul.rows li.dayhdr.tmr { color: var(--aim); }
+  ul.rows li.dayhdr.tmr .dn { background: var(--aim); }
+  ul.rows li.dayhdr.rest { color: var(--muted); }
+  ul.rows li.dayhdr.rest .dn { background: var(--track); color: var(--secondary); }
   ul.rows li.tdylast { border-bottom: 2px solid var(--accent); margin-bottom: 7px; padding-bottom: 10px; }
-  ul.rows li.tmrrow { background: rgba(111,100,148,0.07); box-shadow: inset 3px 0 0 0 var(--aim); padding-left: 9px; border-top-color: transparent; }
-  ul.rows li.tmrrow .txt::before {
-    content: "TOMORROW"; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; color: var(--aim);
-    border: 1px solid var(--aim); border-radius: 4px; padding: 0 4px; margin-right: 8px; position: relative; top: -1px;
-  }
+  ul.rows li.tmrrow { background: rgba(111,100,148,0.10); box-shadow: inset 3px 0 0 0 var(--aim); padding-left: 9px; border-top-color: transparent; }
+
   ul.rows li.tmrrow.tdylast { border-bottom-color: var(--aim); }
   .planbar { font-size: 13px; color: var(--secondary); background: rgba(111,100,148,0.09); border: 1px solid var(--border);
     border-radius: 9px; padding: 9px 12px; margin: 2px 0 10px; }
@@ -500,6 +504,7 @@
     color:var(--muted); background:transparent; border:0; }
   .mtab.on { background:var(--accent); color:var(--surface); }
   .mmain { flex:1; padding:12px 10px 110px; }
+  .mgroup.tmr { color:var(--aim); }
   .mgroup { font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
     margin:14px 4px 7px; display:flex; justify-content:space-between; }
   .mgroup:first-child { margin-top:0; }
@@ -725,6 +730,7 @@
         <h3>Focus</h3>
         <button class="navitem on" data-dfilter="all">All work <span class="n" id="f-all"></span></button>
         <button class="navitem" data-dfilter="today">Today <span class="n" id="f-today"></span></button>
+        <button class="navitem" data-dfilter="tomorrow">Tomorrow <span class="n" id="f-tomorrow"></span></button>
         <button class="navitem" data-dfilter="week">This week <span class="n" id="f-week"></span></button>
         <button class="navitem" data-dfilter="due">Deadlines <span class="n" id="f-due"></span></button>
         <button class="navitem" data-dfilter="stale">Carried <span class="n" id="f-stale"></span></button>
@@ -783,7 +789,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-07-31 21:19 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 03:42 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2350,6 +2356,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function fMatch(t) {
     if (deskFilter === 'today') return !!t.today;
+    if (deskFilter === 'tomorrow') return !!t.tomorrow;
     if (deskFilter === 'week') return !!t.week;
     if (deskFilter === 'due') return !!(t.date && (t.date.kind === 'hard' || t.date.kind === 'aim'));
     if (deskFilter === 'stale') return !!t.carried;
@@ -2381,18 +2388,23 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('list-tdy').innerHTML = '';
     var tmr = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
     var rest2 = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
-    var wkHtml = tdy.map(function (t, i) {
-      return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tdyrow' + (i === tdy.length - 1 && !tmr.length ? ' tdylast' : '') + ' ');
-    }).join('') + tmr.map(function (t, i) {
-      return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tmrrow' + (i === tmr.length - 1 ? ' tdylast' : '') + ' ');
-    }).join('') + rest2.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
+    var wkHtml = (tdy.length ? '<li class="dayhdr tdy">Today<span class="dn">' + tdy.length + '</span></li>' : '') +
+      tdy.map(function (t, i) {
+        return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tdyrow' + (i === tdy.length - 1 && !tmr.length ? ' tdylast' : '') + ' ');
+      }).join('') +
+      (tmr.length ? '<li class="dayhdr tmr">Tomorrow<span class="dn">' + tmr.length + '</span><em>becomes Today automatically</em></li>' : '') +
+      tmr.map(function (t, i) {
+        return rowHtml(t, { secMark: true }).replace('<li class="', '<li class="tmrrow' + (i === tmr.length - 1 ? ' tdylast' : '') + ' ');
+      }).join('') +
+      ((tdy.length || tmr.length) && rest2.length ? '<li class="dayhdr rest">Rest of the week<span class="dn">' + rest2.length + '</span></li>' : '') +
+      rest2.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
     el('list-week').innerHTML = wkHtml || '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>';
     var planEl = el('planbar');
     if (planEl) {
       if (tmr.length) {
-        planEl.style.display = '';
-        planEl.innerHTML = '<b>Tomorrow is planned:</b> ' + tmr.length + ' task' + (tmr.length === 1 ? '' : 's') +
-          (tmr.length > 3 ? ' — more than 3; the effect comes from picking few.' : '.') + ' They become Today automatically.';
+        planEl.style.display = tmr.length > 3 ? '' : 'none';
+        planEl.innerHTML = tmr.length > 3
+          ? '<b>' + tmr.length + ' planned for tomorrow</b> — more than 3; the effect comes from picking few.' : '';
       } else {
         var hr = new Date().getHours();
         var showPlan = (hr >= 17 || tdy.length === 0) && S.planHidden !== dayStr();
@@ -2412,7 +2424,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var doneToday = live.filter(function (t) { return t.status === 'done' && sameLocalDay(t.doneAt, today); }).length;
     var open = live.filter(function (t) { return t.status === 'now' || t.status === 'working' || t.status === 'planning'; }).length;
     var workedToday = live.filter(function (t) { return (t.worked || []).indexOf(dayStr()) !== -1; }).length;
-    el('statline').innerHTML = '<b>' + wkDone + ' of ' + wk.length + '</b> weekly focus · <b>' + doneToday + '</b> checked off today · <b>' + workedToday + '</b> worked on today · <b>' + open + '</b> open';
+    var tmrN = live.filter(function (t) { return t.tomorrow && t.status !== 'done'; }).length;
+    el('statline').innerHTML = '<b>' + wkDone + ' of ' + wk.length + '</b> weekly focus · <b>' + doneToday + '</b> checked off today · ' +
+      (tmrN ? '<b>' + tmrN + '</b> lined up for tomorrow · ' : '') + '<b>' + workedToday + '</b> worked on today · <b>' + open + '</b> open';
 
     // sections
     var html = '';
@@ -2483,6 +2497,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (el('f-all')) {
       el('f-all').textContent = cnt(function () { return true; });
       el('f-today').textContent = cnt(function (t) { return t.today; });
+      el('f-tomorrow').textContent = cnt(function (t) { return t.tomorrow; });
       el('f-week').textContent = cnt(function (t) { return t.week; });
       el('f-due').textContent = cnt(function (t) { return t.date && (t.date.kind === 'hard' || t.date.kind === 'aim'); });
       el('f-stale').textContent = cnt(function (t) { return t.carried; });
@@ -3051,6 +3066,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       h += '<div class="mgroup"><span>Today · ' + td.length + '</span></div>';
       h += td.length ? td.map(function (t) { return mRow(t, true); }).join('')
         : '<div class="mempty">Nothing picked for today.<br>Open This Week and tap “Do it today”.</div>';
+      var tmrT = live.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
+      if (tmrT.length) h += '<div class="mgroup tmr"><span>Tomorrow · ' + tmrT.length + '</span></div>' +
+        tmrT.map(function (t) { return mRow(t, true); }).join('');
       var dn = live.filter(function (t) { return t.status === 'done' && sameLocalDay(t.doneAt, new Date()); });
       if (dn.length) h += '<div class="mgroup"><span>Done today · ' + dn.length + '</span></div>' +
         dn.map(function (t) { return mRow(t, true); }).join('');
