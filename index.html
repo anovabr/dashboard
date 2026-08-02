@@ -521,6 +521,9 @@
   .micro.drophint .notebtn, .micro.drophint .subct { color: var(--surface); }
   .micro.drophint::after { content: " drop here"; font-size: 9.5px; letter-spacing: .1em; opacity: .8; margin-left: 6px; }
   #sec-week.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .daycol.drophint { outline: 2px dashed var(--hue, var(--accent)); outline-offset: 2px; }
+  .daycol.tmr.drophint { outline-color: var(--aim); }
+  .daycol.tdy.drophint { outline-color: var(--accent); }
   .card.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; background-color: var(--bg-focus); }
   .seccard.drophint > h2::after { content: " — drop here for no subsection"; font-size: 10px; font-weight: 700;
     letter-spacing: .06em; color: var(--accent); text-transform: none; margin-left: 6px; }
@@ -870,7 +873,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-02 02:29 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-02 05:43 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2694,7 +2697,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     rest.sort(function (a, b) {
       var ad = a.status === 'done' ? 1 : 0, bd = b.status === 'done' ? 1 : 0;
       if (ad !== bd) return ad - bd;
-      return ((b.carried || 0) - (a.carried || 0));
+      return ((a.ord || 1e9) - (b.ord || 1e9)) || ((b.carried || 0) - (a.carried || 0));
     });
     el('tdyHdr').style.display = 'none';
     el('list-tdy').innerHTML = '';
@@ -2881,6 +2884,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (head) return { sec: head.dataset.sec, fold: head.dataset.fold, root: false };
     var ghead = node.closest('.grouphead');
     if (ghead) return { sec: ghead.dataset.sec, grp: ghead.dataset.grp, root: false };
+    if (node.closest('#col-tmr')) return { day: 'tomorrow' };
+    if (node.closest('#col-tdy')) return { day: 'today' };
     if (node.closest('#sec-week')) return { week: true };
     var card = node.closest('.card[data-sec]');
     if (!card) return null;
@@ -4244,7 +4249,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (!dst) return;
     var t0 = task(dragId);
     if (!t0) return;
-    if (dst.week ? t0.week
+    if (dst.day) {
+      if (dst.day === 'tomorrow' ? t0.tomorrow : t0.today) return;
+    } else if (dst.week ? t0.week
       : (dst.sec === t0.sec && !dst.fold && !dst.grp && !(dst.root && (t0.proj || t0.grp)))) return;
     e.preventDefault();
     var hintEl = e.target.closest('.subhead') || e.target.closest('.grouphead');
@@ -4256,7 +4263,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         hintEl = ph || null;
       }
     }
-    if (!hintEl) hintEl = e.target.closest('#sec-week') || e.target.closest('.card[data-sec]');
+    if (!hintEl) hintEl = e.target.closest('.daycol') || e.target.closest('#sec-week') || e.target.closest('.card[data-sec]');
     if (hintEl) hintEl.classList.add('drophint');
   });
   document.addEventListener('drop', function (e) {
@@ -4283,7 +4290,18 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var sameList = srcLi2 && e.target.closest && e.target.closest('li[data-id]') &&
         e.target.closest('li[data-id]').parentNode === srcLi2.parentNode;
       if (sameList) return;
-      if (dst2.week) {
+      if (dst2.day) {
+        if (dst2.day === 'tomorrow' ? mt2.tomorrow : mt2.today) return;
+        pushUndo();
+        mt2.week = true;
+        if (dst2.day === 'tomorrow') {
+          mt2.tomorrow = true; mt2.tomorrowFor = tomorrowStr(); mt2.today = false;
+          logChange('Planned for tomorrow: ' + taskLabel(mt2));
+        } else {
+          mt2.today = true; mt2.todayOn = dayStr(); mt2.tomorrow = false; delete mt2.tomorrowFor;
+          logChange('Today: ' + taskLabel(mt2));
+        }
+      } else if (dst2.week) {
         if (mt2.week) return;
         pushUndo();
         mt2.week = true;
