@@ -420,7 +420,7 @@
   .micro:first-of-type { margin-top: 0; }
   .micro .subdel { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; margin-left: 7px;
     opacity: 0; transition: opacity .16s ease; }
-  .card:hover .micro .subdel { opacity: .5; }
+  .micro:hover .subdel { opacity: .5; }
   @media (hover: none) { .micro .subdel { opacity: .5; } }
   .micro .subdel:hover { color: var(--hard); opacity: 1; }
   .addrow.sub { margin: 2px 0 0 14px; font-size: 12px; }
@@ -452,7 +452,7 @@
   .secmore { border: 0; background: transparent; cursor: pointer; font-size: 14px; font-weight: 800; line-height: 1;
     letter-spacing: 1px; padding: 0 4px; margin-left: 4px; color: var(--muted); border-radius: 6px; }
   .secfold, .seccolor, .secmore { opacity: 0; transition: opacity .16s ease; }
-  .card:hover .secfold, .card:hover .seccolor, .card:hover .secmore { opacity: .72; }
+  .card > h2:hover .secfold, .card > h2:hover .seccolor, .card > h2:hover .secmore { opacity: .72; }
   .secfold:hover, .secmore:hover { opacity: 1 !important; color: var(--accent); }
   .secmore:hover { background: var(--bg-focus); }
   @media (hover: none) { .secfold, .seccolor, .secmore { opacity: .6; } }
@@ -462,7 +462,7 @@
   .seccolor:hover { opacity: 1 !important; transform: scale(1.15); box-shadow: 0 0 0 3px var(--hue-bg); }
   .notebtn { border: 0; background: transparent; cursor: pointer; font-size: 13px; padding: 0 4px; margin-left: 6px;
     color: var(--muted); opacity: 0; line-height: 1; border-radius: 5px; transition: opacity .16s ease; }
-  .card:hover .notebtn, .micro:hover .notebtn { opacity: .5; }
+  .card > h2:hover .notebtn, .micro:hover .notebtn { opacity: .5; }
   @media (hover: none) { .notebtn { opacity: .45; } }
   .notebtn:hover { opacity: 1 !important; color: var(--accent); background: var(--bg-focus); }
   .notebtn.has { opacity: 1 !important; color: var(--surface); background: var(--hue, var(--accent));
@@ -491,6 +491,7 @@
     line-height: 1.5; color: var(--ink); background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
     padding: 8px 9px; outline: none; }
   .notepanel textarea:focus { border-color: var(--accent); }
+  .notepanel .nphint { font-size: 11px; color: var(--muted); margin: 7px 2px 1px; }
   .notepanel .nprow { display: flex; gap: 7px; align-items: center; margin-top: 8px; }
   .notepanel button { font: inherit; font-size: 13px; font-weight: 650; border-radius: 8px; padding: 5px 11px; cursor: pointer;
     border: 1px solid var(--border); background: var(--surface); color: var(--secondary); }
@@ -862,7 +863,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-01 22:24 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-02 00:17 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2476,6 +2477,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   var notePanel = null;
   function closeNote() { if (notePanel) { notePanel.remove(); notePanel = null; } }
+  // clicking away keeps what you typed; only Cancel / Esc throws it out
+  function commitNote() {
+    if (!notePanel) return;
+    var k = notePanel.dataset.key;
+    var lbl = notePanel.querySelector('.nphead').textContent;
+    var v = notePanel.querySelector('textarea').value.trim();
+    var was = noteGet(k);
+    closeNote();
+    if (v !== was) saveNote(k, v, lbl);
+  }
   function openNote(key, label, x, y) {
     closeNote();
     var m = document.createElement('div');
@@ -2484,7 +2495,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       '<textarea spellcheck="false" placeholder="Logins, client names, links, anything you need to remember for this project."></textarea>' +
       '<div class="nprow"><button class="pri" data-nsave="1">Save</button>' +
       '<button data-ncancel="1">Cancel</button>' +
-      '<button class="dgr" data-ndel="1">Delete note</button></div>';
+      '<button class="dgr" data-ndel="1">Delete note</button></div>' +
+      '<div class="nphint">Clicking away also saves. Esc discards.</div>';
     document.body.appendChild(m);
     m.querySelector('.nphead').textContent = label;
     m.dataset.key = key;
@@ -2506,7 +2518,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function saveNote(key, val, label) {
     S.notes = S.notes || {};
+    S.noteAt = S.noteAt || {};
     if (val) S.notes[key] = val; else delete S.notes[key];
+    S.noteAt[key] = nowIso();
     logChange((val ? 'Updated' : 'Cleared') + ' note: ' + label);
     scheduleSave(); renderAll();
     var btn = document.querySelector('.notebtn[data-note="' + key.replace(/"/g, '\\"') + '"]');
@@ -2984,9 +2998,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var rmNow = removedSet();
     S.customSections = (S.customSections || []).filter(function (c) { return !rmNow[c.id]; });
     if (S.secOrder) S.secOrder = S.secOrder.filter(function (id) { return !rmNow[id]; });
-    if (remote.notes && (remote.savedAt || '') > (S.savedAt || '')) {
+    if (remote.notes) {
       S.notes = S.notes || {};
-      Object.keys(remote.notes).forEach(function (k) { S.notes[k] = remote.notes[k]; });
+      S.noteAt = S.noteAt || {};
+      var rAt = remote.noteAt || {};
+      Object.keys(remote.notes).forEach(function (k) {
+        var mine = S.noteAt[k] || '', theirs = rAt[k] || (remote.savedAt || '');
+        if (!(k in S.notes) || theirs > mine) { S.notes[k] = remote.notes[k]; S.noteAt[k] = theirs; }
+      });
+      Object.keys(rAt).forEach(function (k) {
+        if (!(k in remote.notes) && (k in S.notes) && rAt[k] > (S.noteAt[k] || '')) {
+          delete S.notes[k]; S.noteAt[k] = rAt[k];
+        }
+      });
     }
     if (remote.daySplit && (remote.savedAt || '') > (S.savedAt || '')) S.daySplit = remote.daySplit;
     if (remote.secTitle && (remote.savedAt || '') > (S.savedAt || '')) {
@@ -3454,8 +3478,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (!isPhone()) return;
     if (notePanel && notePanel.contains(e.target)) { noteClickInPanel(e); return; }
     var mnb = e.target.closest('.notebtn');
-    if (mnb) { openNote(mnb.dataset.note, mnb.dataset.notelbl, 10, e.clientY); return; }
-    closeNote();
+    if (mnb) { commitNote(); openNote(mnb.dataset.note, mnb.dataset.notelbl, 10, e.clientY); return; }
+    commitNote();
     var tb = e.target.closest('.mtab, #mnav button');
     if (tb && tb.dataset.mtab) { mtab = tb.dataset.mtab; renderMobile(); return; }
     if (e.target.closest('#mfab')) { mAddSheet(); return; }
@@ -3610,8 +3634,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var scb = e.target.closest ? e.target.closest('.seccolor') : null;
     if (scb) { openColorMenu(scb.dataset.seccolor, e.clientX, e.clientY); return; }
     var nb = e.target.closest ? e.target.closest('.notebtn') : null;
-    if (nb) { openNote(nb.dataset.note, nb.dataset.notelbl, e.clientX, e.clientY); return; }
-    closeNote();
+    if (nb) { commitNote(); openNote(nb.dataset.note, nb.dataset.notelbl, e.clientX, e.clientY); return; }
+    commitNote();
 
     var swb = e.target.closest ? e.target.closest('.sw[data-swhue]') : null;
     if (swb) { var swsec = swb.dataset.swsec; clearPendMenu(); setSecHue(swsec, swb.dataset.swhue); return; }
@@ -4061,7 +4085,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (e.target.id === 'btnCopyState') { copyText('Full board state:\n' + JSON.stringify(S, null, 1), el('diagCopied')); return; }
   });
 
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNote(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeNote();
+    else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && notePanel) commitNote();
+  });
 
   document.addEventListener('contextmenu', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
