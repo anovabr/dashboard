@@ -870,7 +870,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-02 00:44 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-02 02:29 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2171,7 +2171,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) { flushSave(); return; }
-    if (S) { var chg = rolloverToday(); chg += promoteTomorrow(); if (chg) renderAll(); }
+    if (S) { var chg = rolloverToday(); chg += promoteTomorrow(); if (chg) syncRender(); }
   });
   setInterval(function () {
     if (!S || syncing) return;
@@ -3101,7 +3101,26 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (remote.folded) S.folded = remote.folded;
     }
   }
-  window.__dbg = { merge: function (r) { mergeRemote(r); renderAll(); }, state: function () { return S; } };
+  // a background sync must never wipe an input you are typing in
+  function editorOpen() {
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return true;
+    return !!notePanel;
+  }
+  var pendingRender = false;
+  function syncRender() {
+    if (editorOpen()) { pendingRender = true; return; }
+    pendingRender = false;
+    renderAll();
+  }
+  document.addEventListener('focusout', function () {
+    setTimeout(function () {
+      if (pendingRender && !editorOpen()) { pendingRender = false; renderAll(); }
+    }, 250);
+  });
+
+  window.__dbg = { merge: function (r) { mergeRemote(r); renderAll(); }, state: function () { return S; },
+    syncRender: function () { syncRender(); }, pending: function () { return pendingRender; } };
   var syncing = false;
   function doSync(auto) {
     var tok = getToken(), pw = getPw();
@@ -3134,7 +3153,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         if (!tok) {
           syncing = false;
           if (engine) engine.save(JSON.stringify(S));
-          renderAll();
+          syncRender();
           applyTheme();
           syncBar('done');
           setSyncStatus(auto ? 'viewing latest — token needed to save' : 'up to date (read-only)');
@@ -3154,7 +3173,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         syncing = false;
         S.changelog = [];
         if (engine) engine.save(JSON.stringify(S));
-        renderAll();
+        syncRender();
         applyTheme();
         syncBar('done');
         var doneAtTxt = 'last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
