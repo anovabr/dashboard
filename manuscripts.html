@@ -237,6 +237,11 @@
   .dbtns .ddel:hover { background: rgba(194,64,44,.10); border-color: transparent; color: var(--hard); }
   td.sig { color: var(--hard); font-weight: 800; font-size: 13px; white-space: nowrap; }
   td.sig .res { color: var(--aim); margin-left: 7px; }
+  .rowedit { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px;
+    margin-left: 10px; opacity: 0; transition: opacity .15s; }
+  tbody tr:hover .rowedit { opacity: .65; }
+  .rowedit:hover { opacity: 1 !important; color: var(--accent); }
+  @media (hover: none) { .rowedit { opacity: .6; } }
   .pill.big { font-size: 11.5px; }
   .late { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
     color: var(--hard); border: 1px solid var(--hard); border-radius: 4px; padding: 0 5px; margin-left: 7px; }
@@ -464,13 +469,14 @@
       <option value="90">delayed after 90 days</option>
     </select>
     <span class="chip" id="expandAll">expand all</span>
+    <span class="chip" id="rebuildBtn" title="turn the notes of every paper without a history into dated timeline entries">rebuild history</span>
     <span class="chip" id="auditBtn">check data</span>
     <span class="thint" id="hint">Click a row to open it · a column header to sort · ⊞ to group</span>
   </div>
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-03 21:48 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-03 22:07 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -662,6 +668,12 @@
       else { mo = a; dy = b; }
       return m[3] + '-' + ('0' + mo).slice(-2) + '-' + ('0' + dy).slice(-2);
     }
+    var mn = s.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:\s*,?\s*(\d{4}))?/i);
+    if (mn) {
+      var MO = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+      var yr = mn[3] || String(new Date().getFullYear());
+      return yr + '-' + ('0' + MO[mn[1].toLowerCase()]).slice(-2) + '-' + ('0' + mn[2]).slice(-2);
+    }
     var t = Date.parse(s);
     if (!isNaN(t)) { var dt = new Date(t); return dt.toISOString().slice(0, 10); }
     return '';
@@ -698,6 +710,7 @@
   function resubCount(p) {
     var n = 0;
     (p.updates || []).forEach(function (u) { if (/resubmit/i.test(String(u.s || '') + ' ' + String(u.t || ''))) n++; });
+    if (!n) String(p.notes || '').replace(/resubmi|re-submi/gi, function () { n++; return ''; });
     return n;
   }
   var PROJ_HUES = ['writing', 'ocean', 'moss', 'clay', 'plum', 'steel', 'berry', 'indigo', 'sand', 'river', 'rne', 'other'];
@@ -799,6 +812,82 @@
     return '<span class="pill" style="background:var(--h-' + m.hue + ')">' + esc(m.k) + '</span>';
   }
   var openRows = {};
+  // when a record has no structured history, read one out of its notes and dates
+  function classify(txt) {
+    var t = String(txt || '').toLowerCase();
+    if (/resubmi|re-submi/.test(t)) return 'Resubmitted';
+    if (/desk reject/.test(t)) return 'Desk reject';
+    if (/reject|declin/.test(t)) return 'Rejected';
+    if (/in press/.test(t)) return 'In press';
+    if (/publish/.test(t)) return 'Published';
+    if (/accept/.test(t)) return 'Accepted';
+    if (/major revis|minor revis|revise|revision|r&r/.test(t)) return 'Revision';
+    if (/withdraw/.test(t)) return 'Withdrawn';
+    if (/submit|sent to/.test(t)) return 'Submitted';
+    if (/review/.test(t)) return 'Under review';
+    return '';
+  }
+  function notesEvents(p) {
+    var out = [];
+    var lines = [];
+    String(p.notes || '').split(/\r?\n/).forEach(function (ln) {
+      String(ln).split(/(?:\.\s+|;\s+)/).forEach(function (part) { if (String(part).trim()) lines.push(part); });
+    });
+    lines.forEach(function (linex) {
+      var line = String(linex).trim();
+      if (!line) return;
+      var lab = classify(line);
+      if (!lab) return;
+      var d = '';
+      var iso = line.match(/\b\d{4}-\d{2}-\d{2}\b/);
+      var slash = line.match(/\b\d{1,2}[\/.]\d{1,2}[\/.]\d{4}\b/);
+      var named = line.match(/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:\s*,?\s*\d{4})?/i);
+      if (iso) d = ymd(iso[0]);
+      else if (slash) d = ymd(slash[0]);
+      else if (named) {
+        d = ymd(named[0]);
+        if (d && !/\d{4}/.test(named[0])) {          // no year written down: anchor it to this paper, never the future
+          var base = ymd(p.submitted) || ymd(p.createdAt) || '';
+          var yr = base ? base.slice(0, 4) : d.slice(0, 4);
+          d = yr + d.slice(4);
+          var today = new Date().toISOString().slice(0, 10);
+          if (d > today) d = (parseInt(yr, 10) - 1) + d.slice(4);
+        }
+      }
+      out.push({ d: d, t: line, s: lab, derived: true });
+    });
+    return out;
+  }
+  function derivedUpdates(p) {
+    if ((p.updates || []).length) return p.updates;
+    var out = [];
+    var sub = ymd(p.submitted);
+    if (sub) out.push({ d: sub, t: 'submitted', s: 'Submitted', derived: true });
+    notesEvents(p).forEach(function (u) { out.push(u); });
+    var cur = statusMeta(p.status).k;
+    var lu = ymd(p.lastUpdate) || '';
+    var already = out.some(function (u) { return String(u.s || '').toLowerCase() === cur; });
+    if (cur && cur !== 'submitted' && !already) {
+      out.push({ d: lu || sub, t: 'current status', s: cur.charAt(0).toUpperCase() + cur.slice(1), derived: true });
+    }
+    out.sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
+    return out;
+  }
+  function rebuildAllHistories() {
+    var n = 0;
+    pushUndo();
+    live().forEach(function (p) {
+      if ((p.updates || []).length) return;
+      var d = derivedUpdates(p);
+      if (!d.length) return;
+      p.updates = d.map(function (u) { return { d: u.d, t: u.t, s: u.s, derived: true }; });
+      p.lastUpdate = lastUpdateOf(p);
+      touch(p); n++;
+    });
+    logChange('Rebuilt the history of ' + n + ' paper' + (n === 1 ? '' : 's') + ' from their notes');
+    scheduleSave(); render();
+    toast(n ? 'Rebuilt history for ' + n + ' papers' : 'Every paper already has a history');
+  }
   function tlHue(u) {
     var txt = (String(u.s || '') + ' ' + String(u.t || '')).toLowerCase();
     if (/resubmit/.test(txt)) return 'indigo';
@@ -820,9 +909,12 @@
     return 'Update';
   }
   function timelineHtml(p) {
-    var ups = (p.updates || []).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
-    if (!ups.length) return '<div class="dnone">No dated updates recorded.</div>';
-    return '<div class="tlflow">' + ups.map(function (u, i) {
+    var ups = derivedUpdates(p).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
+    var isDerived = !((p.updates || []).length);
+    if (!ups.length) return '<div class="dnone">Nothing to build a history from — no dates, no notes.</div>';
+    var head = isDerived ? '<div class="dnone" style="margin-bottom:6px">Read out of the notes and dates — hit “rebuild history” to keep it.</div>' : '';
+    return head +
+      '<div class="tlflow">' + ups.map(function (u, i) {
       var c = tlVar(tlHue(u));
       return (i ? '<span class="tlar">→</span>' : '') +
         '<div class="tlcard" style="--tc:' + c + '"><b>' + esc(tlLabel(u)) + '</b>' +
@@ -865,7 +957,8 @@
       '<td class="num">' + (lastUpdateOf(p) || '—') +
         (d != null ? '<span class="sub" style="display:block;font-size:11.5px;color:' + (late ? 'var(--hard)' : 'var(--muted)') + '">' + d + ' days ago</span>' : '') + '</td>' +
       '<td class="num sig">' + (rej ? '<span title="rejections on record">↩ ' + rej + '</span>' : '') +
-        (res ? '<span class="res" title="resubmissions">⤴ ' + res + '</span>' : '') + '</td>' +
+        (res ? '<span class="res" title="resubmissions">⤴ ' + res + '</span>' : '') +
+        '<button class="rowedit" data-edit="' + p.id + '" title="edit this paper">✎</button></td>' +
       '</tr>';
     if (open) out += detailHtml(p);
     return out;
@@ -1448,6 +1541,7 @@
       return;
     }
     if (t.id === 'auditBtn') { showAudit(); return; }
+    if (t.id === 'rebuildBtn') { rebuildAllHistories(); return; }
     var vb = t.closest('[data-view]');
     if (vb) { M.view = vb.dataset.view; scheduleSave(); render(); return; }
     var gr = t.closest('[data-group]');
@@ -1458,6 +1552,13 @@
       if (M.sort.col === c) M.sort.dir = -M.sort.dir;
       else M.sort = { col: c, dir: (c === 'lastUpdate' || c === 'submitted') ? -1 : 1 };
       scheduleSave(); render(); return;
+    }
+    var eb0 = t.closest('[data-edit]');
+    if (eb0) {
+      e.preventDefault(); e.stopPropagation();
+      var p0 = paper(eb0.dataset.edit);
+      if (p0) openModal(p0);
+      return;
     }
     if (t.closest('a')) return;
     var eb = t.closest('[data-edit]');
