@@ -212,6 +212,31 @@
   .pill { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .04em;
     border-radius: 20px; padding: 2px 9px; white-space: nowrap;
     color: var(--surface); background: var(--h-others); }
+  .pill.proj { font-size: 10.5px; }
+  td.c-title .caret { display: inline-block; width: 13px; color: var(--muted); font-size: 10px; }
+  tr.expanded { background: var(--bg-focus); }
+  tr.expanded td { border-bottom: 0; }
+  tr.detail td { background: var(--bg-focus); border-top: 0; padding: 4px 16px 18px 30px; cursor: default; }
+  tr.detail:hover td { background: var(--bg-focus); }
+  .dmeta { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--secondary); margin-bottom: 14px; }
+  .dmeta i { font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 5px; }
+  .dmeta .warnsig { color: var(--hard); font-weight: 700; }
+  .dlabel { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 7px; }
+  .tlflow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tlar { align-self: center; color: var(--muted); font-size: 13px; }
+  .tlcard { border: 1.5px solid var(--tc); border-radius: 8px; padding: 7px 11px; min-width: 150px; max-width: 240px; background: var(--surface); }
+  .tlcard b { display: block; font-size: 12.5px; font-weight: 800; color: var(--tc); }
+  .tlcard .dt { display: block; font-size: 12px; color: var(--secondary); margin-top: 1px; }
+  .tlcard .tx { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  .dnone { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 16px; }
+  .dnotes { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+    font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; margin-bottom: 14px; }
+  .dnotes.empty { color: var(--muted); font-style: italic; }
+  .dbtns { display: flex; gap: 8px; }
+  .dbtns .ddel { color: var(--hard); border-color: transparent; }
+  .dbtns .ddel:hover { background: rgba(194,64,44,.10); border-color: transparent; color: var(--hard); }
+  td.sig { color: var(--hard); font-weight: 800; font-size: 13px; white-space: nowrap; }
+  td.sig .res { color: var(--aim); margin-left: 7px; }
   .pill.big { font-size: 11.5px; }
   .late { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
     color: var(--hard); border: 1px solid var(--hard); border-radius: 4px; padding: 0 5px; margin-left: 7px; }
@@ -268,6 +293,14 @@
     border: 1px solid var(--border); border-radius: 9px; padding: 7px 9px; outline: none; }
   .addup input:focus { border-color: var(--accent); }
 
+  #audit .asum { font-size: 14px; color: var(--secondary); margin-bottom: 16px; }
+  #audit .asum b { color: var(--ink); font-weight: 800; }
+  #audit .alist { list-style: none; margin: 0 0 16px; padding: 0; columns: 2; font-size: 13.5px; color: var(--secondary); }
+  #audit .alist li { padding: 2px 0; }
+  #audit .aok { font-size: 13px; color: var(--good); margin-bottom: 5px; }
+  #audit .abad { font-size: 13px; color: var(--hard); margin-bottom: 10px; }
+  #audit .abad ul { margin: 4px 0 0 18px; color: var(--secondary); }
+  #audit .abad li { padding: 1px 0; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 130;
     background: var(--ink); color: var(--page); font-size: 13px; font-weight: 650; padding: 8px 16px;
     border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.22); opacity: 0; pointer-events: none;
@@ -430,16 +463,19 @@
       <option value="60">delayed after 60 days</option>
       <option value="90">delayed after 90 days</option>
     </select>
-    <span class="thint" id="hint">Click a column header to sort · ⊞ to group</span>
+    <span class="chip" id="expandAll">expand all</span>
+    <span class="chip" id="auditBtn">check data</span>
+    <span class="thint" id="hint">Click a row to open it · a column header to sort · ⊞ to group</span>
   </div>
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-03 21:15 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-03 21:48 UTC</div>
 </div>
 
 <div id="syncbar"></div>
 <div class="scrim" id="scrim"></div>
+<div class="modal" id="audit"></div>
 <div class="modal" id="modal">
   <h2 id="mtitle">New paper</h2>
   <div class="frow one">
@@ -513,6 +549,7 @@
     { k: 'writing', hue: 'writing', active: true },
     { k: 'internal review', hue: 'plum', active: true },
     { k: 'submitted', hue: 'ocean', active: true },
+    { k: 'resubmitted', hue: 'indigo', active: true },
     { k: 'under review', hue: 'river', active: true },
     { k: 'major revision', hue: 'clay', active: true },
     { k: 'minor revision', hue: 'sand', active: true },
@@ -520,6 +557,7 @@
     { k: 'in press', hue: 'steel', active: false },
     { k: 'published', hue: 'other', active: false },
     { k: 'rejected', hue: 'berry', active: false },
+    { k: 'desk reject', hue: 'berry', active: false },
     { k: 'on hold', hue: 'others', active: false }
   ];
   var EXTRA_HUES = ['indigo', 'plum', 'steel', 'clay', 'berry', 'moss', 'sand', 'ocean'];
@@ -647,6 +685,27 @@
     if (!best) best = ymd(p.submitted) || ymd(p.createdAt) || '';
     return best;
   }
+  function rejectionBreak(p) {
+    var tl = 0;
+    (p.updates || []).forEach(function (u) {
+      if (/reject/i.test(String(u.s || '') + ' ' + String(u.t || ''))) tl++;
+    });
+    var m = String(p.notes || '').match(/reject/gi);
+    var nt = m ? m.length : 0;
+    return { tl: tl, notes: nt, total: tl + nt };
+  }
+  function rejectionCount(p) { return rejectionBreak(p).total; }
+  function resubCount(p) {
+    var n = 0;
+    (p.updates || []).forEach(function (u) { if (/resubmit/i.test(String(u.s || '') + ' ' + String(u.t || ''))) n++; });
+    return n;
+  }
+  var PROJ_HUES = ['writing', 'ocean', 'moss', 'clay', 'plum', 'steel', 'berry', 'indigo', 'sand', 'river', 'rne', 'other'];
+  function projHue(name) {
+    var h = 0, s2 = String(name || '');
+    for (var i = 0; i < s2.length; i++) h = (h * 31 + s2.charCodeAt(i)) % 100000;
+    return PROJ_HUES[h % PROJ_HUES.length];
+  }
   function isActive(p) { return statusMeta(p.status).active; }
   function delayDays(p) {
     if (!isActive(p)) return null;
@@ -669,15 +728,15 @@
   }
   var COLS = [
     { k: 'title', label: 'Title' },
-    { k: 'type', label: 'Type' },
-    { k: 'project', label: 'Project' },
     { k: 'journal', label: 'Journal' },
-    { k: 'authors', label: 'Authors' },
+    { k: 'project', label: 'Project' },
+    { k: 'status', label: 'Status' },
     { k: 'submitted', label: 'Submitted' },
     { k: 'lastUpdate', label: 'Last update' },
-    { k: 'status', label: 'Status' }
+    { k: 'signals', label: 'Signals' }
   ];
   function cellValue(p, k) {
+    if (k === 'signals') return String(1000 + rejectionCount(p));
     if (k === 'lastUpdate') return lastUpdateOf(p);
     if (k === 'submitted') return ymd(p.submitted);
     if (k === 'year') return (ymd(p.submitted) || '').slice(0, 4) || 'no date';
@@ -739,21 +798,77 @@
     var m = statusMeta(p.status);
     return '<span class="pill" style="background:var(--h-' + m.hue + ')">' + esc(m.k) + '</span>';
   }
+  var openRows = {};
+  function tlHue(u) {
+    var txt = (String(u.s || '') + ' ' + String(u.t || '')).toLowerCase();
+    if (/resubmit/.test(txt)) return 'indigo';
+    if (/reject/.test(txt)) return 'hard';
+    if (/accept|in press|published/.test(txt)) return 'good';
+    if (/revis/.test(txt)) return 'clay';
+    if (/submit/.test(txt)) return 'ocean';
+    return 'muted';
+  }
+  function tlVar(h) { return (h === 'hard' || h === 'good' || h === 'muted') ? 'var(--' + h + ')' : 'var(--h-' + h + ')'; }
+  function tlLabel(u) {
+    if (u.s) return u.s;
+    var txt = String(u.t || '').toLowerCase();
+    if (/resubmit/.test(txt)) return 'Resubmitted';
+    if (/reject/.test(txt)) return 'Rejected';
+    if (/accept/.test(txt)) return 'Accepted';
+    if (/revis/.test(txt)) return 'Revision';
+    if (/submit/.test(txt)) return 'Submitted';
+    return 'Update';
+  }
+  function timelineHtml(p) {
+    var ups = (p.updates || []).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
+    if (!ups.length) return '<div class="dnone">No dated updates recorded.</div>';
+    return '<div class="tlflow">' + ups.map(function (u, i) {
+      var c = tlVar(tlHue(u));
+      return (i ? '<span class="tlar">→</span>' : '') +
+        '<div class="tlcard" style="--tc:' + c + '"><b>' + esc(tlLabel(u)) + '</b>' +
+        '<span class="dt">' + esc(u.d || '') + '</span>' +
+        (u.t ? '<span class="tx">' + esc(u.t) + '</span>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  function detailHtml(p) {
+    var rb = rejectionBreak(p), rej = rb.total, res = resubCount(p);
+    return '<tr class="detail" data-detail="' + p.id + '"><td colspan="' + COLS.length + '">' +
+      '<div class="dmeta">' +
+        (p.journal ? '<span><i>Journal</i> ' + esc(p.journal) + '</span>' : '') +
+        (p.authors ? '<span><i>Authors</i> ' + esc(p.authors) + '</span>' : '') +
+        '<span><i>Type</i> ' + esc(p.type || 'manuscript') + '</span>' +
+        (p.submitted ? '<span><i>Submitted</i> ' + esc(ymd(p.submitted)) + '</span>' : '') +
+        (lastUpdateOf(p) ? '<span><i>Last update</i> ' + esc(lastUpdateOf(p)) + '</span>' : '') +
+        (rej ? '<span class="warnsig">' + rej + ' rejection' + (rej === 1 ? '' : 's') + ' on record' +
+          '<i style="margin-left:6px;text-transform:none;letter-spacing:0;font-weight:600">(' + rb.tl + ' in the timeline, ' + rb.notes + ' in notes)</i></span>' : '') +
+        (res ? '<span class="warnsig">' + res + ' resubmission' + (res === 1 ? '' : 's') + '</span>' : '') +
+        (p.url ? '<span><a href="' + esc(p.url) + '" target="_blank" rel="noopener">published link ↗</a></span>' : '') +
+      '</div>' +
+      '<div class="dlabel">Timeline</div>' + timelineHtml(p) +
+      '<div class="dlabel">Full notes</div>' +
+      '<div class="dnotes' + (p.notes ? '' : ' empty') + '">' + (p.notes ? esc(p.notes) : 'No notes.') + '</div>' +
+      '<div class="dbtns"><button class="btn ghost" data-edit="' + p.id + '">✎ Edit</button>' +
+      '<button class="btn ghost ddel" data-del="' + p.id + '">Delete</button></div>' +
+      '</td></tr>';
+  }
   function rowHtml(p) {
-    var late = isDelayed(p), d = delayDays(p);
-    return '<tr data-id="' + p.id + '">' +
-      '<td class="c-title">' + esc(p.title || '(untitled)') +
+    var late = isDelayed(p), d = delayDays(p), rej = rejectionCount(p), res = resubCount(p);
+    var open = !!openRows[p.id];
+    var out = '<tr data-id="' + p.id + '"' + (open ? ' class="expanded"' : '') + '>' +
+      '<td class="c-title"><span class="caret">' + (open ? '▾' : '▸') + '</span>' + esc(p.title || '(untitled)') +
         (p.url ? ' <a class="tlink" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="open the published paper">↗</a>' : '') +
         (p.authors ? '<span class="sub">' + esc(p.authors) + '</span>' : '') + '</td>' +
-      '<td class="num">' + esc(p.type || 'manuscript') + '</td>' +
-      '<td class="num">' + esc(p.project || '—') + '</td>' +
       '<td class="num">' + esc(p.journal || '—') + '</td>' +
-      '<td class="num">' + esc(p.authors ? String(p.authors).split(/[,;]/)[0].trim() + (String(p.authors).indexOf(',') > -1 ? ' et al.' : '') : '—') + '</td>' +
-      '<td class="num">' + (prettyDate(p.submitted) || '—') + '</td>' +
-      '<td class="num">' + (prettyDate(lastUpdateOf(p)) || '—') +
-        (d != null ? '<span class="sub" style="display:block;font-size:11.5px;color:' + (late ? 'var(--hard)' : 'var(--muted)') + '">' + d + ' days ago</span>' : '') + '</td>' +
+      '<td class="num">' + (p.project ? '<span class="pill proj" style="background:var(--h-' + projHue(p.project) + ')">' + esc(p.project) + '</span>' : '—') + '</td>' +
       '<td>' + statusPill(p) + (late ? '<span class="late">DELAYED</span>' : '') + '</td>' +
+      '<td class="num">' + (ymd(p.submitted) || '—') + '</td>' +
+      '<td class="num">' + (lastUpdateOf(p) || '—') +
+        (d != null ? '<span class="sub" style="display:block;font-size:11.5px;color:' + (late ? 'var(--hard)' : 'var(--muted)') + '">' + d + ' days ago</span>' : '') + '</td>' +
+      '<td class="num sig">' + (rej ? '<span title="rejections on record">↩ ' + rej + '</span>' : '') +
+        (res ? '<span class="res" title="resubmissions">⤴ ' + res + '</span>' : '') + '</td>' +
       '</tr>';
+    if (open) out += detailHtml(p);
+    return out;
   }
   function renderTable() {
     var list = sorted(live().filter(match));
@@ -960,8 +1075,9 @@
         if (typeof h === 'string') { var m = h.match(/^\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.]\d{1,2}[\/.]\d{4})\s*[—\-:–]\s*(.+)$/);
           if (m) ups.push({ d: ymd(m[1]), t: m[2].trim() }); else ups.push({ d: '', t: String(h).trim() }); return; }
         var d = ymd(h.d || h.date || h.when || h.at || '');
-        var t = h.t || h.text || h.note || h.what || h.msg || '';
-        if (d || t) ups.push({ d: d, t: String(t).trim() });
+        var t = h.t || h.text || h.note || h.what || h.msg || h.detail || h.description || '';
+        var st = h.s || h.status || h.state || h.stage || h.event || h.type || '';
+        if (d || t || st) ups.push({ d: d, t: String(t).trim(), s: String(st).trim() });
       });
     }
     // dated lines inside a free-text notes field
@@ -1022,6 +1138,60 @@
     scheduleSave(); render();
     toast('Imported ' + added + ' new, ' + updated + ' updated' +
       (!ds.decided && ds.ambiguous ? ' — slash dates read as month/day' : ''));
+  }
+
+  // ---------- data check ----------
+  function showAudit() {
+    var l = live();
+    var byStatus = {}, known = {};
+    STATUS.forEach(function (x) { known[x.k] = 1; });
+    var noJournal = [], noSubmitted = [], noStatus = [], noTimeline = [], odd = [], dupes = [], future = [];
+    var seen = {};
+    l.forEach(function (p) {
+      var k = statusMeta(p.status).k;
+      byStatus[k] = (byStatus[k] || 0) + 1;
+      if (!known[k]) odd.push(p.title + ' → ' + k);
+      if (!p.journal) noJournal.push(p.title);
+      if (!ymd(p.submitted)) noSubmitted.push(p.title);
+      if (!String(p.status || '').trim()) noStatus.push(p.title);
+      if (!(p.updates || []).length) noTimeline.push(p.title);
+      var t = String(p.title || '').trim().toLowerCase();
+      if (seen[t]) dupes.push(p.title); else seen[t] = 1;
+      var d = ymd(p.submitted);
+      if (d && d > new Date().toISOString().slice(0, 10)) future.push(p.title + ' (' + d + ')');
+    });
+    var upd = 0;
+    l.forEach(function (p) { upd += (p.updates || []).length; });
+    function block(title, arr) {
+      if (!arr.length) return '<div class="aok">' + esc(title) + ': none</div>';
+      return '<div class="abad"><b>' + esc(title) + ' — ' + arr.length + '</b><ul>' +
+        arr.slice(0, 25).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
+        (arr.length > 25 ? '<li>… and ' + (arr.length - 25) + ' more</li>' : '') + '</ul></div>';
+    }
+    var statusRows = Object.keys(byStatus).sort(function (a, b) { return byStatus[b] - byStatus[a]; })
+      .map(function (k) { return '<li>' + esc(k) + ' — <b>' + byStatus[k] + '</b></li>'; }).join('');
+    var html = '<h2>Data check</h2>' +
+      '<div class="asum"><b>' + l.length + '</b> papers · <b>' + upd + '</b> timeline entries · <b>' +
+      l.filter(isDelayed).length + '</b> delayed</div>' +
+      '<div class="dlabel">Status spread</div><ul class="alist">' + statusRows + '</ul>' +
+      '<div class="dlabel">Possible gaps</div>' +
+      block('Statuses outside the known list', odd) +
+      block('No journal', noJournal) +
+      block('No submitted date', noSubmitted) +
+      block('No status', noStatus) +
+      block('No timeline entry', noTimeline) +
+      block('Duplicate titles', dupes) +
+      block('Submitted date in the future', future) +
+      '<div class="mfoot"><button class="btn ghost" id="aCopy">Copy this report</button>' +
+      '<button class="btn" id="aClose" style="margin-left:auto">Close</button></div>';
+    var m = el('audit');
+    m.innerHTML = html;
+    m.classList.add('on');
+    el('scrim').classList.add('on');
+  }
+  function auditText() {
+    var m = el('audit');
+    return m ? m.innerText : '';
   }
 
   // ---------- crypto ----------
@@ -1232,6 +1402,15 @@
   // ---------- events ----------
   document.addEventListener('click', function (e) {
     var t = e.target;
+    if (t.closest('#audit')) {
+      if (t.id === 'aClose') { el('audit').classList.remove('on'); el('scrim').classList.remove('on'); }
+      else if (t.id === 'aCopy') {
+        var txt = auditText();
+        if (navigator.clipboard) navigator.clipboard.writeText(txt);
+        toast('Report copied');
+      }
+      return;
+    }
     if (t.closest('#modal') || t.closest('#tokenbar') || t.closest('#gate')) {
       if (t.id === 'mSave') saveModal();
       else if (t.id === 'mCancel') closeModal();
@@ -1247,7 +1426,7 @@
       else if (t.id === 'fgBack') { el('forgotBox').classList.remove('on'); el('forgotLink').style.display = ''; }
       return;
     }
-    if (t.id === 'scrim') { closeModal(); return; }
+    if (t.id === 'scrim') { el('audit').classList.remove('on'); closeModal(); return; }
     if (t.id === 'newBtn') { openModal(null); return; }
     if (t.id === 'syncBtn') { doSync(false); return; }
     if (t.id === 'undoBtn') { undo(); return; }
@@ -1260,6 +1439,15 @@
       applyTheme(); scheduleSave(); return;
     }
     if (t.id === 'lateBtn') { M.delayedOnly = !M.delayedOnly; scheduleSave(); render(); return; }
+    if (t.id === 'expandAll') {
+      var vis = live().filter(match);
+      var anyClosed = vis.some(function (p) { return !openRows[p.id]; });
+      openRows = {};
+      if (anyClosed) vis.forEach(function (p) { openRows[p.id] = 1; });
+      render();
+      return;
+    }
+    if (t.id === 'auditBtn') { showAudit(); return; }
     var vb = t.closest('[data-view]');
     if (vb) { M.view = vb.dataset.view; scheduleSave(); render(); return; }
     var gr = t.closest('[data-group]');
@@ -1272,8 +1460,25 @@
       scheduleSave(); render(); return;
     }
     if (t.closest('a')) return;
-    var row = t.closest('tr[data-id]') || t.closest('.bcard[data-id]');
-    if (row) { var p = paper(row.dataset.id); if (p) openModal(p); return; }
+    var eb = t.closest('[data-edit]');
+    if (eb) { var pe = paper(eb.dataset.edit); if (pe) openModal(pe); return; }
+    var db = t.closest('[data-del]');
+    if (db) {
+      var pd = paper(db.dataset.del);
+      if (pd) { pushUndo(); pd.deleted = true; touch(pd); logChange('Deleted paper: ' + (pd.title || pd.id));
+        delete openRows[pd.id]; scheduleSave(); render(); toast('Deleted — Ctrl+Z to undo'); }
+      return;
+    }
+    if (t.closest('tr.detail')) return;
+    var bc = t.closest('.bcard[data-id]');
+    if (bc) { var pb = paper(bc.dataset.id); if (pb) openModal(pb); return; }
+    var row = t.closest('tr[data-id]');
+    if (row) {
+      var id = row.dataset.id;
+      if (openRows[id]) delete openRows[id]; else openRows[id] = 1;
+      render();
+      return;
+    }
   });
   document.addEventListener('change', function (e) {
     if (e.target.id === 'groupSel') { M.group = e.target.value; scheduleSave(); render(); }
