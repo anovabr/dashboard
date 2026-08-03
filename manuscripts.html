@@ -306,6 +306,12 @@
   #audit .abad { font-size: 13px; color: var(--hard); margin-bottom: 10px; }
   #audit .abad ul { margin: 4px 0 0 18px; color: var(--secondary); }
   #audit .abad li { padding: 1px 0; }
+  #audit .irep { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  #audit .irep th { text-align: left; font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); padding: 4px 8px 6px; border-bottom: 1px solid var(--border); }
+  #audit .irep td { padding: 5px 8px; border-top: 1px solid var(--hairline); color: var(--secondary); }
+  #audit .irep td.good { color: var(--good); font-weight: 700; }
+  #audit .irep td.bad { color: var(--hard); font-weight: 800; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 130;
     background: var(--ink); color: var(--page); font-size: 13px; font-weight: 650; padding: 8px 16px;
     border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.22); opacity: 0; pointer-events: none;
@@ -470,13 +476,14 @@
     </select>
     <span class="chip" id="expandAll">expand all</span>
     <span class="chip" id="rebuildBtn" title="turn the notes of every paper without a history into dated timeline entries">rebuild history</span>
+    <span class="chip" id="reportBtn" style="display:none" title="what the last import mapped">import report</span>
     <span class="chip" id="auditBtn">check data</span>
     <span class="thint" id="hint">Click a row to open it · a column header to sort · ⊞ to group</span>
   </div>
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-03 22:07 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-03 23:09 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -655,7 +662,13 @@
     return { decided: dmy !== null, ambiguous: ambiguous, dayFirst: DMY };
   }
   function ymd(d) {
+    if (d === 0 || d === '0') return '';
     if (!d) return '';
+    if (typeof d === 'number' || /^\d{9,13}$/.test(String(d))) {      // epoch seconds or milliseconds
+      var nnum = +d, ms = String(Math.floor(nnum)).length <= 10 ? nnum * 1000 : nnum;
+      var dd = new Date(ms);
+      if (!isNaN(dd.getTime())) return dd.toISOString().slice(0, 10);
+    }
     var s = String(d).trim();
     var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
@@ -691,10 +704,21 @@
     var then = new Date(+p[0], +p[1] - 1, +p[2]);
     return Math.floor((new Date().setHours(0, 0, 0, 0) - then.setHours(0, 0, 0, 0)) / 86400000);
   }
+  function submittedOf(p) {
+    var d = ymd(p.submitted);
+    if (d) return d;
+    var ups = (p.updates || []).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
+    for (var i = 0; i < ups.length; i++) {
+      if (/submit/i.test(String(ups[i].s || '') + ' ' + String(ups[i].t || '')) && ups[i].d) return ups[i].d;
+    }
+    for (var j = 0; j < ups.length; j++) if (ups[j].d) return ups[j].d;
+    return '';
+  }
   function lastUpdateOf(p) {
     var best = ymd(p.lastUpdate) || '';
     (p.updates || []).forEach(function (u) { var d = ymd(u.d); if (d > best) best = d; });
     if (!best) best = ymd(p.submitted) || ymd(p.createdAt) || '';
+    if (!best) best = submittedOf(p);
     return best;
   }
   function rejectionBreak(p) {
@@ -751,8 +775,8 @@
   function cellValue(p, k) {
     if (k === 'signals') return String(1000 + rejectionCount(p));
     if (k === 'lastUpdate') return lastUpdateOf(p);
-    if (k === 'submitted') return ymd(p.submitted);
-    if (k === 'year') return (ymd(p.submitted) || '').slice(0, 4) || 'no date';
+    if (k === 'submitted') return submittedOf(p);
+    if (k === 'year') return (submittedOf(p) || '').slice(0, 4) || 'no date';
     if (k === 'status') return String(p.status || '').toLowerCase();
     return String(p[k] == null ? '' : p[k]);
   }
@@ -929,7 +953,7 @@
         (p.journal ? '<span><i>Journal</i> ' + esc(p.journal) + '</span>' : '') +
         (p.authors ? '<span><i>Authors</i> ' + esc(p.authors) + '</span>' : '') +
         '<span><i>Type</i> ' + esc(p.type || 'manuscript') + '</span>' +
-        (p.submitted ? '<span><i>Submitted</i> ' + esc(ymd(p.submitted)) + '</span>' : '') +
+        (submittedOf(p) ? '<span><i>Submitted</i> ' + esc(submittedOf(p)) + (ymd(p.submitted) ? '' : ' <i>(from the timeline)</i>') + '</span>' : '') +
         (lastUpdateOf(p) ? '<span><i>Last update</i> ' + esc(lastUpdateOf(p)) + '</span>' : '') +
         (rej ? '<span class="warnsig">' + rej + ' rejection' + (rej === 1 ? '' : 's') + ' on record' +
           '<i style="margin-left:6px;text-transform:none;letter-spacing:0;font-weight:600">(' + rb.tl + ' in the timeline, ' + rb.notes + ' in notes)</i></span>' : '') +
@@ -953,7 +977,7 @@
       '<td class="num">' + esc(p.journal || '—') + '</td>' +
       '<td class="num">' + (p.project ? '<span class="pill proj" style="background:var(--h-' + projHue(p.project) + ')">' + esc(p.project) + '</span>' : '—') + '</td>' +
       '<td>' + statusPill(p) + (late ? '<span class="late">DELAYED</span>' : '') + '</td>' +
-      '<td class="num">' + (ymd(p.submitted) || '—') + '</td>' +
+      '<td class="num">' + (submittedOf(p) || '—') + '</td>' +
       '<td class="num">' + (lastUpdateOf(p) || '—') +
         (d != null ? '<span class="sub" style="display:block;font-size:11.5px;color:' + (late ? 'var(--hard)' : 'var(--muted)') + '">' + d + ' days ago</span>' : '') + '</td>' +
       '<td class="num sig">' + (rej ? '<span title="rejections on record">↩ ' + rej + '</span>' : '') +
@@ -1144,23 +1168,64 @@
     journal: ['journal', 'venue', 'revista', 'target journal'],
     url: ['url', 'published url', 'link', 'doi', 'published_url', 'publishedurl'],
     authors: ['authors', 'author', 'autores'],
-    submitted: ['submitted', 'submitted date', 'submission', 'submission date', 'date submitted', 'submitted_date', 'submitteddate'],
+    submitted: ['submitted', 'submitted date', 'submission', 'submission date', 'date submitted',
+      'date of submission', 'submitted on', 'submitted at', 'first submitted', 'submitteddate', 'submissiondate'],
     lastUpdate: ['last update', 'lastupdate', 'last_update', 'updated', 'last change', 'last updated'],
     status: ['status', 'state', 'situacao', 'situação'],
     notes: ['notes', 'note', 'history', 'notes/history', 'notes / history', 'comments', 'observacoes']
   };
-  function normKey(k) { return String(k || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+  function normKey(k) { return String(k || '').trim().toLowerCase().replace(/[_\-]+/g, ' ').replace(/\s+/g, ' '); }
+  // last resort when the export uses a column name we have never seen
+  var FUZZY = {
+    submitted: function (k) { return /submi(t|ss)/.test(k) && !/re-?submi/.test(k) && !/status|state|stage/.test(k); },
+    lastUpdate: function (k) { return (/last/.test(k) && /(update|change|activity|action)/.test(k)) || /^updated( at| on)?$/.test(k); },
+    title: function (k) { return /^(title|name)$/.test(k) || /manuscript title|paper title/.test(k); },
+    journal: function (k) { return /journal|venue|revista/.test(k); },
+    project: function (k) { return /project|projeto|study|grant/.test(k); },
+    authors: function (k) { return /author|autor/.test(k); },
+    url: function (k) { return /url|link|doi/.test(k); },
+    status: function (k) { return /status|state|stage|situa/.test(k); },
+    notes: function (k) { return /note|history|comment|observ/.test(k); },
+    type: function (k) { return /^(type|kind)$/.test(k); }
+  };
+  var LAST_MAP = null;
+  function flat(raw) {
+    var seen = {};
+    function walk(o, depth) {
+      if (!o || typeof o !== 'object' || depth > 2) return;
+      Object.keys(o).forEach(function (k) {
+        var v = o[k];
+        if (v && typeof v === 'object' && !Array.isArray(v)) { walk(v, depth + 1); return; }
+        var nk = normKey(k);
+        if (seen[nk] === undefined || String(seen[nk]).trim() === '') seen[nk] = v;
+      });
+    }
+    walk(raw, 0);
+    return seen;
+  }
   function mapRecord(raw) {
-    var out = {}, seen = {};
-    Object.keys(raw).forEach(function (k) { seen[normKey(k)] = raw[k]; });
+    var out = {}, seen = flat(raw);
     Object.keys(FIELD_ALIASES).forEach(function (field) {
       for (var i = 0; i < FIELD_ALIASES[field].length; i++) {
         var a = FIELD_ALIASES[field][i];
-        if (seen[a] !== undefined && String(seen[a]).trim() !== '') { out[field] = seen[a]; return; }
+        if (seen[a] !== undefined && String(seen[a]).trim() !== '') {
+          out[field] = seen[a];
+          if (LAST_MAP) LAST_MAP[field] = a;
+          return;
+        }
+      }
+      var keys = Object.keys(seen);
+      for (var j = 0; j < keys.length; j++) {
+        if (FUZZY[field] && FUZZY[field](keys[j]) && String(seen[keys[j]]).trim() !== '') {
+          out[field] = seen[keys[j]];
+          if (LAST_MAP) LAST_MAP[field] = keys[j] + ' (matched loosely)';
+          return;
+        }
       }
     });
     // updates / history array straight from a JSON export
-    var hist = raw.updates || raw.history || raw.timeline || seen['updates'] || seen['history'];
+    var hist = raw.updates || raw.history || raw.timeline || raw.events || raw.log || raw.entries ||
+      raw.status_history || raw.statusHistory || raw.milestones;
     var ups = [];
     if (Array.isArray(hist)) {
       hist.forEach(function (h) {
@@ -1200,6 +1265,7 @@
   }
   function importText(text, name) {
     var recs = null;
+    LAST_MAP = {};
     var ds = sniffDateOrder(String(text));
     var trimmed = String(text).replace(/^﻿/, '').trim();
     if (trimmed.charAt(0) === '{' || trimmed.charAt(0) === '[') {
@@ -1229,8 +1295,53 @@
     });
     logChange('Imported ' + name + ': ' + added + ' new, ' + updated + ' updated');
     scheduleSave(); render();
+    showImportReport(name, mapped, recs, added, updated);
     toast('Imported ' + added + ' new, ' + updated + ' updated' +
       (!ds.decided && ds.ambiguous ? ' — slash dates read as month/day' : ''));
+  }
+
+  function showImportReport(name, mapped, recs, added, updated) {
+    var fields = ['title', 'journal', 'project', 'status', 'submitted', 'lastUpdate', 'authors', 'url', 'type', 'notes'];
+    var filled = {};
+    fields.forEach(function (f) {
+      filled[f] = mapped.filter(function (p) { return String(p[f] || '').trim() !== ''; }).length;
+    });
+    var withHist = mapped.filter(function (p) { return (p.updates || []).length; }).length;
+    var cols = {};
+    (recs || []).forEach(function (r) { Object.keys(flat(r)).forEach(function (k) { cols[k] = 1; }); });
+    var used = {};
+    Object.keys(LAST_MAP || {}).forEach(function (f) { used[String(LAST_MAP[f]).replace(' (matched loosely)', '')] = f; });
+    var unused = Object.keys(cols).filter(function (k) { return !used[k]; });
+    var rows = fields.map(function (f) {
+      var src = (LAST_MAP || {})[f];
+      var bad = filled[f] === 0;
+      return '<tr><td>' + esc(f) + '</td><td>' + (src ? esc(src) : '<i>no column matched</i>') + '</td>' +
+        '<td class="' + (bad ? 'bad' : 'good') + '">' + filled[f] + ' of ' + mapped.length + '</td></tr>';
+    }).join('');
+    var suspicious = ['title', 'submitted', 'status', 'journal'].some(function (f) { return filled[f] === 0; }) ||
+      filled.submitted < Math.ceil(mapped.length * 0.7);
+    var html = '<h2>Import report — ' + esc(name) + '</h2>' +
+      '<div class="asum"><b>' + added + '</b> new · <b>' + updated + '</b> updated · <b>' + withHist + '</b> arrived with a timeline</div>' +
+      '<table class="irep"><thead><tr><th>Field</th><th>Read from</th><th>Filled</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      (unused.length ? '<div class="dlabel" style="margin-top:14px">Columns in the file that nothing used</div>' +
+        '<div class="abad" style="color:var(--secondary)">' + unused.map(esc).join(' · ') + '</div>' : '') +
+      '<div class="mfoot"><button class="btn ghost" id="aCopy">Copy this report</button>' +
+      '<button class="btn" id="aClose" style="margin-left:auto">Close</button></div>';
+    lastReport = html;
+    el('reportBtn').style.display = '';
+    if (!suspicious) { toast('Import looks clean — “import report” has the detail'); return; }
+    var m = el('audit');
+    m.innerHTML = html;
+    m.classList.add('on');
+    el('scrim').classList.add('on');
+  }
+  var lastReport = null;
+  function showLastReport() {
+    if (!lastReport) return;
+    var m = el('audit');
+    m.innerHTML = lastReport;
+    m.classList.add('on');
+    el('scrim').classList.add('on');
   }
 
   // ---------- data check ----------
@@ -1245,12 +1356,12 @@
       byStatus[k] = (byStatus[k] || 0) + 1;
       if (!known[k]) odd.push(p.title + ' → ' + k);
       if (!p.journal) noJournal.push(p.title);
-      if (!ymd(p.submitted)) noSubmitted.push(p.title);
+      if (!submittedOf(p)) noSubmitted.push(p.title);
       if (!String(p.status || '').trim()) noStatus.push(p.title);
       if (!(p.updates || []).length) noTimeline.push(p.title);
       var t = String(p.title || '').trim().toLowerCase();
       if (seen[t]) dupes.push(p.title); else seen[t] = 1;
-      var d = ymd(p.submitted);
+      var d = submittedOf(p);
       if (d && d > new Date().toISOString().slice(0, 10)) future.push(p.title + ' (' + d + ')');
     });
     var upd = 0;
@@ -1542,6 +1653,7 @@
     }
     if (t.id === 'auditBtn') { showAudit(); return; }
     if (t.id === 'rebuildBtn') { rebuildAllHistories(); return; }
+    if (t.id === 'reportBtn') { showLastReport(); return; }
     var vb = t.closest('[data-view]');
     if (vb) { M.view = vb.dataset.view; scheduleSave(); render(); return; }
     var gr = t.closest('[data-group]');
