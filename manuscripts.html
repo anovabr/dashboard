@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manuscripts</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%231d6b64%27/%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%230f4844%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2764%27%20height%3D%2764%27%20rx%3D%2715%27%20fill%3D%27url%28%23g%29%27/%3E%3Cpath%20d%3D%27M15%2033.5%20L27%2045%20L49%2019%27%20stroke%3D%27%23ffffff%27%20stroke-width%3D%278.5%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27/%3E%3Ccircle%20cx%3D%2751%27%20cy%3D%2713%27%20r%3D%277.5%27%20fill%3D%27%23f26652%27/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #eef3f2;
+    --surface: #ffffff;
+    --ink: #1b2130;
+    --secondary: #3f4453;
+    --muted: #666b7a;
+    --hairline: #dde4e2;
+    --border: rgba(27,33,48,0.11);
+    --accent: #14544f;
+    --hard: #c2402c;
+    --aim: #6f6494;
+    --good: #3f7d61;
+    --track: #dbe3e1;
+    --claim-bg: rgba(63,125,97,0.13);
+    --shadow: 0 1px 3px rgba(27,33,48,0.06);
+    --glass: rgba(255,255,255,0.72);
+    --h-focus: #14544f;   --bg-focus: rgba(20,84,79,0.06);
+    --focus-band-text: #ffffff;
+    --h-writing: #b03352; --bg-writing: rgba(201,58,92,0.07);
+    --h-rne: #6f6494;     --bg-rne: rgba(145,135,174,0.11);
+    --h-river: #8f6312;   --bg-river: rgba(245,180,92,0.13);
+    --h-personal: #5d5a6e;--bg-personal: rgba(93,90,110,0.09);
+    --h-rewards: #a83f28; --bg-rewards: rgba(242,102,82,0.07);
+    --h-other: #3a7860;   --bg-other: rgba(79,148,120,0.10);
+    --h-others: #5d6a78; --bg-others: rgba(93,106,120,0.09);
+    --h-ocean: #1f5f8b;   --bg-ocean: rgba(31,95,139,0.09);
+    --h-moss: #55702a;    --bg-moss: rgba(85,112,42,0.10);
+    --h-clay: #9a5b33;    --bg-clay: rgba(154,91,51,0.10);
+    --h-plum: #7c3f6d;    --bg-plum: rgba(124,63,109,0.09);
+    --h-steel: #3f6a72;   --bg-steel: rgba(63,106,114,0.10);
+    --h-berry: #a33350;   --bg-berry: rgba(163,51,80,0.08);
+    --h-indigo: #4a4d95;  --bg-indigo: rgba(74,77,149,0.09);
+    --h-sand: #8a7320;    --bg-sand: rgba(138,115,32,0.11);
+    --st-now: #c2402c;
+    --st-working: #96690f;
+    --st-planning: #6f6494;
+    --pill-ok-bg: rgba(63,125,97,0.14);  --pill-ok-fg: #2e6a50;
+    --pill-warn-bg: rgba(150,105,15,0.14); --pill-warn-fg: #7d5a0c;
+    --pill-bad-bg: rgba(194,64,44,0.12);  --pill-bad-fg: #a53a26;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #14161c;
+      --surface: #1d2027;
+      --ink: #f0f1f4;
+      --secondary: #c6c9d2;
+      --muted: #8f93a1;
+      --hairline: #2b2f39;
+      --border: rgba(255,255,255,0.10);
+      --accent: #7cc6b8;
+      --hard: #ef8a70;
+      --aim: #b3a8d6;
+      --good: #7fc39f;
+      --track: #2c313b;
+      --claim-bg: rgba(127,195,159,0.14);
+      --shadow: none;
+      --glass: rgba(29,32,39,0.72);
+      --h-focus: #7cc6b8;   --bg-focus: rgba(124,198,184,0.08);
+      --focus-band-text: #10201d;
+      --h-writing: #e58aa2; --bg-writing: rgba(229,138,162,0.09);
+      --h-rne: #b3a8d6;     --bg-rne: rgba(179,168,214,0.09);
+      --h-river: #e2b269;   --bg-river: rgba(226,178,105,0.10);
+      --h-personal: #a9a5c0;--bg-personal: rgba(169,165,192,0.09);
+      --h-rewards: #ef9077; --bg-rewards: rgba(239,144,119,0.08);
+      --h-other: #7fc39f;   --bg-other: rgba(127,195,159,0.08);
+      --h-others: #9aa7b6; --bg-others: rgba(154,167,182,0.09);
+      --h-ocean: #7fb6dd;   --bg-ocean: rgba(127,182,221,0.09);
+      --h-moss: #a9c470;    --bg-moss: rgba(169,196,112,0.09);
+      --h-clay: #e0a07a;    --bg-clay: rgba(224,160,122,0.09);
+      --h-plum: #d193c2;    --bg-plum: rgba(209,147,194,0.09);
+      --h-steel: #8fbcc4;   --bg-steel: rgba(143,188,196,0.09);
+      --h-berry: #e88aa0;   --bg-berry: rgba(232,138,160,0.08);
+      --h-indigo: #9a9de8;  --bg-indigo: rgba(154,157,232,0.09);
+      --h-sand: #d6c06a;    --bg-sand: rgba(214,192,106,0.10);
+      --st-now: #ef8a70;
+      --st-working: #e2b269;
+      --st-planning: #b3a8d6;
+      --pill-ok-bg: rgba(127,195,159,0.16); --pill-ok-fg: #7fc39f;
+      --pill-warn-bg: rgba(226,178,105,0.16); --pill-warn-fg: #e2b269;
+      --pill-bad-bg: rgba(239,138,112,0.16); --pill-bad-fg: #ef8a70;
+    }
+  }
+  :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #14161c;
+      --surface: #1d2027;
+      --ink: #f0f1f4;
+      --secondary: #c6c9d2;
+      --muted: #8f93a1;
+      --hairline: #2b2f39;
+      --border: rgba(255,255,255,0.10);
+      --accent: #7cc6b8;
+      --hard: #ef8a70;
+      --aim: #b3a8d6;
+      --good: #7fc39f;
+      --track: #2c313b;
+      --claim-bg: rgba(127,195,159,0.14);
+      --shadow: none;
+      --glass: rgba(29,32,39,0.72);
+      --h-focus: #7cc6b8;   --bg-focus: rgba(124,198,184,0.08);
+      --focus-band-text: #10201d;
+      --h-writing: #e58aa2; --bg-writing: rgba(229,138,162,0.09);
+      --h-rne: #b3a8d6;     --bg-rne: rgba(179,168,214,0.09);
+      --h-river: #e2b269;   --bg-river: rgba(226,178,105,0.10);
+      --h-personal: #a9a5c0;--bg-personal: rgba(169,165,192,0.09);
+      --h-rewards: #ef9077; --bg-rewards: rgba(239,144,119,0.08);
+      --h-other: #7fc39f;   --bg-other: rgba(127,195,159,0.08);
+      --h-others: #9aa7b6; --bg-others: rgba(154,167,182,0.09);
+      --h-ocean: #7fb6dd;   --bg-ocean: rgba(127,182,221,0.09);
+      --h-moss: #a9c470;    --bg-moss: rgba(169,196,112,0.09);
+      --h-clay: #e0a07a;    --bg-clay: rgba(224,160,122,0.09);
+      --h-plum: #d193c2;    --bg-plum: rgba(209,147,194,0.09);
+      --h-steel: #8fbcc4;   --bg-steel: rgba(143,188,196,0.09);
+      --h-berry: #e88aa0;   --bg-berry: rgba(232,138,160,0.08);
+      --h-indigo: #9a9de8;  --bg-indigo: rgba(154,157,232,0.09);
+      --h-sand: #d6c06a;    --bg-sand: rgba(214,192,106,0.10);
+      --st-now: #ef8a70;
+      --st-working: #e2b269;
+      --st-planning: #b3a8d6;
+      --pill-ok-bg: rgba(127,195,159,0.16); --pill-ok-fg: #7fc39f;
+      --pill-warn-bg: rgba(226,178,105,0.16); --pill-warn-fg: #e2b269;
+      --pill-bad-bg: rgba(239,138,112,0.16); --pill-bad-fg: #ef8a70;
+    }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); color: var(--ink);
+    font-size: 15px; line-height: 1.55;
+    padding: 16px 20px 60px;
+  }
+  .app { max-width: 1500px; margin: 0 auto; }
+  a { color: var(--accent); }
+
+  /* ---------- top bar ---------- */
+  .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 40; padding: 10px 0 12px;
+    background: linear-gradient(var(--page) 78%, rgba(0,0,0,0)); }
+  .brand b { font-size: 22px; font-weight: 800; letter-spacing: -.01em; color: var(--accent); }
+  .brand .meta { display: block; font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+  .searchbox { position: relative; flex: 1; min-width: 220px; max-width: 460px; }
+  .searchbox input { width: 100%; font: inherit; font-size: 14px; padding: 8px 12px 8px 30px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--ink); outline: none; }
+  .searchbox input:focus { border-color: var(--accent); }
+  .searchbox .mag { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
+  .topact { margin-left: auto; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .chip { font-size: 12px; font-weight: 650; background: transparent; border: 1px dashed var(--border);
+    color: var(--muted); border-radius: 20px; padding: 3px 11px; cursor: pointer; }
+  .chip:hover { color: var(--accent); border-color: var(--accent); }
+  .chip.on { background: var(--accent); border-style: solid; border-color: var(--accent); color: var(--surface); }
+  .chip.warn.on { background: var(--hard); border-color: var(--hard); color: #fff; }
+  @keyframes syncflash { 0%,100% { background: transparent; } 50% { background: var(--good); color: #fff; border-color: var(--good); } }
+  .chip.flash { animation: syncflash .55s ease 2; }
+  .btn { font: inherit; font-size: 13px; font-weight: 700; border-radius: 9px; padding: 7px 14px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: var(--surface); }
+  .btn:hover { filter: brightness(1.12); }
+  .btn.ghost { background: var(--surface); color: var(--secondary); border-color: var(--border); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  #syncbar { position: fixed; left: 0; top: 0; height: 3px; width: 0; background: var(--good); z-index: 200; opacity: 0; }
+
+  /* ---------- stats ---------- */
+  .stats { font-size: 13.5px; color: var(--secondary); margin: 4px 0 14px; }
+  .stats b { font-weight: 750; color: var(--ink); }
+  .stats .sep { color: var(--muted); margin: 0 6px; }
+  .stats a { font-weight: 700; text-decoration: none; border-bottom: 1px dotted var(--accent); }
+
+  /* ---------- toolbar ---------- */
+  .toolbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 12px; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--surface); }
+  .seg button { font: inherit; font-size: 12.5px; font-weight: 650; border: 0; background: transparent;
+    color: var(--secondary); padding: 6px 13px; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: var(--surface); font-weight: 750; }
+  .tsel { font: inherit; font-size: 12.5px; color: var(--secondary); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 9px; padding: 6px 9px; cursor: pointer; }
+  .tsel:focus { outline: none; border-color: var(--accent); }
+  .thint { font-size: 12px; color: var(--muted); font-style: italic; }
+
+  /* ---------- table ---------- */
+  .tablewrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: auto; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th { position: sticky; top: 0; z-index: 2; background: var(--surface);
+    text-align: left; font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
+  thead th:hover { color: var(--accent); }
+  thead th .ar { font-size: 9px; margin-left: 4px; }
+  thead th .gr { font-size: 11px; margin-left: 6px; opacity: 0; }
+  thead th:hover .gr { opacity: .55; }
+  thead th .gr:hover { opacity: 1 !important; color: var(--accent); }
+  tbody tr { border-top: 1px solid var(--hairline); cursor: pointer; }
+  tbody tr:hover { background: var(--bg-focus); }
+  tbody td { padding: 9px 12px; vertical-align: top; }
+  td.c-title { font-weight: 650; min-width: 300px; }
+  td.c-title .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 450; margin-top: 1px; }
+  td.num { white-space: nowrap; color: var(--secondary); font-size: 13px; }
+  tr.grouphead td { background: var(--bg-focus); font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--accent); padding: 8px 12px; cursor: default; }
+  tr.grouphead td .gn { color: var(--muted); margin-left: 8px; letter-spacing: 0; text-transform: none; font-weight: 700; }
+  .empty { padding: 26px 14px; text-align: center; color: var(--muted); font-style: italic; }
+
+  .pill { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .04em;
+    border-radius: 20px; padding: 2px 9px; white-space: nowrap;
+    color: var(--surface); background: var(--h-others); }
+  .pill.big { font-size: 11.5px; }
+  .late { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
+    color: var(--hard); border: 1px solid var(--hard); border-radius: 4px; padding: 0 5px; margin-left: 7px; }
+  .tlink { text-decoration: none; font-size: 13px; font-weight: 700; }
+
+  /* ---------- board ---------- */
+  .board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 14px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+  .bcol { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px; min-height: 90px; }
+  .bcol.over { outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .bcol h3 { font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--bh); display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+  .bcol h3::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--bh); }
+  .bcol h3 .n { margin-left: auto; font-size: 11px; font-weight: 800; color: var(--surface); background: var(--bh);
+    border-radius: 20px; padding: 1px 7px; }
+  .bcard { border: 1px solid var(--border); border-left: 3px solid var(--bh); border-radius: 9px;
+    padding: 8px 10px; margin-bottom: 8px; cursor: pointer; background: var(--page); }
+  .bcard:hover { background: var(--bg-focus); }
+  .bcard.dragging { opacity: .4; }
+  .bcard .t { font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+  .bcard .m { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+
+  /* ---------- modal ---------- */
+  .scrim { position: fixed; inset: 0; background: rgba(10,14,20,.45); z-index: 100; display: none; }
+  .scrim.on { display: block; }
+  .modal { position: fixed; z-index: 101; left: 50%; top: 4vh; transform: translateX(-50%);
+    width: min(760px, 94vw); max-height: 92vh; overflow: auto; display: none;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.3); padding: 20px 22px 18px; }
+  .modal.on { display: block; }
+  .modal h2 { font-size: 17px; font-weight: 800; color: var(--accent); margin-bottom: 14px; }
+  .frow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+  .frow.one { grid-template-columns: 1fr; }
+  .fld label { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 4px; }
+  .fld input, .fld select, .fld textarea { width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+    background: var(--page); border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; outline: none; }
+  .fld textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
+  .fld input:focus, .fld select:focus, .fld textarea:focus { border-color: var(--accent); }
+  .fld .req { color: var(--hard); }
+  .mfoot { display: flex; align-items: center; gap: 9px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+  .mfoot .del { margin-right: auto; border-color: transparent; background: transparent; color: var(--hard); }
+  .mfoot .del:hover { background: rgba(194,64,44,.10); }
+  .tl { margin: 2px 0 12px; }
+  .tl .tlrow { display: flex; align-items: flex-start; gap: 9px; padding: 6px 2px; border-top: 1px solid var(--hairline); }
+  .tl .tlrow:first-child { border-top: 0; }
+  .tl .d { flex: none; font-size: 12px; font-weight: 750; color: var(--accent); width: 92px; padding-top: 2px; }
+  .tl .x { flex: 1; font-size: 13.5px; line-height: 1.45; }
+  .tl .rm { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; opacity: 0; }
+  .tl .tlrow:hover .rm { opacity: .6; }
+  .tl .rm:hover { opacity: 1 !important; color: var(--hard); }
+  .tl .none { font-size: 13px; color: var(--muted); font-style: italic; padding: 3px 2px 6px; }
+  .addup { display: grid; grid-template-columns: 150px 1fr auto; gap: 8px; }
+  .addup input { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 9px; padding: 7px 9px; outline: none; }
+  .addup input:focus { border-color: var(--accent); }
+
+  .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 130;
+    background: var(--ink); color: var(--page); font-size: 13px; font-weight: 650; padding: 8px 16px;
+    border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.22); opacity: 0; pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  #tokenbar { position: fixed; right: 14px; bottom: 14px; z-index: 90; display: none;
+    width: min(430px, 92vw); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+  #tokenbar .hint { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  #tokenbar input { width: 100%; font: inherit; padding: 7px 9px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--page); color: var(--ink); outline: none; }
+  .note { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 20px; }
+  @media (max-width: 760px) {
+    body { padding: 12px 12px 50px; }
+    .frow { grid-template-columns: 1fr; }
+    .addup { grid-template-columns: 1fr; }
+    td.c-title { min-width: 180px; }
+  }
+
+
+  #gate {
+    position: fixed; inset: 0; z-index: 999; display: none;
+    background: linear-gradient(165deg, #0b201e 0%, #08161c 55%, #061019 100%);
+    align-items: center; justify-content: center; padding: 24px; overflow: hidden;
+  }
+  #gatebg {
+    position: absolute; inset: -12%; pointer-events: none;
+    transform: translate3d(0,0,0); transition: transform 1.4s cubic-bezier(.2,.8,.2,1);
+  }
+  #gatebg i {
+    position: absolute; display: block; border-radius: 50%;
+    filter: blur(38px); opacity: .55;
+  }
+  .gb1 { width: 58vmax; height: 58vmax; left: -14vmax; top: -18vmax;
+    background: radial-gradient(circle at 50% 50%, rgba(20,110,100,.95), rgba(20,110,100,0) 68%);
+    animation: gfloat1 30s ease-in-out infinite alternate; }
+  .gb2 { width: 52vmax; height: 52vmax; right: -16vmax; top: 6vmax;
+    background: radial-gradient(circle at 50% 50%, rgba(27,86,128,.9), rgba(27,86,128,0) 68%);
+    animation: gfloat2 38s ease-in-out infinite alternate; }
+  .gb3 { width: 40vmax; height: 40vmax; left: 22vmax; bottom: -18vmax;
+    background: radial-gradient(circle at 50% 50%, rgba(124,198,184,.55), rgba(124,198,184,0) 70%);
+    animation: gfloat3 26s ease-in-out infinite alternate; }
+  .gb4 { width: 30vmax; height: 30vmax; right: 10vmax; bottom: -12vmax;
+    background: radial-gradient(circle at 50% 50%, rgba(63,125,97,.7), rgba(63,125,97,0) 70%);
+    animation: gfloat2 34s ease-in-out infinite alternate-reverse; }
+  @keyframes gfloat1 { from { transform: translate(0,0) scale(1); } to { transform: translate(9vmax,6vmax) scale(1.18); } }
+  @keyframes gfloat2 { from { transform: translate(0,0) scale(1.1); } to { transform: translate(-8vmax,8vmax) scale(1); } }
+  @keyframes gfloat3 { from { transform: translate(0,0) scale(1); } to { transform: translate(6vmax,-7vmax) scale(1.22); } }
+  @media (prefers-reduced-motion: reduce) { #gatebg i { animation: none; } }
+  #gate .gatebox { position: relative; z-index: 2; }
+  #gate.on { display: flex; }
+  .gatebox {
+    width: min(430px, 100%);
+    background: linear-gradient(var(--bg-focus), var(--bg-focus)), var(--surface);
+    border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: 12px; box-shadow: var(--shadow);
+    padding: 26px 26px 22px;
+  }
+  .gatetitle {
+    font-size: 26px; font-weight: 800; letter-spacing: -0.01em;
+    color: var(--accent); margin: 0 0 3px;
+  }
+  .gatesub {
+    font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 20px;
+  }
+  #gatepw {
+    width: 100%; font: inherit; font-size: 15px;
+    padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 9px;
+    background: var(--surface); color: var(--ink); outline: none;
+  }
+  #gatepw:focus { border-color: var(--accent); }
+  #gatego {
+    margin-top: 10px; width: 100%; font: inherit; font-size: 13.5px; font-weight: 750;
+    letter-spacing: .06em; padding: 10px; border: 0; border-radius: 9px;
+    background: var(--accent); color: var(--surface); cursor: pointer;
+  }
+  #gatego:hover { filter: brightness(1.12); }
+  .gateerr { margin-top: 10px; font-size: 13px; font-weight: 650; color: var(--hard); min-height: 17px; }
+  .gatelink { display: inline-block; margin-top: 12px; font-size: 12.5px; font-weight: 650; color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+  .gatelink:hover { color: var(--accent); }
+  #forgotBox { display: none; }
+  #forgotBox.on { display: block; }
+  .fgtitle { font-size: 20px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .fgtext { font-size: 14px; color: var(--secondary); line-height: 1.65; }
+  .fgtext b { color: var(--ink); }
+  .dancer { position: relative; height: 96px; margin: 16px auto 6px; width: 80px; animation: bop .55s ease-in-out infinite alternate; }
+  .dancer i { position: absolute; background: var(--accent); border-radius: 6px; display: block; }
+  .d-head { width: 26px; height: 26px; left: 27px; top: 0; border-radius: 50% !important; }
+  .d-body { width: 14px; height: 38px; left: 33px; top: 26px; }
+  .d-arm-l { width: 30px; height: 10px; left: 6px; top: 30px; transform-origin: 100% 50%; animation: armL .55s ease-in-out infinite alternate; }
+  .d-arm-r { width: 30px; height: 10px; left: 44px; top: 30px; transform-origin: 0 50%; animation: armR .55s ease-in-out infinite alternate; }
+  .d-leg-l { width: 11px; height: 32px; left: 28px; top: 62px; transform-origin: 50% 0; animation: legL .55s ease-in-out infinite alternate; }
+  .d-leg-r { width: 11px; height: 32px; left: 41px; top: 62px; transform-origin: 50% 0; animation: legR .55s ease-in-out infinite alternate; }
+  @keyframes bop { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-7px) rotate(3deg); } }
+  @keyframes armL { from { transform: rotate(28deg); } to { transform: rotate(-52deg); } }
+  @keyframes armR { from { transform: rotate(-28deg); } to { transform: rotate(52deg); } }
+  @keyframes legL { from { transform: rotate(12deg); } to { transform: rotate(-16deg); } }
+  @keyframes legR { from { transform: rotate(-12deg); } to { transform: rotate(16deg); } }
+  .gatefoot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hairline); font-size: 12px; color: var(--muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="gate">
+  <div id="gatebg"><i class="gb1"></i><i class="gb2"></i><i class="gb3"></i><i class="gb4"></i></div>
+  <div class="gatebox">
+    <h1 class="gatetitle">Manuscripts</h1>
+    <div class="gatesub">Encrypted · password required</div>
+    <input id="gatepw" type="password" placeholder="password" autocomplete="current-password">
+    <button id="gatego">Unlock</button>
+    <div class="gateerr" id="gateerr"></div>
+    <span class="gatelink" id="forgotLink">Forgot the password?</span>
+    <div id="forgotBox">
+      <div class="dancer"><i class="d-head"></i><i class="d-body"></i><i class="d-arm-l"></i><i class="d-arm-r"></i><i class="d-leg-l"></i><i class="d-leg-r"></i></div>
+      <div class="fgtitle">Never gonna give you… a reset link.</div>
+      <div class="fgtext">There is no recovery, and that is the point: the password never left your devices and no server has a copy. So, with great affection — <b>you are on your own</b>.<br><br>Still fixable if any device is still unlocked: open it, <b>save file</b> to export a backup, then set a new password there and sync. Otherwise the encrypted board stays encrypted, forever.</div>
+      <span class="gatelink" id="fgBack">Back to the password</span>
+    </div>
+    <div class="gatefoot">Manuscript data is stored encrypted (AES-256-GCM). The password stays on this device and is needed to read or write the board.</div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="top">
+    <div class="brand"><b>Manuscripts</b><span class="meta" id="metaline"></span></div>
+    <div class="searchbox"><span class="mag">⌕</span><input id="q" placeholder="Search title, journal, author, project…  (/)"></div>
+    <div class="topact">
+      <button class="btn" id="newBtn">+ New paper</button>
+      <span class="chip" id="syncBtn" title="sync now">sync</span>
+      <span class="chip" id="syncchip" style="display:none" title="unsynced changes"></span>
+      <span class="chip" id="undoBtn" style="display:none" title="undo (Ctrl+Z)">undo</span>
+      <span class="chip" id="themeToggle" title="auto / light / dark">◐ auto</span>
+      <span class="chip" id="expBtn" title="download every record as JSON">⇩ export</span>
+      <span class="chip" id="impBtn" title="import a JSON or CSV export">⇧ import</span>
+      <span class="chip" id="lockBtn" title="log out">exit</span>
+      <input type="file" id="impFile" accept=".json,.csv,.txt,application/json,text/csv" style="display:none">
+    </div>
+  </div>
+
+  <div class="stats" id="statline"></div>
+
+  <div class="toolbar">
+    <div class="seg">
+      <button data-view="table" id="vTable">Table</button>
+      <button data-view="board" id="vBoard">Board</button>
+    </div>
+    <span class="chip warn" id="lateBtn">⚠ Delayed only</span>
+    <select class="tsel" id="groupSel" title="group rows">
+      <option value="">No grouping</option>
+      <option value="status">Group by status</option>
+      <option value="project">Group by project</option>
+      <option value="journal">Group by journal</option>
+      <option value="type">Group by type</option>
+      <option value="year">Group by year submitted</option>
+    </select>
+    <select class="tsel" id="lateSel" title="a paper counts as delayed after this long with no update">
+      <option value="30">delayed after 30 days</option>
+      <option value="45">delayed after 45 days</option>
+      <option value="60">delayed after 60 days</option>
+      <option value="90">delayed after 90 days</option>
+    </select>
+    <span class="thint" id="hint">Click a column header to sort · ⊞ to group</span>
+  </div>
+
+  <div id="main"></div>
+
+  <div class="note" id="buildstamp">build 2026-08-03 21:15 UTC</div>
+</div>
+
+<div id="syncbar"></div>
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="modal">
+  <h2 id="mtitle">New paper</h2>
+  <div class="frow one">
+    <div class="fld"><label>Title <span class="req">*</span></label><input id="f-title" spellcheck="false"></div>
+  </div>
+  <div class="frow">
+    <div class="fld"><label>Type</label>
+      <select id="f-type"><option value="manuscript">manuscript</option><option value="other">other</option></select>
+    </div>
+    <div class="fld"><label>Project</label><input id="f-project" list="projects" spellcheck="false"></div>
+  </div>
+  <div class="frow">
+    <div class="fld"><label>Journal</label><input id="f-journal" list="journals" spellcheck="false"></div>
+    <div class="fld"><label>Published URL</label><input id="f-url" spellcheck="false" placeholder="https://…"></div>
+  </div>
+  <div class="frow one">
+    <div class="fld"><label>Authors</label><input id="f-authors" spellcheck="false" placeholder="Surname, A., Surname, B."></div>
+  </div>
+  <div class="frow">
+    <div class="fld"><label>Submitted</label><input id="f-submitted" type="date"></div>
+    <div class="fld"><label>Status</label><select id="f-status"></select></div>
+  </div>
+  <div class="frow one">
+    <div class="fld"><label>History — dated updates</label>
+      <div class="tl" id="tl"></div>
+      <div class="addup">
+        <input id="u-date" type="date">
+        <input id="u-text" placeholder="what changed — Enter to add">
+        <button class="btn ghost" id="u-add">Add</button>
+      </div>
+    </div>
+  </div>
+  <div class="frow one">
+    <div class="fld"><label>Notes</label><textarea id="f-notes" spellcheck="false" placeholder="free notes; the timeline above is what drives the last-update date"></textarea></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn ghost del" id="mDel">Delete</button>
+    <button class="btn ghost" id="mCancel">Cancel</button>
+    <button class="btn" id="mSave">Save</button>
+  </div>
+</div>
+<datalist id="projects"></datalist>
+<datalist id="journals"></datalist>
+
+<div id="tokenbar">
+  <div class="hint">One-time: paste the token for <b>anovabr/dashboard</b> (Contents: read &amp; write). It stays in this browser only.</div>
+  <input id="gh-token" type="password" placeholder="fine-grained token">
+  <div style="margin-top:8px">
+    <button class="btn" id="tokSave">Save &amp; sync</button>
+    <button class="btn ghost" id="tokCancel">Cancel</button>
+  </div>
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function nowIso() { return new Date().toISOString(); }
+  function uid() { return 'p' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  // ---------- statuses ----------
+  var STATUS = [
+    { k: 'idea', hue: 'others', active: true },
+    { k: 'writing', hue: 'writing', active: true },
+    { k: 'internal review', hue: 'plum', active: true },
+    { k: 'submitted', hue: 'ocean', active: true },
+    { k: 'under review', hue: 'river', active: true },
+    { k: 'major revision', hue: 'clay', active: true },
+    { k: 'minor revision', hue: 'sand', active: true },
+    { k: 'accepted', hue: 'moss', active: false },
+    { k: 'in press', hue: 'steel', active: false },
+    { k: 'published', hue: 'other', active: false },
+    { k: 'rejected', hue: 'berry', active: false },
+    { k: 'on hold', hue: 'others', active: false }
+  ];
+  var EXTRA_HUES = ['indigo', 'plum', 'steel', 'clay', 'berry', 'moss', 'sand', 'ocean'];
+  function statusMeta(s) {
+    var key = String(s || '').trim().toLowerCase();
+    for (var i = 0; i < STATUS.length; i++) if (STATUS[i].k === key) return STATUS[i];
+    var extras = extraStatuses();
+    var idx = extras.indexOf(key);
+    return { k: key || 'unset', hue: EXTRA_HUES[(idx < 0 ? 0 : idx) % EXTRA_HUES.length], active: true, custom: true };
+  }
+  function extraStatuses() {
+    var known = {}, out = [];
+    STATUS.forEach(function (s) { known[s.k] = 1; });
+    live().forEach(function (p) {
+      var k = String(p.status || '').trim().toLowerCase();
+      if (k && !known[k] && out.indexOf(k) === -1) out.push(k);
+    });
+    return out;
+  }
+  function allStatusKeys() {
+    return STATUS.map(function (s) { return s.k; }).concat(extraStatuses());
+  }
+
+  // ---------- state ----------
+  var M = null, engine = null;
+  function freshState() {
+    return { papers: [], changelog: [], view: 'table', sort: { col: 'lastUpdate', dir: -1 },
+      group: '', delayedOnly: false, delayDays: 45, theme: 'auto', savedAt: null };
+  }
+  function live() { return (M && M.papers ? M.papers : []).filter(function (p) { return !p.deleted; }); }
+  function paper(id) { var l = M.papers; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function touch(p) { p.updatedAt = nowIso(); }
+
+  var STORE_KEY = 'manuscript-crm-v1';
+  function detectEngine(cb) {
+    var mem = {};
+    var lsOk = false;
+    try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); lsOk = true; } catch (e) {}
+    if (lsOk) {
+      cb({ name: 'localStorage',
+        save: function (s) { try { localStorage.setItem(STORE_KEY, s); } catch (e) {} },
+        load: function (fn) { var v = null; try { v = localStorage.getItem(STORE_KEY); } catch (e) {} fn(v); } });
+    } else {
+      cb({ name: 'memory', save: function (s) { mem.v = s; }, load: function (fn) { fn(mem.v || null); } });
+    }
+  }
+  var saveT = null;
+  function scheduleSave() { clearTimeout(saveT); saveT = setTimeout(flushSave, 400); renderSyncPill(); }
+  function flushSave() { if (engine && M) { M.savedAt = nowIso(); engine.save(JSON.stringify(M)); } }
+  function logChange(msg) {
+    M.changelog = M.changelog || [];
+    M.changelog.push({ t: nowIso(), msg: msg });
+    if (M.changelog.length > 400) M.changelog = M.changelog.slice(-400);
+  }
+  function renderSyncPill() {
+    var n = (M.changelog || []).length;
+    var c = el('syncchip');
+    c.style.display = n ? '' : 'none';
+    c.textContent = n + ' change' + (n === 1 ? '' : 's') + ' since last sync';
+  }
+
+  // ---------- undo ----------
+  var undoStack = [];
+  function pushUndo() {
+    undoStack.push(JSON.stringify(M.papers));
+    if (undoStack.length > 40) undoStack.shift();
+    el('undoBtn').style.display = '';
+  }
+  function undo() {
+    if (!undoStack.length) return;
+    M.papers = JSON.parse(undoStack.pop());
+    if (!undoStack.length) el('undoBtn').style.display = 'none';
+    logChange('Undid the last change');
+    scheduleSave(); render();
+    toast('Undone');
+  }
+
+  // ---------- dates ----------
+  var DMY = false;                       // set per import file: are slash dates day-first?
+  function sniffDateOrder(text) {
+    var re = /\b(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})\b/g, m, dmy = null, ambiguous = 0;
+    while ((m = re.exec(text))) {
+      var a = +m[1], b = +m[2];
+      if (a > 12) { dmy = true; }
+      else if (b > 12) { if (dmy === null) dmy = false; }
+      else ambiguous++;
+    }
+    DMY = dmy === true;
+    return { decided: dmy !== null, ambiguous: ambiguous, dayFirst: DMY };
+  }
+  function ymd(d) {
+    if (!d) return '';
+    var s = String(d).trim();
+    var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+    m = s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);           // d/m/Y or m/d/Y
+    if (m) {
+      var a = +m[1], b = +m[2], mo, dy;
+      if (a > 12) { dy = a; mo = b; }
+      else if (b > 12) { mo = a; dy = b; }
+      else if (DMY) { dy = a; mo = b; }
+      else { mo = a; dy = b; }
+      return m[3] + '-' + ('0' + mo).slice(-2) + '-' + ('0' + dy).slice(-2);
+    }
+    var t = Date.parse(s);
+    if (!isNaN(t)) { var dt = new Date(t); return dt.toISOString().slice(0, 10); }
+    return '';
+  }
+  function prettyDate(d) {
+    var v = ymd(d);
+    if (!v) return '';
+    var p = v.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysSince(d) {
+    var v = ymd(d);
+    if (!v) return null;
+    var p = v.split('-');
+    var then = new Date(+p[0], +p[1] - 1, +p[2]);
+    return Math.floor((new Date().setHours(0, 0, 0, 0) - then.setHours(0, 0, 0, 0)) / 86400000);
+  }
+  function lastUpdateOf(p) {
+    var best = ymd(p.lastUpdate) || '';
+    (p.updates || []).forEach(function (u) { var d = ymd(u.d); if (d > best) best = d; });
+    if (!best) best = ymd(p.submitted) || ymd(p.createdAt) || '';
+    return best;
+  }
+  function isActive(p) { return statusMeta(p.status).active; }
+  function delayDays(p) {
+    if (!isActive(p)) return null;
+    var d = daysSince(lastUpdateOf(p));
+    return d == null ? null : d;
+  }
+  function isDelayed(p) {
+    var d = delayDays(p);
+    return d != null && d > (M.delayDays || 45);
+  }
+
+  // ---------- filters / sorting ----------
+  var q = '';
+  function match(p) {
+    if (M.delayedOnly && !isDelayed(p)) return false;
+    if (!q) return true;
+    var hay = [p.title, p.journal, p.authors, p.project, p.status, p.type, p.notes,
+      (p.updates || []).map(function (u) { return u.t; }).join(' ')].join(' ').toLowerCase();
+    return hay.indexOf(q) !== -1;
+  }
+  var COLS = [
+    { k: 'title', label: 'Title' },
+    { k: 'type', label: 'Type' },
+    { k: 'project', label: 'Project' },
+    { k: 'journal', label: 'Journal' },
+    { k: 'authors', label: 'Authors' },
+    { k: 'submitted', label: 'Submitted' },
+    { k: 'lastUpdate', label: 'Last update' },
+    { k: 'status', label: 'Status' }
+  ];
+  function cellValue(p, k) {
+    if (k === 'lastUpdate') return lastUpdateOf(p);
+    if (k === 'submitted') return ymd(p.submitted);
+    if (k === 'year') return (ymd(p.submitted) || '').slice(0, 4) || 'no date';
+    if (k === 'status') return String(p.status || '').toLowerCase();
+    return String(p[k] == null ? '' : p[k]);
+  }
+  function sorted(list) {
+    var col = (M.sort && M.sort.col) || 'lastUpdate', dir = (M.sort && M.sort.dir) || -1;
+    return list.slice().sort(function (a, b) {
+      if (col === 'status') {
+        var order = allStatusKeys();
+        var ia = order.indexOf(cellValue(a, 'status')), ib = order.indexOf(cellValue(b, 'status'));
+        if (ia !== ib) return (ia - ib) * dir;
+      }
+      var va = cellValue(a, col).toLowerCase(), vb = cellValue(b, col).toLowerCase();
+      if (va === vb) return String(a.title || '').toLowerCase() < String(b.title || '').toLowerCase() ? -1 : 1;
+      if (!va) return 1;
+      if (!vb) return -1;
+      return va < vb ? -dir : dir;
+    });
+  }
+
+  // ---------- render ----------
+  function render() {
+    el('metaline').textContent = new Date().toLocaleDateString('en-US',
+      { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    el('vTable').classList.toggle('on', M.view !== 'board');
+    el('vBoard').classList.toggle('on', M.view === 'board');
+    el('lateBtn').classList.toggle('on', !!M.delayedOnly);
+    el('groupSel').value = M.group || '';
+    el('lateSel').value = String(M.delayDays || 45);
+    el('hint').style.display = M.view === 'board' ? 'none' : '';
+    renderStats();
+    renderLists();
+    if (M.view === 'board') renderBoard(); else renderTable();
+    renderSyncPill();
+  }
+  function renderStats() {
+    var l = live();
+    var act = l.filter(isActive).length;
+    var pub = l.filter(function (p) { return statusMeta(p.status).k === 'published'; }).length;
+    var rev = l.filter(function (p) { var k = statusMeta(p.status).k; return k === 'under review' || k === 'submitted'; }).length;
+    var late = l.filter(isDelayed).length;
+    el('statline').innerHTML =
+      '<b>' + l.length + '</b> papers tracked' +
+      '<span class="sep">·</span><b>' + act + '</b> active' +
+      '<span class="sep">·</span><b>' + rev + '</b> with the journal' +
+      '<span class="sep">·</span><b>' + pub + '</b> published' +
+      '<span class="sep">·</span><b style="color:' + (late ? 'var(--hard)' : 'inherit') + '">' + late + '</b> delayed' +
+      '<span class="sep">·</span><a href="index.html">Task board</a>';
+  }
+  function renderLists() {
+    var pr = {}, jr = {};
+    live().forEach(function (p) { if (p.project) pr[p.project] = 1; if (p.journal) jr[p.journal] = 1; });
+    el('projects').innerHTML = Object.keys(pr).sort().map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+    el('journals').innerHTML = Object.keys(jr).sort().map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+  }
+  function statusPill(p) {
+    var m = statusMeta(p.status);
+    return '<span class="pill" style="background:var(--h-' + m.hue + ')">' + esc(m.k) + '</span>';
+  }
+  function rowHtml(p) {
+    var late = isDelayed(p), d = delayDays(p);
+    return '<tr data-id="' + p.id + '">' +
+      '<td class="c-title">' + esc(p.title || '(untitled)') +
+        (p.url ? ' <a class="tlink" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="open the published paper">↗</a>' : '') +
+        (p.authors ? '<span class="sub">' + esc(p.authors) + '</span>' : '') + '</td>' +
+      '<td class="num">' + esc(p.type || 'manuscript') + '</td>' +
+      '<td class="num">' + esc(p.project || '—') + '</td>' +
+      '<td class="num">' + esc(p.journal || '—') + '</td>' +
+      '<td class="num">' + esc(p.authors ? String(p.authors).split(/[,;]/)[0].trim() + (String(p.authors).indexOf(',') > -1 ? ' et al.' : '') : '—') + '</td>' +
+      '<td class="num">' + (prettyDate(p.submitted) || '—') + '</td>' +
+      '<td class="num">' + (prettyDate(lastUpdateOf(p)) || '—') +
+        (d != null ? '<span class="sub" style="display:block;font-size:11.5px;color:' + (late ? 'var(--hard)' : 'var(--muted)') + '">' + d + ' days ago</span>' : '') + '</td>' +
+      '<td>' + statusPill(p) + (late ? '<span class="late">DELAYED</span>' : '') + '</td>' +
+      '</tr>';
+  }
+  function renderTable() {
+    var list = sorted(live().filter(match));
+    var head = '<thead><tr>' + COLS.map(function (c) {
+      var on = (M.sort.col === c.k);
+      return '<th data-col="' + c.k + '">' + esc(c.label) +
+        (on ? '<span class="ar">' + (M.sort.dir > 0 ? '▲' : '▼') + '</span>' : '') +
+        (c.k === 'title' ? '' : '<span class="gr" data-group="' + c.k + '" title="group by ' + esc(c.label) + '">⊞</span>') +
+        '</th>';
+    }).join('') + '</tr></thead>';
+    var body = '';
+    if (!list.length) {
+      body = '<tbody><tr><td colspan="' + COLS.length + '"><div class="empty">' +
+        (live().length ? 'Nothing matches this filter.' : 'No papers yet — hit “+ New paper”, or import your export.') +
+        '</div></td></tr></tbody>';
+    } else if (M.group) {
+      var groups = {}, order = [];
+      list.forEach(function (p) {
+        var g = cellValue(p, M.group) || '—';
+        if (!groups[g]) { groups[g] = []; order.push(g); }
+        groups[g].push(p);
+      });
+      order.sort();
+      body = '<tbody>' + order.map(function (g) {
+        return '<tr class="grouphead"><td colspan="' + COLS.length + '">' + esc(g) +
+          '<span class="gn">' + groups[g].length + '</span></td></tr>' +
+          groups[g].map(rowHtml).join('');
+      }).join('') + '</tbody>';
+    } else {
+      body = '<tbody>' + list.map(rowHtml).join('') + '</tbody>';
+    }
+    el('main').innerHTML = '<div class="tablewrap"><table>' + head + body + '</table></div>';
+  }
+  function renderBoard() {
+    var list = live().filter(match);
+    var keys = allStatusKeys().filter(function (k) {
+      return list.some(function (p) { return statusMeta(p.status).k === k; }) ||
+        STATUS.some(function (s) { return s.k === k && ['writing', 'submitted', 'under review', 'major revision', 'accepted', 'published'].indexOf(k) !== -1; });
+    });
+    var html = '<div class="board">' + keys.map(function (k) {
+      var m = statusMeta(k);
+      var items = sorted(list.filter(function (p) { return statusMeta(p.status).k === k; }));
+      return '<div class="bcol" data-status="' + esc(k) + '" style="--bh:var(--h-' + m.hue + ')">' +
+        '<h3>' + esc(k) + '<span class="n">' + items.length + '</span></h3>' +
+        items.map(function (p) {
+          var late = isDelayed(p);
+          return '<div class="bcard" draggable="true" data-id="' + p.id + '">' +
+            '<div class="t">' + esc(p.title || '(untitled)') + '</div>' +
+            '<div class="m">' + esc(p.journal || p.project || '—') +
+            (late ? '<span class="late">DELAYED</span>' : '') + '</div></div>';
+        }).join('') + '</div>';
+    }).join('') + '</div>';
+    el('main').innerHTML = html;
+  }
+
+  // ---------- modal ----------
+  var editing = null, draftUpdates = [];
+  function openModal(p) {
+    editing = p ? p.id : null;
+    draftUpdates = p ? clone(p.updates || []) : [];
+    el('mtitle').textContent = p ? 'Edit paper' : 'New paper';
+    el('f-title').value = p ? (p.title || '') : '';
+    el('f-type').value = p ? (p.type || 'manuscript') : 'manuscript';
+    el('f-project').value = p ? (p.project || '') : '';
+    el('f-journal').value = p ? (p.journal || '') : '';
+    el('f-url').value = p ? (p.url || '') : '';
+    el('f-authors').value = p ? (p.authors || '') : '';
+    el('f-submitted').value = p ? ymd(p.submitted) : '';
+    el('f-notes').value = p ? (p.notes || '') : '';
+    var sel = el('f-status');
+    var cur = p ? statusMeta(p.status).k : 'writing';
+    sel.innerHTML = allStatusKeys().map(function (k) {
+      return '<option value="' + esc(k) + '"' + (k === cur ? ' selected' : '') + '>' + esc(k) + '</option>';
+    }).join('');
+    el('mDel').style.display = p ? '' : 'none';
+    el('u-date').value = new Date().toISOString().slice(0, 10);
+    el('u-text').value = '';
+    paintTimeline();
+    el('scrim').classList.add('on');
+    el('modal').classList.add('on');
+    setTimeout(function () { el('f-title').focus(); }, 40);
+  }
+  function closeModal() {
+    el('scrim').classList.remove('on');
+    el('modal').classList.remove('on');
+    editing = null;
+  }
+  function paintTimeline() {
+    draftUpdates.sort(function (a, b) { return (b.d || '') < (a.d || '') ? -1 : 1; });
+    el('tl').innerHTML = draftUpdates.length
+      ? draftUpdates.map(function (u, i) {
+          return '<div class="tlrow"><span class="d">' + esc(prettyDate(u.d) || u.d || '') + '</span>' +
+            '<span class="x">' + esc(u.t || '') + '</span>' +
+            '<button class="rm" data-rm="' + i + '" title="remove">✕</button></div>';
+        }).join('')
+      : '<div class="none">No dated updates yet.</div>';
+  }
+  function addUpdate() {
+    var d = ymd(el('u-date').value) || new Date().toISOString().slice(0, 10);
+    var t = el('u-text').value.trim();
+    if (!t) return;
+    draftUpdates.push({ d: d, t: t });
+    el('u-text').value = '';
+    paintTimeline();
+    el('u-text').focus();
+  }
+  function saveModal() {
+    var title = el('f-title').value.trim();
+    if (!title) { el('f-title').focus(); toast('A title is required'); return; }
+    pushUndo();
+    var p = editing ? paper(editing) : null;
+    var isNew = !p;
+    if (isNew) { p = { id: uid(), createdAt: nowIso() }; M.papers.push(p); }
+    p.title = title;
+    p.type = el('f-type').value;
+    p.project = el('f-project').value.trim();
+    p.journal = el('f-journal').value.trim();
+    p.url = el('f-url').value.trim();
+    p.authors = el('f-authors').value.trim();
+    p.submitted = ymd(el('f-submitted').value);
+    p.status = el('f-status').value;
+    p.notes = el('f-notes').value;
+    p.updates = draftUpdates.slice();
+    p.lastUpdate = lastUpdateOf(p);
+    touch(p);
+    logChange((isNew ? 'Added paper: ' : 'Updated paper: ') + title);
+    closeModal(); scheduleSave(); render();
+    toast(isNew ? 'Paper added' : 'Saved');
+  }
+  function deleteCurrent() {
+    var p = editing ? paper(editing) : null;
+    if (!p) return;
+    pushUndo();
+    p.deleted = true; touch(p);
+    logChange('Deleted paper: ' + (p.title || p.id));
+    closeModal(); scheduleSave(); render();
+    toast('Deleted — Ctrl+Z to undo');
+  }
+
+  // ---------- toast ----------
+  var toastEl = null;
+  function toast(msg) {
+    if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function () { toastEl.classList.remove('on'); }, 1800);
+  }
+
+  // ---------- import / export ----------
+  function doExport() {
+    var payload = { kind: 'manuscript-crm', exportedAt: nowIso(), papers: live() };
+    var blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'manuscripts-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    toast('Exported ' + live().length + ' papers');
+  }
+  function csvRows(text) {
+    var rows = [], row = [], cur = '', inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+        else cur += c;
+      } else if (c === '"') inQ = true;
+      else if (c === ',' || c === ';' || c === '\t') { row.push(cur); cur = ''; }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else if (c !== '\r') cur += c;
+    }
+    if (cur.length || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (v) { return String(v).trim(); }); });
+  }
+  var FIELD_ALIASES = {
+    title: ['title', 'name', 'paper', 'manuscript'],
+    type: ['type', 'kind'],
+    project: ['project', 'projeto', 'study'],
+    journal: ['journal', 'venue', 'revista', 'target journal'],
+    url: ['url', 'published url', 'link', 'doi', 'published_url', 'publishedurl'],
+    authors: ['authors', 'author', 'autores'],
+    submitted: ['submitted', 'submitted date', 'submission', 'submission date', 'date submitted', 'submitted_date', 'submitteddate'],
+    lastUpdate: ['last update', 'lastupdate', 'last_update', 'updated', 'last change', 'last updated'],
+    status: ['status', 'state', 'situacao', 'situação'],
+    notes: ['notes', 'note', 'history', 'notes/history', 'notes / history', 'comments', 'observacoes']
+  };
+  function normKey(k) { return String(k || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+  function mapRecord(raw) {
+    var out = {}, seen = {};
+    Object.keys(raw).forEach(function (k) { seen[normKey(k)] = raw[k]; });
+    Object.keys(FIELD_ALIASES).forEach(function (field) {
+      for (var i = 0; i < FIELD_ALIASES[field].length; i++) {
+        var a = FIELD_ALIASES[field][i];
+        if (seen[a] !== undefined && String(seen[a]).trim() !== '') { out[field] = seen[a]; return; }
+      }
+    });
+    // updates / history array straight from a JSON export
+    var hist = raw.updates || raw.history || raw.timeline || seen['updates'] || seen['history'];
+    var ups = [];
+    if (Array.isArray(hist)) {
+      hist.forEach(function (h) {
+        if (!h) return;
+        if (typeof h === 'string') { var m = h.match(/^\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.]\d{1,2}[\/.]\d{4})\s*[—\-:–]\s*(.+)$/);
+          if (m) ups.push({ d: ymd(m[1]), t: m[2].trim() }); else ups.push({ d: '', t: String(h).trim() }); return; }
+        var d = ymd(h.d || h.date || h.when || h.at || '');
+        var t = h.t || h.text || h.note || h.what || h.msg || '';
+        if (d || t) ups.push({ d: d, t: String(t).trim() });
+      });
+    }
+    // dated lines inside a free-text notes field
+    if (!ups.length && out.notes) {
+      String(out.notes).split(/\r?\n/).forEach(function (linex) {
+        var m = linex.match(/^\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.]\d{1,2}[\/.]\d{4})\s*[—\-:–]\s*(.+)$/);
+        if (m) ups.push({ d: ymd(m[1]), t: m[2].trim() });
+      });
+    }
+    var p = {
+      id: raw.id || uid(),
+      title: String(out.title || '').trim(),
+      type: (String(out.type || 'manuscript').trim().toLowerCase() === 'other') ? 'other' : 'manuscript',
+      project: String(out.project || '').trim(),
+      journal: String(out.journal || '').trim(),
+      url: String(out.url || '').trim(),
+      authors: String(out.authors || '').trim(),
+      submitted: ymd(out.submitted),
+      status: String(out.status || 'writing').trim().toLowerCase(),
+      notes: String(out.notes || ''),
+      updates: ups,
+      createdAt: raw.createdAt || nowIso(),
+      updatedAt: raw.updatedAt || nowIso()
+    };
+    p.lastUpdate = ymd(out.lastUpdate) || lastUpdateOf(p);
+    return p;
+  }
+  function importText(text, name) {
+    var recs = null;
+    var ds = sniffDateOrder(String(text));
+    var trimmed = String(text).replace(/^﻿/, '').trim();
+    if (trimmed.charAt(0) === '{' || trimmed.charAt(0) === '[') {
+      var j = JSON.parse(trimmed);
+      recs = Array.isArray(j) ? j : (j.papers || j.data || j.rows || j.manuscripts || j.records);
+      if (!Array.isArray(recs)) throw new Error('no array of records in that JSON');
+    } else {
+      var rows = csvRows(trimmed);
+      if (rows.length < 2) throw new Error('that CSV has no data rows');
+      var head = rows[0].map(normKey);
+      recs = rows.slice(1).map(function (r) {
+        var o = {};
+        head.forEach(function (h, i) { o[h] = r[i]; });
+        return o;
+      });
+    }
+    var mapped = recs.map(mapRecord).filter(function (p) { return p.title; });
+    if (!mapped.length) throw new Error('no records with a title were found');
+    pushUndo();
+    var byId = {}, byTitle = {};
+    M.papers.forEach(function (p) { byId[p.id] = p; byTitle[String(p.title).toLowerCase()] = p; });
+    var added = 0, updated = 0;
+    mapped.forEach(function (n) {
+      var ex = byId[n.id] || byTitle[String(n.title).toLowerCase()];
+      if (ex) { Object.keys(n).forEach(function (k) { if (k !== 'id') ex[k] = n[k]; }); ex.deleted = false; touch(ex); updated++; }
+      else { M.papers.push(n); byId[n.id] = n; byTitle[String(n.title).toLowerCase()] = n; added++; }
+    });
+    logChange('Imported ' + name + ': ' + added + ' new, ' + updated + ' updated');
+    scheduleSave(); render();
+    toast('Imported ' + added + ' new, ' + updated + ' updated' +
+      (!ds.decided && ds.ambiguous ? ' — slash dates read as month/day' : ''));
+  }
+
+  // ---------- crypto ----------
+  var PW_KEY = 'task-board-pw';
+  function getPw() { try { return localStorage.getItem(PW_KEY) || null; } catch (e) { return null; } }
+  function setPw(p) { try { localStorage.setItem(PW_KEY, p); } catch (e) {} }
+  function clearPw() { try { localStorage.removeItem(PW_KEY); } catch (e) {} }
+  function bytesToB64(u8) { var s = ''; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+  function b64ToBytes(b) { var s = atob(b), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+  function randBytes(n) { var u = new Uint8Array(n); crypto.getRandomValues(u); return u; }
+  function deriveKey(pw, saltB64) {
+    var salt = b64ToBytes(saltB64);
+    return crypto.subtle.importKey('raw', new TextEncoder().encode(pw), { name: 'PBKDF2' }, false, ['deriveKey'])
+      .then(function (base) {
+        return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 250000, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+      });
+  }
+  function encryptState(obj, pw, saltB64) {
+    var salt = saltB64 || bytesToB64(randBytes(16));
+    return deriveKey(pw, salt).then(function (key) {
+      var iv = randBytes(12);
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj)))
+        .then(function (ct) {
+          return { enc: 'v1', kdf: 'PBKDF2-SHA256-250k', salt: salt, iv: bytesToB64(iv), data: bytesToB64(new Uint8Array(ct)) };
+        });
+    });
+  }
+  function decryptState(env, pw) {
+    return deriveKey(pw, env.salt).then(function (key) {
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(env.iv) }, key, b64ToBytes(env.data));
+    }).then(function (pt) { return JSON.parse(new TextDecoder().decode(pt)); });
+  }
+  function showGate(msg) {
+    el('gateerr').textContent = msg || '';
+    el('forgotBox').classList.remove('on');
+    el('forgotLink').style.display = '';
+    el('gate').classList.add('on');
+    initGateParallax();
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { el('gatepw').focus(); }, 60);
+  }
+  var gateParallax = false;
+  function initGateParallax() {
+    if (gateParallax) return;
+    gateParallax = true;
+    var bg = el('gatebg');
+    el('gate').addEventListener('mousemove', function (ev) {
+      var w = window.innerWidth || 1, h = window.innerHeight || 1;
+      bg.style.transform = 'translate3d(' + ((ev.clientX / w - .5) * -34) + 'px,' + ((ev.clientY / h - .5) * -26) + 'px,0)';
+    });
+  }
+  function hideGate() {
+    el('gate').classList.remove('on');
+    document.body.style.overflow = '';
+    el('gatepw').value = '';
+  }
+
+  // ---------- sync ----------
+  var SYNC_KEY = 'task-board-sync';
+  var GH_REPO = 'anovabr/dashboard', GH_BRANCH = 'state', GH_PATH = 'manuscripts.json';
+  function getToken() {
+    try {
+      var v = localStorage.getItem(SYNC_KEY);
+      if (!v) return null;
+      if (v.charAt(0) === '{') { var o = JSON.parse(v); return o.token || null; }
+      return v;
+    } catch (e) { return null; }
+  }
+  function setToken(t) { try { localStorage.setItem(SYNC_KEY, t); } catch (e) {} }
+  function ghUrl() { return 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_PATH; }
+  function ghHdr(tok) {
+    var h = { 'Accept': 'application/vnd.github+json' };
+    if (tok) h['Authorization'] = 'Bearer ' + tok;
+    return h;
+  }
+  function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
+  function b64dec(b) { return decodeURIComponent(escape(atob(String(b).replace(/\s/g, '')))); }
+  function syncBar(state) {
+    var b = el('syncbar');
+    if (state === 'start') {
+      b.style.background = 'var(--good)';
+      b.style.transition = 'none'; b.style.opacity = '1'; b.style.width = '0';
+      void b.offsetWidth;
+      b.style.transition = 'width 1.1s ease, opacity .4s';
+      b.style.width = '80%';
+    } else {
+      if (state === 'fail') b.style.background = 'var(--hard)';
+      b.style.width = '100%';
+      setTimeout(function () { b.style.opacity = '0'; }, 350);
+      setTimeout(function () { b.style.transition = 'none'; b.style.width = '0'; void b.offsetWidth;
+        b.style.transition = 'width 1.1s ease, opacity .4s'; }, 900);
+    }
+  }
+  function setSyncStatus(txt, bad) {
+    var b = el('syncBtn');
+    b.textContent = txt;
+    b.style.color = bad ? 'var(--hard)' : '';
+    b.style.borderColor = bad ? 'var(--hard)' : '';
+  }
+  function mergeRemote(remote) {
+    var map = {};
+    M.papers.forEach(function (p) { map[p.id] = p; });
+    (remote.papers || []).forEach(function (rp) {
+      var lp = map[rp.id];
+      if (!lp) { M.papers.push(rp); map[rp.id] = rp; }
+      else if ((rp.updatedAt || '') > (lp.updatedAt || '')) Object.keys(rp).forEach(function (k) { lp[k] = rp[k]; });
+    });
+    if ((remote.savedAt || '') > (M.savedAt || '')) {
+      if (remote.theme) M.theme = remote.theme;
+      if (remote.delayDays) M.delayDays = remote.delayDays;
+      if (remote.view) M.view = remote.view;
+      if (remote.sort) M.sort = remote.sort;
+    }
+  }
+  var syncing = false, pendingRender = false;
+  function editorOpen() {
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return true;
+    return el('modal').classList.contains('on');
+  }
+  function syncRender() {
+    if (editorOpen()) { pendingRender = true; return; }
+    pendingRender = false; render();
+  }
+  document.addEventListener('focusout', function () {
+    setTimeout(function () { if (pendingRender && !editorOpen()) { pendingRender = false; render(); } }, 250);
+  });
+  function doSync(auto) {
+    var tok = getToken(), pw = getPw();
+    if (!pw) { showGate(); return; }
+    if (syncing) return;
+    syncing = true;
+    setSyncStatus('syncing…');
+    syncBar('start');
+    flushSave();
+    var sha = null, salt = null;
+    fetch(ghUrl() + '?ref=' + GH_BRANCH + '&t=' + Date.now(), { headers: ghHdr(tok) })
+      .then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error('read ' + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        if (!j || !j.content) return null;
+        sha = j.sha;
+        var parsed = null;
+        try { parsed = JSON.parse(b64dec(j.content)); } catch (e) { return null; }
+        if (parsed && parsed.enc === 'v1') { salt = parsed.salt; return decryptState(parsed, pw).catch(function () { throw new Error('badpw'); }); }
+        return parsed;
+      })
+      .then(function (remote) {
+        if (remote && remote.papers) mergeRemote(remote);
+        if (!tok) {
+          syncing = false;
+          if (engine) engine.save(JSON.stringify(M));
+          syncRender();
+          syncBar('done');
+          setSyncStatus(auto ? 'viewing latest — token needed to save' : 'up to date (read-only)');
+          if (!auto) showTokenBar();
+          return null;
+        }
+        M.savedAt = nowIso();
+        return encryptState(M, pw, salt).then(function (env) {
+          var body = { message: 'manuscripts sync', content: b64enc(JSON.stringify(env)), branch: GH_BRANCH };
+          if (sha) body.sha = sha;
+          return fetch(ghUrl(), { method: 'PUT', headers: ghHdr(tok), body: JSON.stringify(body) });
+        });
+      })
+      .then(function (r) {
+        if (r === null || r === undefined) return;
+        if (!r.ok) throw new Error('write ' + r.status);
+        syncing = false;
+        M.changelog = [];
+        if (engine) engine.save(JSON.stringify(M));
+        syncRender();
+        syncBar('done');
+        var done = 'last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        setSyncStatus('completed');
+        var sb = el('syncBtn');
+        sb.classList.add('flash');
+        setTimeout(function () { sb.classList.remove('flash'); if (!syncing) setSyncStatus(done); }, 1400);
+      })
+      .catch(function (e) {
+        syncing = false;
+        syncBar('fail');
+        if (String(e.message) === 'badpw') { showGate('That password does not open this file.'); setSyncStatus('locked', true); return; }
+        setSyncStatus('sync failed', true);
+        toast('Sync failed: ' + e.message);
+      });
+  }
+  function showTokenBar() { el('tokenbar').style.display = 'block'; el('gh-token').focus(); }
+  setInterval(function () {
+    if (!M || syncing || document.hidden) return;
+    if (!getToken() || !getPw()) return;
+    if (!M.changelog || !M.changelog.length) return;
+    doSync(true);
+  }, 180000);
+
+  // ---------- theme ----------
+  function applyTheme() {
+    var th = (M && M.theme) || 'auto';
+    if (th === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', th);
+    el('themeToggle').textContent = th === 'auto' ? '◐ auto' : (th === 'light' ? '☀ light' : '☾ dark');
+  }
+
+  // ---------- events ----------
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.closest('#modal') || t.closest('#tokenbar') || t.closest('#gate')) {
+      if (t.id === 'mSave') saveModal();
+      else if (t.id === 'mCancel') closeModal();
+      else if (t.id === 'mDel') deleteCurrent();
+      else if (t.id === 'u-add') addUpdate();
+      else if (t.dataset && t.dataset.rm !== undefined) { draftUpdates.splice(+t.dataset.rm, 1); paintTimeline(); }
+      else if (t.id === 'tokSave') {
+        var v = el('gh-token').value.trim();
+        if (v) { setToken(v); el('tokenbar').style.display = 'none'; el('gh-token').value = ''; doSync(false); }
+      } else if (t.id === 'tokCancel') { el('tokenbar').style.display = 'none'; el('gh-token').value = ''; }
+      else if (t.id === 'gatego') tryUnlock();
+      else if (t.id === 'forgotLink') { el('forgotBox').classList.add('on'); el('forgotLink').style.display = 'none'; }
+      else if (t.id === 'fgBack') { el('forgotBox').classList.remove('on'); el('forgotLink').style.display = ''; }
+      return;
+    }
+    if (t.id === 'scrim') { closeModal(); return; }
+    if (t.id === 'newBtn') { openModal(null); return; }
+    if (t.id === 'syncBtn') { doSync(false); return; }
+    if (t.id === 'undoBtn') { undo(); return; }
+    if (t.id === 'expBtn') { doExport(); return; }
+    if (t.id === 'impBtn') { el('impFile').click(); return; }
+    if (t.id === 'lockBtn') { clearPw(); showGate('Locked. Enter the password to unlock.'); return; }
+    if (t.id === 'themeToggle') {
+      var ord = ['auto', 'light', 'dark'];
+      M.theme = ord[(ord.indexOf(M.theme || 'auto') + 1) % 3];
+      applyTheme(); scheduleSave(); return;
+    }
+    if (t.id === 'lateBtn') { M.delayedOnly = !M.delayedOnly; scheduleSave(); render(); return; }
+    var vb = t.closest('[data-view]');
+    if (vb) { M.view = vb.dataset.view; scheduleSave(); render(); return; }
+    var gr = t.closest('[data-group]');
+    if (gr) { M.group = (M.group === gr.dataset.group) ? '' : gr.dataset.group; scheduleSave(); render(); return; }
+    var th = t.closest('th[data-col]');
+    if (th) {
+      var c = th.dataset.col;
+      if (M.sort.col === c) M.sort.dir = -M.sort.dir;
+      else M.sort = { col: c, dir: (c === 'lastUpdate' || c === 'submitted') ? -1 : 1 };
+      scheduleSave(); render(); return;
+    }
+    if (t.closest('a')) return;
+    var row = t.closest('tr[data-id]') || t.closest('.bcard[data-id]');
+    if (row) { var p = paper(row.dataset.id); if (p) openModal(p); return; }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.id === 'groupSel') { M.group = e.target.value; scheduleSave(); render(); }
+    else if (e.target.id === 'lateSel') { M.delayDays = +e.target.value; scheduleSave(); render(); }
+    else if (e.target.id === 'impFile' && e.target.files && e.target.files[0]) {
+      var f = e.target.files[0], rd = new FileReader();
+      rd.onload = function () {
+        try { importText(rd.result, f.name); }
+        catch (err) { toast('Import failed: ' + err.message); }
+        e.target.value = '';
+      };
+      rd.readAsText(f);
+    }
+  });
+  document.addEventListener('input', function (e) {
+    if (e.target.id === 'q') { q = e.target.value.trim().toLowerCase(); render(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.id === 'u-text' && e.key === 'Enter') { e.preventDefault(); addUpdate(); return; }
+    if (e.target.id === 'gatepw' && e.key === 'Enter') { tryUnlock(); return; }
+    if (el('modal').classList.contains('on')) {
+      if (e.key === 'Escape') closeModal();
+      else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveModal();
+      return;
+    }
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === '/') { e.preventDefault(); el('q').focus(); }
+    else if (e.key === 'n') { e.preventDefault(); openModal(null); }
+    else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  });
+
+  // drag a card between board columns
+  var dragId = null;
+  document.addEventListener('dragstart', function (e) {
+    var c = e.target.closest ? e.target.closest('.bcard[data-id]') : null;
+    if (!c) return;
+    dragId = c.dataset.id;
+    c.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
+  });
+  document.addEventListener('dragover', function (e) {
+    if (!dragId) return;
+    var col = e.target.closest ? e.target.closest('.bcol') : null;
+    document.querySelectorAll('.bcol.over').forEach(function (x) { x.classList.remove('over'); });
+    if (!col) return;
+    e.preventDefault();
+    col.classList.add('over');
+  });
+  document.addEventListener('drop', function (e) {
+    if (!dragId) return;
+    var col = e.target.closest ? e.target.closest('.bcol') : null;
+    if (!col) return;
+    e.preventDefault();
+    var p = paper(dragId), st = col.dataset.status;
+    dragId = null;
+    if (!p || statusMeta(p.status).k === st) { render(); return; }
+    pushUndo();
+    var from = statusMeta(p.status).k;
+    p.status = st;
+    p.updates = p.updates || [];
+    p.updates.push({ d: new Date().toISOString().slice(0, 10), t: 'Status: ' + from + ' → ' + st });
+    p.lastUpdate = lastUpdateOf(p);
+    touch(p);
+    logChange('Status of "' + p.title + '": ' + from + ' → ' + st);
+    scheduleSave(); render();
+    toast('Moved to ' + st);
+  });
+  document.addEventListener('dragend', function () {
+    document.querySelectorAll('.bcol.over').forEach(function (x) { x.classList.remove('over'); });
+    document.querySelectorAll('.bcard.dragging').forEach(function (x) { x.classList.remove('dragging'); });
+    dragId = null;
+  });
+
+  function tryUnlock() {
+    var v = el('gatepw').value;
+    if (!v) return;
+    setPw(v);
+    hideGate();
+    doSync(true);
+  }
+
+  // ---------- boot ----------
+  detectEngine(function (eng) {
+    engine = eng;
+    engine.load(function (raw) {
+      var stored = null;
+      try { stored = raw ? JSON.parse(raw) : null; } catch (e) {}
+      M = stored || freshState();
+      M.papers = M.papers || [];
+      M.sort = M.sort || { col: 'lastUpdate', dir: -1 };
+      if (!M.delayDays) M.delayDays = 45;
+      applyTheme();
+      setSyncStatus('sync');
+      render();
+      flushSave();
+      window.__ms = { state: function () { return M; }, render: render, syncRender: syncRender,
+        importText: importText, pending: function () { return pendingRender; } };
+      if (getPw()) doSync(true); else showGate();
+    });
+  });
+})();
+
+</script>
+</body>
+</html>

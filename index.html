@@ -175,6 +175,9 @@
 
   .stats { font-size: 13.5px; color: var(--secondary); margin: 8px 0 18px; }
   .stats b { font-weight: 750; color: var(--ink); }
+  .stats .statsep { color: var(--border); margin: 0 4px; }
+  .stats .statlink { font-weight: 700; color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+  .stats .statlink:hover { border-bottom-style: solid; }
 
   .ring-wrap { display: flex; align-items: center; gap: 10px; flex: none; }
   .ring-lbl { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.35; }
@@ -873,7 +876,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-02 05:43 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-03 21:17 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2726,7 +2729,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var workedToday = live.filter(function (t) { return (t.worked || []).indexOf(dayStr()) !== -1; }).length;
     var tmrN = live.filter(function (t) { return t.tomorrow && t.status !== 'done'; }).length;
     el('statline').innerHTML = '<b>' + wkDone + ' of ' + wk.length + '</b> weekly focus · <b>' + doneToday + '</b> checked off today · ' +
-      (tmrN ? '<b>' + tmrN + '</b> lined up for tomorrow · ' : '') + '<b>' + workedToday + '</b> worked on today · <b>' + open + '</b> open';
+      (tmrN ? '<b>' + tmrN + '</b> lined up for tomorrow · ' : '') + '<b>' + workedToday + '</b> worked on today · <b>' + open + '</b> open' +
+      ' <span class="statsep">|</span> <a class="statlink" href="manuscripts.html">Manuscript system</a>';
 
     // sections
     var html = '';
