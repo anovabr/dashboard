@@ -188,9 +188,12 @@
   .thint { font-size: 12px; color: var(--muted); font-style: italic; }
 
   /* ---------- table ---------- */
-  .tablewrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: auto; box-shadow: var(--shadow); }
+  .tablewrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    overflow: visible; box-shadow: var(--shadow); }
+  table { table-layout: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  thead th { position: sticky; top: 0; z-index: 2; background: var(--surface);
+  thead th { position: sticky; top: var(--stick, 64px); z-index: 30; background: var(--surface);
+    box-shadow: 0 1px 0 var(--border);
     text-align: left; font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
     color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
   thead th:hover { color: var(--accent); }
@@ -198,7 +201,7 @@
   thead th .gr { font-size: 11px; margin-left: 6px; opacity: 0; }
   thead th:hover .gr { opacity: .55; }
   thead th .gr:hover { opacity: 1 !important; color: var(--accent); }
-  tbody tr { border-top: 1px solid var(--hairline); cursor: pointer; }
+  tbody tr { border-top: 1px solid var(--hairline); cursor: pointer; scroll-margin-top: calc(var(--stick, 64px) + 52px); }
   tbody tr:hover { background: var(--bg-focus); }
   tbody td { padding: 9px 12px; vertical-align: top; }
   td.c-title { font-weight: 650; min-width: 300px; }
@@ -248,7 +251,12 @@
   .tlink { text-decoration: none; font-size: 13px; font-weight: 700; }
 
   /* ---------- board ---------- */
-  .board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 14px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+  .board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px;
+    overflow-x: auto; padding-bottom: 8px; align-items: start; scroll-snap-type: x proximity; }
+  .bcol { scroll-snap-align: start; }
+  .board .bcol.vacant { min-width: 128px; max-width: 148px; opacity: .72; }
+  .board .bcol.vacant h3 { font-size: 9.5px; }
+  .board .bcol.vacant:hover, .board .bcol.vacant.over { opacity: 1; }
   .bcol { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px; min-height: 90px; }
   .bcol.over { outline: 2px dashed var(--accent); outline-offset: 2px; }
   .bcol h3 { font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
@@ -312,6 +320,37 @@
   #audit .irep td { padding: 5px 8px; border-top: 1px solid var(--hairline); color: var(--secondary); }
   #audit .irep td.good { color: var(--good); font-weight: 700; }
   #audit .irep td.bad { color: var(--hard); font-weight: 800; }
+  .attflow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .attcard { border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px;
+    padding: 7px 11px; min-width: 160px; background: var(--surface); }
+  .attcard b { display: block; font-size: 12.5px; font-weight: 750; }
+  .attcard .dt { display: block; font-size: 11.5px; color: var(--secondary); margin-top: 1px; }
+  .attcard .tx { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .addatt { display: grid; grid-template-columns: 1.4fr .9fr .8fr 1fr .9fr auto; gap: 6px; }
+  .addatt input, .addatt select { font: inherit; font-size: 13px; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; outline: none; min-width: 0; }
+  .addatt input:focus, .addatt select:focus { border-color: var(--accent); }
+  .tl .msid { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+  .tl .daysx { font-size: 11px; color: var(--muted); }
+  .tl .ulab, .tl .utxt { font: inherit; font-size: 13px; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 7px; padding: 3px 7px; outline: none; }
+  .tl .ulab { width: 110px; font-weight: 700; margin-right: 6px; }
+  .tl .utxt { width: calc(100% - 130px); }
+  .tl .ulab:focus, .tl .utxt:focus { border-color: var(--accent); }
+  td.sig .due { display: inline-block; font-size: 10.5px; font-weight: 800; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 4px; padding: 0 5px; margin-right: 7px; }
+  td.sig .due.soon { color: var(--h-river); border-color: var(--h-river); }
+  td.sig .due.over { color: var(--hard); border-color: var(--hard); background: rgba(194,64,44,.08); }
+  #audit .bars { display: flex; flex-direction: column; gap: 5px; }
+  #audit .bar { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+  #audit .bar .by { width: 46px; color: var(--secondary); font-weight: 700; }
+  #audit .bar .bb { flex: 1; height: 10px; background: var(--track); border-radius: 6px; overflow: hidden; }
+  #audit .bar .bb i { display: block; height: 100%; background: var(--accent); border-radius: 6px; }
+  #audit .bar .bn { width: 26px; text-align: right; font-weight: 750; color: var(--ink); }
+  #audit .cvlist h3 { font-size: 13px; font-weight: 800; color: var(--accent); margin: 14px 0 4px; }
+  #audit .cvlist ol { margin: 0 0 6px 20px; font-size: 13.5px; line-height: 1.55; color: var(--secondary); }
+  #audit .cvlist li { margin-bottom: 6px; }
+  .tsel.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 130;
     background: var(--ink); color: var(--page); font-size: 13px; font-weight: 650; padding: 8px 16px;
     border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.22); opacity: 0; pointer-events: none;
@@ -324,11 +363,49 @@
   #tokenbar input { width: 100%; font: inherit; padding: 7px 9px; border: 1px solid var(--border);
     border-radius: 8px; background: var(--page); color: var(--ink); outline: none; }
   .note { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 20px; }
+  @media (hover: none) {
+    .tl .rm, thead th .gr, .notebtn { opacity: .6 !important; }
+    .bcard { position: relative; }
+  }
+  #moreChips { display: none; }
   @media (max-width: 760px) {
-    body { padding: 12px 12px 50px; }
+    body { padding: 10px 10px 60px; }
     .frow { grid-template-columns: 1fr; }
-    .addup { grid-template-columns: 1fr; }
-    td.c-title { min-width: 180px; }
+    .addup, .addatt { grid-template-columns: 1fr; }
+    .searchbox { order: 3; max-width: none; flex: 1 0 100%; }
+    .searchbox input, .fld input, .fld select, .fld textarea, .addup input, .addatt input, .addatt select,
+    #gatepw, .tl .ulab, .tl .utxt { font-size: 16px; }          /* stop iOS zooming on focus */
+    .tl .ulab, .tl .utxt { width: 100%; margin: 0 0 4px; }
+    .top { padding: 8px 0 10px; gap: 8px; }
+    .brand b { font-size: 19px; }
+    .brand .meta { display: none; }
+    .topact { margin-left: 0; width: 100%; gap: 6px; }
+    body:not(.chipsopen) .topact .chip:not(#syncBtn):not(#moreChips) { display: none; }
+    #moreChips { display: inline-block; }
+    .toolbar { gap: 7px; }
+    .toolbar .tsel, .toolbar .chip { font-size: 12px; }
+    /* the table becomes cards */
+    .tablewrap { border: 0; background: transparent; box-shadow: none; overflow: visible; }
+    table, thead, tbody, tr, td { display: block; width: 100%; }
+    thead { display: none; }
+    tbody tr[data-id] { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 12px; margin-bottom: 10px; }
+    tbody tr.expanded { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
+    tbody td { border: 0; padding: 2px 0; }
+    td.c-title { min-width: 0; font-size: 15px; }
+    tbody td.num:empty, tbody td.sig:empty { display: none; }
+    tbody td.num::before { content: attr(data-l) " "; font-size: 10px; font-weight: 800; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted); margin-right: 5px; }
+    tr.detail td { background: var(--surface); border: 1px solid var(--border); border-top: 0;
+      border-radius: 0 0 12px 12px; padding: 4px 12px 14px; margin-bottom: 10px; }
+    tr.grouphead td { background: transparent; padding: 12px 2px 4px; }
+    .tlflow, .attflow { flex-direction: column; }
+    .tlar { display: none; }
+    .tlcard, .attcard { max-width: none; width: 100%; }
+    .board { grid-auto-flow: row; grid-auto-columns: auto; }
+    .modal { top: 2vh; width: 96vw; padding: 16px 14px 14px; max-height: 96vh; }
+    #audit .alist { columns: 1; }
+    #audit .irep { font-size: 12.5px; }
   }
 
 
@@ -436,7 +513,7 @@
 
 <div class="app">
 
-  <div class="top">
+  <div class="top" id="topbar">
     <div class="brand"><b>Manuscripts</b><span class="meta" id="metaline"></span></div>
     <div class="searchbox"><span class="mag">⌕</span><input id="q" placeholder="Search title, journal, author, project…  (/)"></div>
     <div class="topact">
@@ -448,6 +525,7 @@
       <span class="chip" id="expBtn" title="download every record as JSON">⇩ export</span>
       <span class="chip" id="impBtn" title="import a JSON or CSV export">⇧ import</span>
       <span class="chip" id="lockBtn" title="log out">exit</span>
+      <span class="chip" id="moreChips" title="more">⋯</span>
       <input type="file" id="impFile" accept=".json,.csv,.txt,application/json,text/csv" style="display:none">
     </div>
   </div>
@@ -474,16 +552,25 @@
       <option value="60">delayed after 60 days</option>
       <option value="90">delayed after 90 days</option>
     </select>
+    <select class="tsel" id="fStatus"></select>
+    <select class="tsel" id="fProject"></select>
+    <select class="tsel" id="fJournal"></select>
+    <select class="tsel" id="fYear"></select>
+    <span class="chip" id="hideFin" title="hide published, rejected and withdrawn papers">hide finished</span>
     <span class="chip" id="expandAll">expand all</span>
     <span class="chip" id="rebuildBtn" title="turn the notes of every paper without a history into dated timeline entries">rebuild history</span>
+    <span class="chip warn" id="conflictBtn" style="display:none" title="papers edited on two devices at once">conflicts</span>
     <span class="chip" id="reportBtn" style="display:none" title="what the last import mapped">import report</span>
+    <span class="chip" id="statsBtn" title="acceptance rate, time to decision, submissions per year">stats</span>
+    <span class="chip" id="cvBtn" title="printable publication list">CV list</span>
+    <span class="chip" id="trashBtn" title="deleted papers">trash</span>
     <span class="chip" id="auditBtn">check data</span>
     <span class="thint" id="hint">Click a row to open it · a column header to sort · ⊞ to group</span>
   </div>
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-03 23:09 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-04 06:03 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -501,15 +588,36 @@
     <div class="fld"><label>Project</label><input id="f-project" list="projects" spellcheck="false"></div>
   </div>
   <div class="frow">
-    <div class="fld"><label>Journal</label><input id="f-journal" list="journals" spellcheck="false"></div>
+    <div class="fld"><label>DOI</label><input id="f-doi" spellcheck="false" placeholder="10.1000/xyz"></div>
     <div class="fld"><label>Published URL</label><input id="f-url" spellcheck="false" placeholder="https://…"></div>
+  </div>
+  <div class="frow">
+    <div class="fld"><label>Preprint / OSF</label><input id="f-preprint" spellcheck="false" placeholder="https://osf.io/…"></div>
+    <div class="fld"><label>Next deadline</label><input id="f-due" type="date"></div>
   </div>
   <div class="frow one">
     <div class="fld"><label>Authors</label><input id="f-authors" spellcheck="false" placeholder="Surname, A., Surname, B."></div>
   </div>
+  <input type="hidden" id="f-journal"><input type="hidden" id="f-submitted">
   <div class="frow">
-    <div class="fld"><label>Submitted</label><input id="f-submitted" type="date"></div>
-    <div class="fld"><label>Status</label><select id="f-status"></select></div>
+    <div class="fld"><label>Published on</label><input id="f-published" type="date"></div>
+    <div class="fld"><label>Status</label>
+      <div style="display:flex;gap:6px"><select id="f-status" style="flex:1"></select>
+      <button class="btn ghost" id="f-newstatus" title="create a status" style="padding:6px 10px">+</button></div>
+    </div>
+  </div>
+  <div class="frow one">
+    <div class="fld"><label>Submission attempts — where it has been</label>
+      <div class="tl" id="att"></div>
+      <div class="addatt">
+        <input id="a-journal" placeholder="journal" list="journals">
+        <input id="a-sub" type="date" title="submitted">
+        <input id="a-msid" placeholder="ms number">
+        <select id="a-dec"></select>
+        <input id="a-decdate" type="date" title="decision date">
+        <button class="btn ghost" id="a-add">Add</button>
+      </div>
+    </div>
   </div>
   <div class="frow one">
     <div class="fld"><label>History — dated updates</label>
@@ -581,15 +689,25 @@
     var idx = extras.indexOf(key);
     return { k: key || 'unset', hue: EXTRA_HUES[(idx < 0 ? 0 : idx) % EXTRA_HUES.length], active: true, custom: true };
   }
+  var extraCache = null, extraCacheKey = '';
   function extraStatuses() {
     var known = {}, out = [];
     STATUS.forEach(function (s) { known[s.k] = 1; });
-    live().forEach(function (p) {
+    var papers = live();
+    var key = papers.length + '|' + (M && M.statusRev || 0);
+    if (extraCache && extraCacheKey === key) return extraCache;
+    papers.forEach(function (p) {
       var k = String(p.status || '').trim().toLowerCase();
       if (k && !known[k] && out.indexOf(k) === -1) out.push(k);
     });
+    ((M && M.customStatuses) || []).forEach(function (k) {
+      k = String(k).trim().toLowerCase();
+      if (k && !known[k] && out.indexOf(k) === -1) out.push(k);
+    });
+    extraCache = out; extraCacheKey = key;
     return out;
   }
+  function bumpStatuses() { M.statusRev = (M.statusRev || 0) + 1; extraCache = null; }
   function allStatusKeys() {
     return STATUS.map(function (s) { return s.k; }).concat(extraStatuses());
   }
@@ -601,6 +719,32 @@
       group: '', delayedOnly: false, delayDays: 45, theme: 'auto', savedAt: null };
   }
   function live() { return (M && M.papers ? M.papers : []).filter(function (p) { return !p.deleted; }); }
+  function trashed() { return (M && M.papers ? M.papers : []).filter(function (p) { return p.deleted; }); }
+  // one row per submission attempt; the paper's journal/date mirror the latest one
+  function attemptsOf(p) {
+    if (!p.attempts || !p.attempts.length) {
+      if (p.journal || p.submitted) {
+        p.attempts = [{ id: uid(), journal: p.journal || '', submitted: ymd(p.submitted) || '',
+          msid: p.msid || '', decision: '', decisionDate: '' }];
+      } else p.attempts = [];
+    }
+    return p.attempts;
+  }
+  function currentAttempt(p) {
+    var a = attemptsOf(p);
+    return a.length ? a[a.length - 1] : null;
+  }
+  function syncAttemptMirror(p) {
+    var c = currentAttempt(p);
+    if (!c) return;
+    p.journal = c.journal || p.journal || '';
+    if (c.submitted) p.submitted = c.submitted;
+    p.msid = c.msid || '';
+  }
+  function migrateAll() {
+    (M.papers || []).forEach(function (p) { attemptsOf(p); });
+  }
+  var DECISIONS = ['', 'accepted', 'minor revision', 'major revision', 'rejected', 'desk reject', 'withdrawn'];
   function paper(id) { var l = M.papers; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   function touch(p) { p.updatedAt = nowIso(); }
 
@@ -619,6 +763,7 @@
   }
   var saveT = null;
   function scheduleSave() { clearTimeout(saveT); saveT = setTimeout(flushSave, 400); renderSyncPill(); }
+  function touchSettings() { M.settingsAt = nowIso(); scheduleSave(); }
   function flushSave() { if (engine && M) { M.savedAt = nowIso(); engine.save(JSON.stringify(M)); } }
   function logChange(msg) {
     M.changelog = M.changelog || [];
@@ -641,7 +786,12 @@
   }
   function undo() {
     if (!undoStack.length) return;
+    var before = {};
+    M.papers.forEach(function (p) { before[p.id] = JSON.stringify(p); });
     M.papers = JSON.parse(undoStack.pop());
+    M.papers.forEach(function (p) {          // anything the undo changed must beat the already-synced copy
+      if (before[p.id] !== JSON.stringify(p)) p.updatedAt = nowIso();
+    });
     if (!undoStack.length) el('undoBtn').style.display = 'none';
     logChange('Undid the last change');
     scheduleSave(); render();
@@ -704,7 +854,15 @@
     var then = new Date(+p[0], +p[1] - 1, +p[2]);
     return Math.floor((new Date().setHours(0, 0, 0, 0) - then.setHours(0, 0, 0, 0)) / 86400000);
   }
+  function journalOf(p) {
+    var c = currentAttempt(p);
+    return (c && c.journal) || p.journal || '';
+  }
   function submittedOf(p) {
+    var c = currentAttempt(p);
+    if (c && c.submitted) return ymd(c.submitted);
+    var first = attemptsOf(p).map(function (a) { return ymd(a.submitted); }).filter(Boolean).sort()[0];
+    if (first) return first;
     var d = ymd(p.submitted);
     if (d) return d;
     var ups = (p.updates || []).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
@@ -717,6 +875,11 @@
   function lastUpdateOf(p) {
     var best = ymd(p.lastUpdate) || '';
     (p.updates || []).forEach(function (u) { var d = ymd(u.d); if (d > best) best = d; });
+    attemptsOf(p).forEach(function (a) {
+      var d1 = ymd(a.decisionDate), d2 = ymd(a.submitted);
+      if (d1 > best) best = d1;
+      if (d2 > best) best = d2;
+    });
     if (!best) best = ymd(p.submitted) || ymd(p.createdAt) || '';
     if (!best) best = submittedOf(p);
     return best;
@@ -749,17 +912,43 @@
     var d = daysSince(lastUpdateOf(p));
     return d == null ? null : d;
   }
+  function delayLimit(p) {
+    var k = statusMeta(p.status).k;
+    var byStatus = M.delayByStatus || {};
+    if (byStatus[k]) return byStatus[k];
+    if (k === 'idea' || k === 'writing' || k === 'internal review' || k === 'on hold') return 0;   // drafting is not "delayed"
+    return M.delayDays || 45;
+  }
   function isDelayed(p) {
+    var lim = delayLimit(p);
+    if (!lim) return false;
+    if (isActive(p) && !lastUpdateOf(p)) return true;      // active with no date at all is the worst case
     var d = delayDays(p);
-    return d != null && d > (M.delayDays || 45);
+    return d != null && d > lim;
+  }
+  function dueDays(p) {
+    var d = ymd(p.due);
+    if (!d) return null;
+    return -daysSince(d);
   }
 
   // ---------- filters / sorting ----------
   var q = '';
+  var F = { status: '', project: '', journal: '', year: '' };
+  function finished(p) {
+    var k = statusMeta(p.status).k;
+    return k === 'published' || k === 'rejected' || k === 'desk reject' || k === 'withdrawn';
+  }
   function match(p) {
     if (M.delayedOnly && !isDelayed(p)) return false;
+    if (M.hideFinished && finished(p)) return false;
+    if (F.status && statusMeta(p.status).k !== F.status) return false;
+    if (F.project && String(p.project || '') !== F.project) return false;
+    if (F.journal && journalOf(p) !== F.journal) return false;
+    if (F.year && (submittedOf(p) || '').slice(0, 4) !== F.year) return false;
     if (!q) return true;
-    var hay = [p.title, p.journal, p.authors, p.project, p.status, p.type, p.notes,
+    var hay = [p.title, journalOf(p), p.authors, p.project, p.status, p.type, p.notes, p.doi, p.preprint, p.msid,
+      attemptsOf(p).map(function (a) { return a.journal + ' ' + a.msid + ' ' + a.decision; }).join(' '),
       (p.updates || []).map(function (u) { return u.t; }).join(' ')].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   }
@@ -774,6 +963,7 @@
   ];
   function cellValue(p, k) {
     if (k === 'signals') return String(1000 + rejectionCount(p));
+    if (k === 'journal') return journalOf(p);
     if (k === 'lastUpdate') return lastUpdateOf(p);
     if (k === 'submitted') return submittedOf(p);
     if (k === 'year') return (submittedOf(p) || '').slice(0, 4) || 'no date';
@@ -797,6 +987,11 @@
   }
 
   // ---------- render ----------
+  function syncStickyOffset() {
+    var top = el('topbar');
+    if (top) document.documentElement.style.setProperty('--stick', Math.round(top.getBoundingClientRect().height) + 'px');
+  }
+  window.addEventListener('resize', syncStickyOffset);
   function render() {
     el('metaline').textContent = new Date().toLocaleDateString('en-US',
       { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -808,8 +1003,10 @@
     el('hint').style.display = M.view === 'board' ? 'none' : '';
     renderStats();
     renderLists();
+    renderFilters();
     if (M.view === 'board') renderBoard(); else renderTable();
     renderSyncPill();
+    syncStickyOffset();
   }
   function renderStats() {
     var l = live();
@@ -825,11 +1022,40 @@
       '<span class="sep">·</span><b style="color:' + (late ? 'var(--hard)' : 'inherit') + '">' + late + '</b> delayed' +
       '<span class="sep">·</span><a href="index.html">Task board</a>';
   }
+  function fillSelect(id, label, values, current) {
+    var e = el(id);
+    if (!e) return;
+    e.innerHTML = '<option value="">' + esc(label) + '</option>' + values.map(function (v) {
+      return '<option value="' + esc(v) + '"' + (v === current ? ' selected' : '') + '>' + esc(v) + '</option>';
+    }).join('');
+    e.classList.toggle('on', !!current);
+  }
+  function renderFilters() {
+    var l = live();
+    var projects = {}, journals = {}, years = {};
+    l.forEach(function (p) {
+      if (p.project) projects[p.project] = 1;
+      if (journalOf(p)) journals[journalOf(p)] = 1;
+      var y = (submittedOf(p) || '').slice(0, 4);
+      if (y) years[y] = 1;
+    });
+    fillSelect('fStatus', 'Any status', allStatusKeys(), F.status);
+    fillSelect('fProject', 'Any project', Object.keys(projects).sort(), F.project);
+    fillSelect('fJournal', 'Any journal', Object.keys(journals).sort(), F.journal);
+    fillSelect('fYear', 'Any year', Object.keys(years).sort().reverse(), F.year);
+    el('hideFin').classList.toggle('on', !!M.hideFinished);
+  }
   function renderLists() {
     var pr = {}, jr = {};
-    live().forEach(function (p) { if (p.project) pr[p.project] = 1; if (p.journal) jr[p.journal] = 1; });
+    live().forEach(function (p) { if (p.project) pr[p.project] = 1; if (journalOf(p)) jr[journalOf(p)] = 1; });
     el('projects').innerHTML = Object.keys(pr).sort().map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
     el('journals').innerHTML = Object.keys(jr).sort().map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+  }
+  function safeUrl(u) {
+    var v = String(u || '').trim();
+    if (/^(https?:|mailto:)/i.test(v)) return v;
+    if (/^[\w.-]+\.[a-z]{2,}/i.test(v)) return 'https://' + v;
+    return '';
   }
   function statusPill(p) {
     var m = statusMeta(p.status);
@@ -950,7 +1176,7 @@
     var rb = rejectionBreak(p), rej = rb.total, res = resubCount(p);
     return '<tr class="detail" data-detail="' + p.id + '"><td colspan="' + COLS.length + '">' +
       '<div class="dmeta">' +
-        (p.journal ? '<span><i>Journal</i> ' + esc(p.journal) + '</span>' : '') +
+        (journalOf(p) ? '<span><i>Journal</i> ' + esc(journalOf(p)) + '</span>' : '') +
         (p.authors ? '<span><i>Authors</i> ' + esc(p.authors) + '</span>' : '') +
         '<span><i>Type</i> ' + esc(p.type || 'manuscript') + '</span>' +
         (submittedOf(p) ? '<span><i>Submitted</i> ' + esc(submittedOf(p)) + (ymd(p.submitted) ? '' : ' <i>(from the timeline)</i>') + '</span>' : '') +
@@ -958,8 +1184,19 @@
         (rej ? '<span class="warnsig">' + rej + ' rejection' + (rej === 1 ? '' : 's') + ' on record' +
           '<i style="margin-left:6px;text-transform:none;letter-spacing:0;font-weight:600">(' + rb.tl + ' in the timeline, ' + rb.notes + ' in notes)</i></span>' : '') +
         (res ? '<span class="warnsig">' + res + ' resubmission' + (res === 1 ? '' : 's') + '</span>' : '') +
-        (p.url ? '<span><a href="' + esc(p.url) + '" target="_blank" rel="noopener">published link ↗</a></span>' : '') +
+        (p.due ? '<span><i>Deadline</i> ' + esc(ymd(p.due)) + '</span>' : '') +
+        (p.doi ? '<span><i>DOI</i> <a href="' + esc(safeUrl('https://doi.org/' + String(p.doi).replace(/^https?:\/\/doi\.org\//, ''))) + '" target="_blank" rel="noopener">' + esc(p.doi) + '</a></span>' : '') +
+        (p.preprint ? '<span><a href="' + esc(safeUrl(p.preprint)) + '" target="_blank" rel="noopener">preprint ↗</a></span>' : '') +
+        (p.url ? '<span><a href="' + esc(safeUrl(p.url)) + '" target="_blank" rel="noopener">published link ↗</a></span>' : '') +
       '</div>' +
+      (attemptsOf(p).length ? '<div class="dlabel">Submission attempts</div><div class="attflow">' +
+        attemptsOf(p).map(function (a) {
+          var days = daysBetween(a.submitted, a.decisionDate);
+          return '<div class="attcard"><b>' + esc(a.journal || '(no journal)') + '</b>' +
+            '<span class="dt">' + esc(a.submitted || '—') + (a.msid ? ' · ' + esc(a.msid) : '') + '</span>' +
+            '<span class="tx">' + esc(a.decision || 'pending') + (a.decisionDate ? ' · ' + esc(a.decisionDate) : '') +
+            (days != null && days >= 0 ? ' · ' + days + ' days' : '') + '</span></div>';
+        }).join('') + '</div>' : '') +
       '<div class="dlabel">Timeline</div>' + timelineHtml(p) +
       '<div class="dlabel">Full notes</div>' +
       '<div class="dnotes' + (p.notes ? '' : ' empty') + '">' + (p.notes ? esc(p.notes) : 'No notes.') + '</div>' +
@@ -968,19 +1205,21 @@
       '</td></tr>';
   }
   function rowHtml(p) {
-    var late = isDelayed(p), d = delayDays(p), rej = rejectionCount(p), res = resubCount(p);
+    var late = isDelayed(p), d = delayDays(p), rej = rejectionCount(p), res = resubCount(p), dd = dueDays(p);
     var open = !!openRows[p.id];
     var out = '<tr data-id="' + p.id + '"' + (open ? ' class="expanded"' : '') + '>' +
       '<td class="c-title"><span class="caret">' + (open ? '▾' : '▸') + '</span>' + esc(p.title || '(untitled)') +
-        (p.url ? ' <a class="tlink" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="open the published paper">↗</a>' : '') +
+        (p.url ? ' <a class="tlink" href="' + esc(safeUrl(p.url)) + '" target="_blank" rel="noopener" title="open the published paper">↗</a>' : '') +
         (p.authors ? '<span class="sub">' + esc(p.authors) + '</span>' : '') + '</td>' +
-      '<td class="num">' + esc(p.journal || '—') + '</td>' +
-      '<td class="num">' + (p.project ? '<span class="pill proj" style="background:var(--h-' + projHue(p.project) + ')">' + esc(p.project) + '</span>' : '—') + '</td>' +
+      '<td class="num" data-l="journal">' + esc(journalOf(p) || '—') + '</td>' +
+      '<td class="num" data-l="project">' + (p.project ? '<span class="pill proj" style="background:var(--h-' + projHue(p.project) + ')">' + esc(p.project) + '</span>' : '—') + '</td>' +
       '<td>' + statusPill(p) + (late ? '<span class="late">DELAYED</span>' : '') + '</td>' +
-      '<td class="num">' + (submittedOf(p) || '—') + '</td>' +
-      '<td class="num">' + (lastUpdateOf(p) || '—') +
+      '<td class="num" data-l="submitted">' + (submittedOf(p) || '—') + '</td>' +
+      '<td class="num" data-l="last update">' + (lastUpdateOf(p) || '—') +
         (d != null ? '<span class="sub" style="display:block;font-size:11.5px;color:' + (late ? 'var(--hard)' : 'var(--muted)') + '">' + d + ' days ago</span>' : '') + '</td>' +
-      '<td class="num sig">' + (rej ? '<span title="rejections on record">↩ ' + rej + '</span>' : '') +
+      '<td class="num sig">' + (dd != null ? '<span class="due' + (dd < 0 ? ' over' : (dd <= 7 ? ' soon' : '')) + '" title="deadline ' + esc(ymd(p.due)) + '">' +
+        (dd < 0 ? 'overdue ' + (-dd) + 'd' : 'due ' + dd + 'd') + '</span>' : '') +
+        (rej ? '<span title="rejections on record">↩ ' + rej + '</span>' : '') +
         (res ? '<span class="res" title="resubmissions">⤴ ' + res + '</span>' : '') +
         '<button class="rowedit" data-edit="' + p.id + '" title="edit this paper">✎</button></td>' +
       '</tr>';
@@ -1021,20 +1260,18 @@
   }
   function renderBoard() {
     var list = live().filter(match);
-    var keys = allStatusKeys().filter(function (k) {
-      return list.some(function (p) { return statusMeta(p.status).k === k; }) ||
-        STATUS.some(function (s) { return s.k === k && ['writing', 'submitted', 'under review', 'major revision', 'accepted', 'published'].indexOf(k) !== -1; });
-    });
+    var keys = allStatusKeys().slice();
+    if (list.some(function (p) { return statusMeta(p.status).k === 'unset'; })) keys.unshift('unset');
     var html = '<div class="board">' + keys.map(function (k) {
       var m = statusMeta(k);
       var items = sorted(list.filter(function (p) { return statusMeta(p.status).k === k; }));
-      return '<div class="bcol" data-status="' + esc(k) + '" style="--bh:var(--h-' + m.hue + ')">' +
+      return '<div class="bcol' + (items.length ? '' : ' vacant') + '" data-status="' + esc(k) + '" style="--bh:var(--h-' + m.hue + ')">' +
         '<h3>' + esc(k) + '<span class="n">' + items.length + '</span></h3>' +
         items.map(function (p) {
           var late = isDelayed(p);
           return '<div class="bcard" draggable="true" data-id="' + p.id + '">' +
             '<div class="t">' + esc(p.title || '(untitled)') + '</div>' +
-            '<div class="m">' + esc(p.journal || p.project || '—') +
+            '<div class="m">' + esc(journalOf(p) || p.project || '—') +
             (late ? '<span class="late">DELAYED</span>' : '') + '</div></div>';
         }).join('') + '</div>';
     }).join('') + '</div>';
@@ -1042,10 +1279,11 @@
   }
 
   // ---------- modal ----------
-  var editing = null, draftUpdates = [];
+  var editing = null, draftUpdates = [], draftAtt = [];
   function openModal(p) {
     editing = p ? p.id : null;
     draftUpdates = p ? clone(p.updates || []) : [];
+    draftAtt = p ? clone(attemptsOf(p)) : [];
     el('mtitle').textContent = p ? 'Edit paper' : 'New paper';
     el('f-title').value = p ? (p.title || '') : '';
     el('f-type').value = p ? (p.type || 'manuscript') : 'manuscript';
@@ -1054,7 +1292,16 @@
     el('f-url').value = p ? (p.url || '') : '';
     el('f-authors').value = p ? (p.authors || '') : '';
     el('f-submitted').value = p ? ymd(p.submitted) : '';
+    el('f-doi').value = p ? (p.doi || '') : '';
+    el('f-preprint').value = p ? (p.preprint || '') : '';
+    el('f-due').value = p ? ymd(p.due) : '';
+    el('f-published').value = p ? ymd(p.published) : '';
     el('f-notes').value = p ? (p.notes || '') : '';
+    el('a-dec').innerHTML = DECISIONS.map(function (d) {
+      return '<option value="' + esc(d) + '">' + esc(d || 'no decision yet') + '</option>';
+    }).join('');
+    el('a-journal').value = ''; el('a-sub').value = ''; el('a-msid').value = ''; el('a-decdate').value = '';
+    paintAttempts();
     var sel = el('f-status');
     var cur = p ? statusMeta(p.status).k : 'writing';
     sel.innerHTML = allStatusKeys().map(function (k) {
@@ -1073,12 +1320,36 @@
     el('modal').classList.remove('on');
     editing = null;
   }
+  function paintAttempts() {
+    el('att').innerHTML = draftAtt.length
+      ? draftAtt.map(function (a, i) {
+          var days = daysBetween(a.submitted, a.decisionDate);
+          return '<div class="tlrow"><span class="d">' + esc(a.submitted || '—') + '</span>' +
+            '<span class="x"><b>' + esc(a.journal || '(no journal)') + '</b>' +
+            (a.msid ? ' <span class="msid">' + esc(a.msid) + '</span>' : '') +
+            (a.decision ? ' — ' + esc(a.decision) + (a.decisionDate ? ' on ' + esc(a.decisionDate) : '') : ' — pending') +
+            (days != null && days >= 0 ? ' <span class="daysx">' + days + ' days</span>' : '') + '</span>' +
+            '<button class="rm" data-attedit="' + i + '" title="edit">✎</button>' +
+            '<button class="rm" data-attrm="' + i + '" title="remove">✕</button></div>';
+        }).join('')
+      : '<div class="none">No submission attempts recorded.</div>';
+  }
+  function addAttempt() {
+    var j = el('a-journal').value.trim(), sub = ymd(el('a-sub').value);
+    if (!j && !sub) return;
+    draftAtt.push({ id: uid(), journal: j, submitted: sub, msid: el('a-msid').value.trim(),
+      decision: el('a-dec').value, decisionDate: ymd(el('a-decdate').value) });
+    el('a-journal').value = ''; el('a-sub').value = ''; el('a-msid').value = '';
+    el('a-dec').value = ''; el('a-decdate').value = '';
+    paintAttempts();
+  }
   function paintTimeline() {
     draftUpdates.sort(function (a, b) { return (b.d || '') < (a.d || '') ? -1 : 1; });
     el('tl').innerHTML = draftUpdates.length
       ? draftUpdates.map(function (u, i) {
           return '<div class="tlrow"><span class="d">' + esc(prettyDate(u.d) || u.d || '') + '</span>' +
-            '<span class="x">' + esc(u.t || '') + '</span>' +
+            '<span class="x"><input class="ulab" data-ulab="' + i + '" value="' + esc(u.s || tlLabel(u)) + '" title="label">' +
+            '<input class="utxt" data-utxt="' + i + '" value="' + esc(u.t || '') + '"></span>' +
             '<button class="rm" data-rm="' + i + '" title="remove">✕</button></div>';
         }).join('')
       : '<div class="none">No dated updates yet.</div>';
@@ -1095,6 +1366,7 @@
   function saveModal() {
     var title = el('f-title').value.trim();
     if (!title) { el('f-title').focus(); toast('A title is required'); return; }
+    if (el('u-text').value.trim()) addUpdate();          // keep a line typed but never confirmed
     pushUndo();
     var p = editing ? paper(editing) : null;
     var isNew = !p;
@@ -1105,10 +1377,20 @@
     p.journal = el('f-journal').value.trim();
     p.url = el('f-url').value.trim();
     p.authors = el('f-authors').value.trim();
-    p.submitted = ymd(el('f-submitted').value);
     p.status = el('f-status').value;
     p.notes = el('f-notes').value;
+    p.doi = el('f-doi').value.trim();
+    p.preprint = el('f-preprint').value.trim();
+    p.due = ymd(el('f-due').value);
+    p.published = ymd(el('f-published').value);
     p.updates = draftUpdates.slice();
+    if (el('a-journal').value.trim() || el('a-sub').value) addAttempt();
+    p.attempts = draftAtt.slice();
+    if (!p.attempts.length && (el('f-journal').value || el('f-submitted').value)) {
+      p.attempts = [{ id: uid(), journal: el('f-journal').value, submitted: ymd(el('f-submitted').value), msid: '', decision: '', decisionDate: '' }];
+    }
+    syncAttemptMirror(p);
+    if (!p.attempts.length) { p.journal = el('f-journal').value; p.submitted = ymd(el('f-submitted').value); }
     p.lastUpdate = lastUpdateOf(p);
     touch(p);
     logChange((isNew ? 'Added paper: ' : 'Updated paper: ') + title);
@@ -1137,7 +1419,9 @@
 
   // ---------- import / export ----------
   function doExport() {
-    var payload = { kind: 'manuscript-crm', exportedAt: nowIso(), papers: live() };
+    var payload = { kind: 'manuscript-crm', exportedAt: nowIso(), papers: M.papers,
+      settings: { theme: M.theme, delayDays: M.delayDays, delayByStatus: M.delayByStatus,
+        view: M.view, sort: M.sort, customStatuses: M.customStatuses }, changelog: M.changelog };
     var blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1145,6 +1429,60 @@
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
     toast('Exported ' + live().length + ' papers');
+  }
+  function showExportMenu() {
+    openPanel('<h2>Export</h2><div class="asum">Everything below covers the ' + live().length + ' papers you can see in the list.</div>' +
+      '<div class="dbtns" style="flex-wrap:wrap">' +
+      '<button class="btn ghost" id="expJson">JSON (full backup)</button>' +
+      '<button class="btn ghost" id="expCsv">CSV (spreadsheet)</button>' +
+      '<button class="btn ghost" id="expBib">BibTeX (published)</button>' +
+      '</div><div class="mfoot"><button class="btn" id="aClose" style="margin-left:auto">Close</button></div>');
+  }
+  function download(text, fname, mime) {
+    var blob = new Blob([text], { type: mime });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  function csvCell(v) {
+    var t = String(v == null ? '' : v);
+    return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+  }
+  function doExportCsv() {
+    var head = ['title', 'type', 'project', 'journal', 'status', 'submitted', 'lastUpdate', 'due', 'authors',
+      'doi', 'preprint', 'url', 'msid', 'attempts', 'rejections', 'notes'];
+    var rows = live().map(function (p) {
+      return [p.title, p.type, p.project, journalOf(p), statusMeta(p.status).k, submittedOf(p), lastUpdateOf(p),
+        ymd(p.due), p.authors, p.doi, p.preprint, p.url, p.msid, attemptsOf(p).length, rejectionCount(p),
+        String(p.notes || '').replace(/\r?\n/g, ' / ')].map(csvCell).join(',');
+    });
+    download(head.join(',') + '\n' + rows.join('\n'), 'manuscripts-' + new Date().toISOString().slice(0, 10) + '.csv', 'text/csv');
+    toast('CSV exported');
+  }
+  function bibKey(p) {
+    var first = String(p.authors || 'anon').split(/[,;]/)[0].replace(/[^A-Za-z]/g, '').toLowerCase() || 'anon';
+    var yr = (ymd(p.published) || lastUpdateOf(p) || submittedOf(p) || '').slice(0, 4) || 'nd';
+    var w = String(p.title || 'paper').split(/\s+/)[0].replace(/[^A-Za-z]/g, '').toLowerCase();
+    return first + yr + w;
+  }
+  function doExportBib() {
+    var pubs = live().filter(function (p) { return statusMeta(p.status).k === 'published'; });
+    if (!pubs.length) { toast('No papers are marked published'); return; }
+    var out = pubs.map(function (p) {
+      var yr = (ymd(p.published) || lastUpdateOf(p) || submittedOf(p) || '').slice(0, 4);
+      return '@article{' + bibKey(p) + ',\n' +
+        '  title   = {' + String(p.title || '') + '},\n' +
+        '  author  = {' + String(p.authors || '') + '},\n' +
+        '  journal = {' + String(journalOf(p) || '') + '},\n' +
+        (yr ? '  year    = {' + yr + '},\n' : '') +
+        (p.doi ? '  doi     = {' + String(p.doi).replace(/^https?:\/\/doi\.org\//, '') + '},\n' : '') +
+        (p.url ? '  url     = {' + String(p.url) + '},\n' : '') +
+        '}';
+    }).join('\n\n');
+    download(out, 'manuscripts-' + new Date().toISOString().slice(0, 10) + '.bib', 'text/plain');
+    toast(pubs.length + ' entries exported');
   }
   function csvRows(text) {
     var rows = [], row = [], cur = '', inQ = false;
@@ -1247,6 +1585,7 @@
     }
     var p = {
       id: raw.id || uid(),
+      deleted: !!raw.deleted,
       title: String(out.title || '').trim(),
       type: (String(out.type || 'manuscript').trim().toLowerCase() === 'other') ? 'other' : 'manuscript',
       project: String(out.project || '').trim(),
@@ -1282,22 +1621,11 @@
         return o;
       });
     }
-    var mapped = recs.map(mapRecord).filter(function (p) { return p.title; });
+    var mapped = recs.map(function (r) { return r ? mapRecord(r) : null; })
+      .filter(function (p) { return p && p.title; });
     if (!mapped.length) throw new Error('no records with a title were found');
-    pushUndo();
-    var byId = {}, byTitle = {};
-    M.papers.forEach(function (p) { byId[p.id] = p; byTitle[String(p.title).toLowerCase()] = p; });
-    var added = 0, updated = 0;
-    mapped.forEach(function (n) {
-      var ex = byId[n.id] || byTitle[String(n.title).toLowerCase()];
-      if (ex) { Object.keys(n).forEach(function (k) { if (k !== 'id') ex[k] = n[k]; }); ex.deleted = false; touch(ex); updated++; }
-      else { M.papers.push(n); byId[n.id] = n; byTitle[String(n.title).toLowerCase()] = n; added++; }
-    });
-    logChange('Imported ' + name + ': ' + added + ' new, ' + updated + ' updated');
-    scheduleSave(); render();
-    showImportReport(name, mapped, recs, added, updated);
-    toast('Imported ' + added + ' new, ' + updated + ' updated' +
-      (!ds.decided && ds.ambiguous ? ' — slash dates read as month/day' : ''));
+    pendingImport = { name: name, mapped: mapped, recs: recs, ds: ds, map: LAST_MAP };
+    showImportPreview();
   }
 
   function showImportReport(name, mapped, recs, added, updated) {
@@ -1335,11 +1663,137 @@
     m.classList.add('on');
     el('scrim').classList.add('on');
   }
+  function showConflicts() {
+    var hist = [];
+    live().forEach(function (p) {
+      (p.conflicts || []).forEach(function (c) { hist.push({ title: p.title, at: c.at, dropped: c.dropped }); });
+    });
+    var html = '<h2>Edit conflicts</h2>' +
+      (hist.length
+        ? '<div class="asum">These papers were edited on two devices between syncs. The newer edit is what you see; the other version is kept here.</div>' +
+          hist.slice(-20).reverse().map(function (c) {
+            return '<div class="abad" style="color:var(--secondary)"><b style="color:var(--hard)">' + esc(c.title) + '</b> — ' + esc(String(c.at).slice(0, 16).replace('T', ' ')) +
+              '<div style="font-size:12px;margin-top:3px">dropped version: ' +
+              esc([c.dropped.status, c.dropped.journal, (c.dropped.notes || '').slice(0, 80)].filter(Boolean).join(' · ')) + '</div></div>';
+          }).join('')
+        : '<div class="aok">No conflicts recorded.</div>') +
+      '<div class="mfoot"><button class="btn" id="aClose" style="margin-left:auto">Close</button></div>';
+    var m = el('audit');
+    m.innerHTML = html;
+    m.classList.add('on');
+    el('scrim').classList.add('on');
+  }
   var lastReport = null;
   function showLastReport() {
     if (!lastReport) return;
     var m = el('audit');
     m.innerHTML = lastReport;
+    m.classList.add('on');
+    el('scrim').classList.add('on');
+  }
+
+  // ---------- analytics ----------
+  function median(a) {
+    if (!a.length) return null;
+    var b = a.slice().sort(function (x, y) { return x - y; });
+    var h = Math.floor(b.length / 2);
+    return b.length % 2 ? b[h] : Math.round((b[h - 1] + b[h]) / 2);
+  }
+  function daysBetween(a, b) {
+    var x = ymd(a), y = ymd(b);
+    if (!x || !y) return null;
+    return Math.round((new Date(y) - new Date(x)) / 86400000);
+  }
+  function showStats() {
+    var l = live(), att = [];
+    l.forEach(function (p) { attemptsOf(p).forEach(function (a) { att.push({ p: p, a: a }); }); });
+    var decided = att.filter(function (x) { return x.a.decision; });
+    var acc = decided.filter(function (x) { return x.a.decision === 'accepted'; }).length;
+    var desk = decided.filter(function (x) { return x.a.decision === 'desk reject'; }).length;
+    var turn = att.map(function (x) { return daysBetween(x.a.submitted, x.a.decisionDate); })
+      .filter(function (n) { return n != null && n >= 0; });
+    var perYear = {};
+    att.forEach(function (x) { var y = (ymd(x.a.submitted) || '').slice(0, 4); if (y) perYear[y] = (perYear[y] || 0) + 1; });
+    var byJournal = {};
+    att.forEach(function (x) {
+      var j = x.a.journal || '—';
+      byJournal[j] = byJournal[j] || { n: 0, acc: 0, rej: 0, days: [] };
+      byJournal[j].n++;
+      if (x.a.decision === 'accepted') byJournal[j].acc++;
+      if (/reject/.test(x.a.decision)) byJournal[j].rej++;
+      var d = daysBetween(x.a.submitted, x.a.decisionDate);
+      if (d != null && d >= 0) byJournal[j].days.push(d);
+    });
+    var pub = l.filter(function (p) { return statusMeta(p.status).k === 'published'; }).length;
+    var yrs = Object.keys(perYear).sort();
+    var maxY = Math.max.apply(null, yrs.map(function (y) { return perYear[y]; }).concat([1]));
+    var bars = yrs.map(function (y) {
+      return '<div class="bar"><span class="by">' + esc(y) + '</span>' +
+        '<span class="bb"><i style="width:' + Math.round(perYear[y] / maxY * 100) + '%"></i></span>' +
+        '<span class="bn">' + perYear[y] + '</span></div>';
+    }).join('');
+    var jrows = Object.keys(byJournal).sort(function (a, b) { return byJournal[b].n - byJournal[a].n; }).slice(0, 12)
+      .map(function (j) {
+        var v = byJournal[j];
+        var md = median(v.days);
+        return '<tr><td>' + esc(j) + '</td><td>' + v.n + '</td><td>' + v.acc + '</td><td>' + v.rej + '</td><td>' +
+          (md == null ? '—' : md + ' d') + '</td></tr>';
+      }).join('');
+    var html = '<h2>Stats</h2>' +
+      '<div class="asum"><b>' + l.length + '</b> papers · <b>' + att.length + '</b> submission attempts · <b>' +
+      pub + '</b> published</div>' +
+      '<div class="dlabel">Outcomes</div><ul class="alist">' +
+      '<li>Decisions recorded — <b>' + decided.length + '</b></li>' +
+      '<li>Acceptance rate — <b>' + (decided.length ? Math.round(acc / decided.length * 100) + '%' : '—') + '</b></li>' +
+      '<li>Desk rejects — <b>' + desk + '</b></li>' +
+      '<li>Median time to decision — <b>' + (turn.length ? median(turn) + ' days' : '—') + '</b></li>' +
+      '</ul>' +
+      '<div class="dlabel">Submissions per year</div><div class="bars">' + (bars || '<div class="dnone">No dated attempts yet.</div>') + '</div>' +
+      (jrows ? '<div class="dlabel" style="margin-top:14px">By journal</div><table class="irep"><thead><tr><th>Journal</th><th>Attempts</th><th>Accepted</th><th>Rejected</th><th>Median decision</th></tr></thead><tbody>' + jrows + '</tbody></table>' : '') +
+      '<div class="mfoot"><button class="btn ghost" id="aCopy">Copy</button><button class="btn" id="aClose" style="margin-left:auto">Close</button></div>';
+    openPanel(html);
+  }
+  function apaAuthors(a) { return String(a || '').trim(); }
+  function cvHtml() {
+    var pubs = live().filter(function (p) { return statusMeta(p.status).k === 'published'; });
+    var byYear = {};
+    pubs.forEach(function (p) {
+      var y = (ymd(p.published) || lastUpdateOf(p) || submittedOf(p) || '').slice(0, 4) || 'n.d.';
+      (byYear[y] = byYear[y] || []).push(p);
+    });
+    var years = Object.keys(byYear).sort().reverse();
+    return years.map(function (y) {
+      return '<h3>' + esc(y) + '</h3><ol>' + byYear[y].sort(function (a, b) {
+        return String(a.title).toLowerCase() < String(b.title).toLowerCase() ? -1 : 1;
+      }).map(function (p) {
+        return '<li>' + esc(apaAuthors(p.authors)) + ' (' + esc(y) + '). ' + esc(p.title) + '. <i>' +
+          esc(journalOf(p) || '') + '</i>.' + (p.doi ? ' https://doi.org/' + esc(String(p.doi).replace(/^https?:\/\/doi\.org\//, '')) : (p.url ? ' ' + esc(p.url) : '')) + '</li>';
+      }).join('') + '</ol>';
+    }).join('') || '<div class="dnone">No papers marked published yet.</div>';
+  }
+  function showCv() {
+    openPanel('<h2>Publication list</h2><div class="cvlist">' + cvHtml() + '</div>' +
+      '<div class="mfoot"><button class="btn ghost" id="cvPrint">Print</button>' +
+      '<button class="btn ghost" id="aCopy">Copy</button>' +
+      '<button class="btn" id="aClose" style="margin-left:auto">Close</button></div>');
+  }
+  function showTrash() {
+    var t = trashed();
+    var html = '<h2>Trash</h2>' +
+      (t.length ? '<div class="asum">' + t.length + ' deleted paper' + (t.length === 1 ? '' : 's') + '. They stay here until you empty the trash.</div>' +
+        '<table class="irep"><thead><tr><th>Paper</th><th>Status</th><th></th></tr></thead><tbody>' +
+        t.map(function (p) {
+          return '<tr><td>' + esc(p.title || '(untitled)') + '</td><td>' + esc(statusMeta(p.status).k) + '</td>' +
+            '<td><button class="btn ghost" data-restore="' + p.id + '">Restore</button></td></tr>';
+        }).join('') + '</tbody></table>' +
+        '<div class="mfoot"><button class="btn ghost" id="emptyTrash" style="color:var(--hard)">Empty trash</button>' +
+        '<button class="btn" id="aClose" style="margin-left:auto">Close</button></div>'
+        : '<div class="aok">The trash is empty.</div><div class="mfoot"><button class="btn" id="aClose" style="margin-left:auto">Close</button></div>');
+    openPanel(html);
+  }
+  function openPanel(html) {
+    var m = el('audit');
+    m.innerHTML = html;
     m.classList.add('on');
     el('scrim').classList.add('on');
   }
@@ -1396,6 +1850,75 @@
   function auditText() {
     var m = el('audit');
     return m ? m.innerText : '';
+  }
+
+  // ---------- import: preview, then apply ----------
+  var pendingImport = null;
+  function importPlan() {
+    var byId = {}, byTitle = {}, deadId = {}, deadTitle = {};
+    live().forEach(function (p) { byId[p.id] = p; byTitle[String(p.title).trim().toLowerCase()] = p; });
+    trashed().forEach(function (p) { deadId[p.id] = 1; deadTitle[String(p.title).trim().toLowerCase()] = 1; });
+    var plan = { add: [], update: [], fields: 0, kept: 0, skipped: 0 };
+    pendingImport.mapped.forEach(function (n) {
+      if (n.deleted) return;                                     // tombstones are never re-added
+      var key = String(n.title).trim().toLowerCase();
+      if (deadId[n.id] || deadTitle[key]) { plan.skipped++; return; }   // in the trash: leave it there
+      var ex = byId[n.id] || byTitle[key];
+      if (!ex) { delete n.deleted; plan.add.push(n); return; }
+      var changes = [];
+      Object.keys(n).forEach(function (k) {
+        if (k === 'id' || k === 'createdAt' || k === 'updatedAt' || k === 'deleted') return;
+        var val = n[k];
+        var empty = (val == null) || (typeof val === 'string' && !val.trim()) || (Array.isArray(val) && !val.length);
+        if (empty) { plan.kept++; return; }                       // never overwrite with nothing
+        if (k === 'updates' && (ex.updates || []).length && val.length <= (ex.updates || []).length) { plan.kept++; return; }
+        if (JSON.stringify(ex[k]) === JSON.stringify(val)) return;
+        changes.push(k);
+      });
+      if (changes.length) { plan.update.push({ ex: ex, n: n, changes: changes }); plan.fields += changes.length; }
+    });
+    return plan;
+  }
+  function showImportPreview() {
+    var plan = importPlan();
+    var rows = plan.update.slice(0, 12).map(function (u) {
+      return '<tr><td>' + esc(u.ex.title) + '</td><td>' + esc(u.changes.join(', ')) + '</td></tr>';
+    }).join('');
+    var html = '<h2>Import preview — ' + esc(pendingImport.name) + '</h2>' +
+      '<div class="asum"><b>' + plan.add.length + '</b> new papers · <b>' + plan.update.length +
+      '</b> existing papers change (' + plan.fields + ' fields) · <b>' + plan.kept +
+      '</b> empty incoming values ignored' +
+      (plan.skipped ? ' · <b>' + plan.skipped + '</b> left in the trash' : '') + '</div>' +
+      (plan.update.length ? '<div class="dlabel">What changes</div><table class="irep"><thead><tr><th>Paper</th><th>Fields</th></tr></thead><tbody>' +
+        rows + (plan.update.length > 12 ? '<tr><td colspan="2">… and ' + (plan.update.length - 12) + ' more</td></tr>' : '') +
+        '</tbody></table>' : '') +
+      '<div class="aok" style="margin-top:12px">Deleted papers are never brought back, and no field is ever replaced by an empty one.</div>' +
+      '<div class="mfoot"><button class="btn ghost" id="iCancel">Cancel</button>' +
+      '<button class="btn" id="iApply" style="margin-left:auto">Apply import</button></div>';
+    var m = el('audit');
+    m.innerHTML = html;
+    m.classList.add('on');
+    el('scrim').classList.add('on');
+  }
+  function applyImport() {
+    if (!pendingImport) return;
+    var plan = importPlan();
+    pushUndo();
+    plan.add.forEach(function (n) { M.papers.push(n); });
+    plan.update.forEach(function (u) {
+      u.changes.forEach(function (k) { u.ex[k] = u.n[k]; });
+      touch(u.ex);
+    });
+    var name = pendingImport.name, ds = pendingImport.ds;
+    LAST_MAP = pendingImport.map;
+    logChange('Imported ' + name + ': ' + plan.add.length + ' new, ' + plan.update.length + ' updated');
+    scheduleSave(); render();
+    var mapped = pendingImport.mapped, recs = pendingImport.recs;
+    pendingImport = null;
+    el('audit').classList.remove('on'); el('scrim').classList.remove('on');
+    showImportReport(name, mapped, recs, plan.add.length, plan.update.length);
+    toast('Imported ' + plan.add.length + ' new, ' + plan.update.length + ' updated' +
+      (!ds.decided && ds.ambiguous ? ' — slash dates read as month/day' : ''));
   }
 
   // ---------- crypto ----------
@@ -1496,19 +2019,37 @@
     b.style.color = bad ? 'var(--hard)' : '';
     b.style.borderColor = bad ? 'var(--hard)' : '';
   }
+  var lastConflicts = [];
   function mergeRemote(remote) {
     var map = {};
+    lastConflicts = [];
     M.papers.forEach(function (p) { map[p.id] = p; });
     (remote.papers || []).forEach(function (rp) {
       var lp = map[rp.id];
       if (!lp) { M.papers.push(rp); map[rp.id] = rp; }
-      else if ((rp.updatedAt || '') > (lp.updatedAt || '')) Object.keys(rp).forEach(function (k) { lp[k] = rp[k]; });
+      else {
+        var base = lp.syncedAt || '';
+        var mineChanged = base && (lp.updatedAt || '') !== base;
+        var theirsChanged = base && (rp.updatedAt || '') !== base;
+        var newer = (rp.updatedAt || '') > (lp.updatedAt || '');
+        if (mineChanged && theirsChanged && (rp.updatedAt || '') !== (lp.updatedAt || '')) {
+          lastConflicts.push({ title: lp.title || lp.id, kept: newer ? 'the other device' : 'this device' });
+          var loser = newer ? JSON.parse(JSON.stringify(lp)) : JSON.parse(JSON.stringify(rp));
+          if (newer) Object.keys(rp).forEach(function (k) { lp[k] = rp[k]; });
+          lp.conflicts = (lp.conflicts || []).concat([{ at: nowIso(), dropped: loser }]).slice(-5);
+        } else if (newer) {
+          Object.keys(rp).forEach(function (k) { lp[k] = rp[k]; });
+        }
+      }
     });
-    if ((remote.savedAt || '') > (M.savedAt || '')) {
+    var mineAt = M.settingsAt || '';
+    if ((remote.settingsAt || '') > mineAt) {
       if (remote.theme) M.theme = remote.theme;
       if (remote.delayDays) M.delayDays = remote.delayDays;
       if (remote.view) M.view = remote.view;
       if (remote.sort) M.sort = remote.sort;
+      if (remote.delayByStatus) M.delayByStatus = remote.delayByStatus;
+      M.settingsAt = remote.settingsAt;
     }
   }
   var syncing = false, pendingRender = false;
@@ -1540,14 +2081,16 @@
         return r.json();
       })
       .then(function (j) {
-        if (!j || !j.content) return null;
+        if (!j || !j.content) return null;                 // no file yet: a first write is safe
         sha = j.sha;
         var parsed = null;
-        try { parsed = JSON.parse(b64dec(j.content)); } catch (e) { return null; }
+        try { parsed = JSON.parse(b64dec(j.content)); } catch (e) { throw new Error('unreadable'); }
         if (parsed && parsed.enc === 'v1') { salt = parsed.salt; return decryptState(parsed, pw).catch(function () { throw new Error('badpw'); }); }
-        return parsed;
+        if (parsed && parsed.papers) return parsed;
+        throw new Error('unreadable');                     // something is there, but it is not our payload
       })
       .then(function (remote) {
+        if (remote && !remote.papers) throw new Error('unreadable');
         if (remote && remote.papers) mergeRemote(remote);
         if (!tok) {
           syncing = false;
@@ -1570,8 +2113,13 @@
         if (!r.ok) throw new Error('write ' + r.status);
         syncing = false;
         M.changelog = [];
+        M.papers.forEach(function (p) { p.syncedAt = p.updatedAt || nowIso(); });
         if (engine) engine.save(JSON.stringify(M));
         syncRender();
+        if (lastConflicts.length) {
+          toast(lastConflicts.length + ' paper' + (lastConflicts.length === 1 ? '' : 's') + ' changed in two places — see “conflicts”');
+          el('conflictBtn').style.display = '';
+        }
         syncBar('done');
         var done = 'last sync ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
         setSyncStatus('completed');
@@ -1583,6 +2131,11 @@
         syncing = false;
         syncBar('fail');
         if (String(e.message) === 'badpw') { showGate('That password does not open this file.'); setSyncStatus('locked', true); return; }
+        if (String(e.message) === 'unreadable') {
+          setSyncStatus('remote unreadable — not written', true);
+          toast('The file on GitHub could not be read, so nothing was written. Your copy here is untouched.');
+          return;
+        }
         setSyncStatus('sync failed', true);
         toast('Sync failed: ' + e.message);
       });
@@ -1607,7 +2160,37 @@
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (t.closest('#audit')) {
-      if (t.id === 'aClose') { el('audit').classList.remove('on'); el('scrim').classList.remove('on'); }
+      var rb = t.closest('[data-restore]');
+      if (rb) {
+        var rp = paper(rb.dataset.restore);
+        if (rp) { pushUndo(); rp.deleted = false; touch(rp); logChange('Restored: ' + rp.title); scheduleSave(); render(); showTrash(); toast('Restored'); }
+        return;
+      }
+      if (t.id === 'emptyTrash') {
+        pushUndo();
+        var n = trashed().length;
+        M.papers = M.papers.filter(function (p) { return !p.deleted; });
+        logChange('Emptied the trash (' + n + ')');
+        scheduleSave(); render(); showTrash(); toast(n + ' removed for good');
+        return;
+      }
+      if (t.id === 'expJson') { doExport(); return; }
+      if (t.id === 'expCsv') { doExportCsv(); return; }
+      if (t.id === 'expBib') { doExportBib(); return; }
+      if (t.id === 'cvPrint') {
+        var w = window.open('', '_blank');
+        if (w) {
+          w.document.write('<!doctype html><meta charset="utf-8"><title>Publications</title>' +
+            '<style>body{font-family:Georgia,serif;max-width:760px;margin:40px auto;line-height:1.6;color:#111}' +
+            'h3{margin:22px 0 6px;font-size:15px}ol{margin:0 0 4px 20px}li{margin-bottom:8px}</style>' +
+            '<h1>Publications</h1>' + cvHtml());
+          w.document.close(); w.print();
+        }
+        return;
+      }
+      if (t.id === 'iApply') { applyImport(); }
+      else if (t.id === 'iCancel') { pendingImport = null; el('audit').classList.remove('on'); el('scrim').classList.remove('on'); toast('Import cancelled — nothing changed'); }
+      else if (t.id === 'aClose') { el('audit').classList.remove('on'); el('scrim').classList.remove('on'); }
       else if (t.id === 'aCopy') {
         var txt = auditText();
         if (navigator.clipboard) navigator.clipboard.writeText(txt);
@@ -1620,6 +2203,25 @@
       else if (t.id === 'mCancel') closeModal();
       else if (t.id === 'mDel') deleteCurrent();
       else if (t.id === 'u-add') addUpdate();
+      else if (t.id === 'a-add') addAttempt();
+      else if (t.id === 'f-newstatus') {
+        var nm = String(window.prompt('New status name') || '').trim().toLowerCase();
+        if (nm) {
+          M.customStatuses = (M.customStatuses || []).concat([nm]);
+          bumpStatuses(); touchSettings();
+          var sel = el('f-status');
+          sel.innerHTML = allStatusKeys().map(function (k) {
+            return '<option value="' + esc(k) + '"' + (k === nm ? ' selected' : '') + '>' + esc(k) + '</option>';
+          }).join('');
+        }
+      }
+      else if (t.dataset && t.dataset.attrm !== undefined) { draftAtt.splice(+t.dataset.attrm, 1); paintAttempts(); }
+      else if (t.dataset && t.dataset.attedit !== undefined) {
+        var ai = +t.dataset.attedit, a = draftAtt[ai];
+        el('a-journal').value = a.journal || ''; el('a-sub').value = a.submitted || '';
+        el('a-msid').value = a.msid || ''; el('a-dec').value = a.decision || ''; el('a-decdate').value = a.decisionDate || '';
+        draftAtt.splice(ai, 1); paintAttempts();
+      }
       else if (t.dataset && t.dataset.rm !== undefined) { draftUpdates.splice(+t.dataset.rm, 1); paintTimeline(); }
       else if (t.id === 'tokSave') {
         var v = el('gh-token').value.trim();
@@ -1634,15 +2236,15 @@
     if (t.id === 'newBtn') { openModal(null); return; }
     if (t.id === 'syncBtn') { doSync(false); return; }
     if (t.id === 'undoBtn') { undo(); return; }
-    if (t.id === 'expBtn') { doExport(); return; }
+    if (t.id === 'expBtn') { showExportMenu(); return; }
     if (t.id === 'impBtn') { el('impFile').click(); return; }
-    if (t.id === 'lockBtn') { clearPw(); showGate('Locked. Enter the password to unlock.'); return; }
+    if (t.id === 'lockBtn') { doLock(); return; }
     if (t.id === 'themeToggle') {
       var ord = ['auto', 'light', 'dark'];
       M.theme = ord[(ord.indexOf(M.theme || 'auto') + 1) % 3];
-      applyTheme(); scheduleSave(); return;
+      applyTheme(); touchSettings(); return;
     }
-    if (t.id === 'lateBtn') { M.delayedOnly = !M.delayedOnly; scheduleSave(); render(); return; }
+    if (t.id === 'lateBtn') { M.delayedOnly = !M.delayedOnly; touchSettings(); render(); return; }
     if (t.id === 'expandAll') {
       var vis = live().filter(match);
       var anyClosed = vis.some(function (p) { return !openRows[p.id]; });
@@ -1654,8 +2256,14 @@
     if (t.id === 'auditBtn') { showAudit(); return; }
     if (t.id === 'rebuildBtn') { rebuildAllHistories(); return; }
     if (t.id === 'reportBtn') { showLastReport(); return; }
+    if (t.id === 'conflictBtn') { showConflicts(); return; }
+    if (t.id === 'hideFin') { M.hideFinished = !M.hideFinished; touchSettings(); render(); return; }
+    if (t.id === 'statsBtn') { showStats(); return; }
+    if (t.id === 'cvBtn') { showCv(); return; }
+    if (t.id === 'trashBtn') { showTrash(); return; }
+    if (t.id === 'moreChips') { document.body.classList.toggle('chipsopen'); syncStickyOffset(); return; }
     var vb = t.closest('[data-view]');
-    if (vb) { M.view = vb.dataset.view; scheduleSave(); render(); return; }
+    if (vb) { M.view = vb.dataset.view; touchSettings(); render(); return; }
     var gr = t.closest('[data-group]');
     if (gr) { M.group = (M.group === gr.dataset.group) ? '' : gr.dataset.group; scheduleSave(); render(); return; }
     var th = t.closest('th[data-col]');
@@ -1694,8 +2302,12 @@
     }
   });
   document.addEventListener('change', function (e) {
+    if (/^f(Status|Project|Journal|Year)$/.test(e.target.id)) {
+      F[e.target.id.slice(1).toLowerCase()] = e.target.value;
+      render(); return;
+    }
     if (e.target.id === 'groupSel') { M.group = e.target.value; scheduleSave(); render(); }
-    else if (e.target.id === 'lateSel') { M.delayDays = +e.target.value; scheduleSave(); render(); }
+    else if (e.target.id === 'lateSel') { M.delayDays = +e.target.value; touchSettings(); render(); }
     else if (e.target.id === 'impFile' && e.target.files && e.target.files[0]) {
       var f = e.target.files[0], rd = new FileReader();
       rd.onload = function () {
@@ -1707,16 +2319,30 @@
     }
   });
   document.addEventListener('input', function (e) {
-    if (e.target.id === 'q') { q = e.target.value.trim().toLowerCase(); render(); }
+    if (e.target.id === 'q') { q = e.target.value.trim().toLowerCase(); render(); return; }
+    if (e.target.dataset && e.target.dataset.ulab !== undefined) { draftUpdates[+e.target.dataset.ulab].s = e.target.value; return; }
+    if (e.target.dataset && e.target.dataset.utxt !== undefined) { draftUpdates[+e.target.dataset.utxt].t = e.target.value; }
   });
+  function anyModalOpen() {
+    return el('modal').classList.contains('on') || el('audit').classList.contains('on') ||
+      el('gate').classList.contains('on');
+  }
+  function closeTopModal() {
+    if (el('modal').classList.contains('on')) { closeModal(); if (el('audit').classList.contains('on')) el('scrim').classList.add('on'); return; }
+    if (el('audit').classList.contains('on')) {
+      pendingImport = null;
+      el('audit').classList.remove('on'); el('scrim').classList.remove('on');
+    }
+  }
   document.addEventListener('keydown', function (e) {
     if (e.target.id === 'u-text' && e.key === 'Enter') { e.preventDefault(); addUpdate(); return; }
     if (e.target.id === 'gatepw' && e.key === 'Enter') { tryUnlock(); return; }
+    if (e.key === 'Escape' && anyModalOpen() && !el('gate').classList.contains('on')) { closeTopModal(); return; }
     if (el('modal').classList.contains('on')) {
-      if (e.key === 'Escape') closeModal();
-      else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveModal();
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveModal();
       return;
     }
+    if (anyModalOpen()) return;                       // no global shortcuts behind a modal
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === '/') { e.preventDefault(); el('q').focus(); }
     else if (e.key === 'n') { e.preventDefault(); openModal(null); }
@@ -1746,19 +2372,9 @@
     var col = e.target.closest ? e.target.closest('.bcol') : null;
     if (!col) return;
     e.preventDefault();
-    var p = paper(dragId), st = col.dataset.status;
+    var id = dragId, st = col.dataset.status;
     dragId = null;
-    if (!p || statusMeta(p.status).k === st) { render(); return; }
-    pushUndo();
-    var from = statusMeta(p.status).k;
-    p.status = st;
-    p.updates = p.updates || [];
-    p.updates.push({ d: new Date().toISOString().slice(0, 10), t: 'Status: ' + from + ' → ' + st });
-    p.lastUpdate = lastUpdateOf(p);
-    touch(p);
-    logChange('Status of "' + p.title + '": ' + from + ' → ' + st);
-    scheduleSave(); render();
-    toast('Moved to ' + st);
+    moveToStatus(id, st);
   });
   document.addEventListener('dragend', function () {
     document.querySelectorAll('.bcol.over').forEach(function (x) { x.classList.remove('over'); });
@@ -1766,12 +2382,94 @@
     dragId = null;
   });
 
+  // touch: press and hold a card, then drag it to another column
+  var tDrag = null, tTimer = null;
+  document.addEventListener('touchstart', function (e) {
+    var c = e.target.closest ? e.target.closest('.bcard[data-id]') : null;
+    if (!c) return;
+    tTimer = setTimeout(function () {
+      tDrag = { id: c.dataset.id, el: c };
+      c.classList.add('dragging');
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, 320);
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (tTimer && !tDrag) { clearTimeout(tTimer); tTimer = null; }
+    if (!tDrag) return;
+    e.preventDefault();
+    var t = e.touches[0];
+    var over = document.elementFromPoint(t.clientX, t.clientY);
+    var col = over && over.closest ? over.closest('.bcol') : null;
+    document.querySelectorAll('.bcol.over').forEach(function (x) { x.classList.remove('over'); });
+    if (col) col.classList.add('over');
+  }, { passive: false });
+  document.addEventListener('touchend', function (e) {
+    if (tTimer) { clearTimeout(tTimer); tTimer = null; }
+    if (!tDrag) return;
+    var t = e.changedTouches[0];
+    var over = document.elementFromPoint(t.clientX, t.clientY);
+    var col = over && over.closest ? over.closest('.bcol') : null;
+    var id = tDrag.id;
+    tDrag.el.classList.remove('dragging');
+    tDrag = null;
+    document.querySelectorAll('.bcol.over').forEach(function (x) { x.classList.remove('over'); });
+    if (col) moveToStatus(id, col.dataset.status);
+  });
+  function moveToStatus(id, st) {
+    var p = paper(id);
+    if (!p || !st || statusMeta(p.status).k === st) return;
+    pushUndo();
+    var from = statusMeta(p.status).k;
+    p.status = st;
+    p.updates = p.updates || [];
+    p.updates.push({ d: new Date().toISOString().slice(0, 10), t: 'Status: ' + from + ' → ' + st, s: st });
+    p.lastUpdate = lastUpdateOf(p);
+    touch(p);
+    logChange('Status of "' + p.title + '": ' + from + ' → ' + st);
+    scheduleSave(); render();
+    toast('Moved to ' + st);
+  }
+
+  var ENC_KEY = 'manuscript-crm-v1e';
+  function doLock() {
+    var pw = getPw();
+    flushSave();
+    var finish = function () {
+      try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      clearPw();
+      try { localStorage.removeItem(SYNC_KEY); } catch (e) {}
+      location.reload();
+    };
+    if (!pw) { finish(); return; }
+    encryptState(M, pw).then(function (env) {
+      try { localStorage.setItem(ENC_KEY, JSON.stringify(env)); } catch (e) {}
+      finish();
+    }).catch(finish);
+  }
+  function lockedBlob() {
+    try { var v = localStorage.getItem(ENC_KEY); return v ? JSON.parse(v) : null; } catch (e) { return null; }
+  }
   function tryUnlock() {
     var v = el('gatepw').value;
     if (!v) return;
-    setPw(v);
-    hideGate();
-    doSync(true);
+    var blob = lockedBlob();
+    if (!blob) {                                  // nothing local to check against: the sync verifies instead
+      setPw(v); hideGate(); doSync(true); return;
+    }
+    el('gateerr').textContent = 'checking…';
+    decryptState(blob, v).then(function (data) {
+      setPw(v);
+      M = data;
+      M.papers = M.papers || [];
+      try { localStorage.removeItem(ENC_KEY); } catch (e) {}
+      flushSave();
+      hideGate();
+      applyTheme(); render();
+      doSync(true);
+    }).catch(function () {
+      el('gateerr').textContent = 'That password does not open this board.';
+      el('gatepw').select();
+    });
   }
 
   // ---------- boot ----------
@@ -1782,14 +2480,16 @@
       try { stored = raw ? JSON.parse(raw) : null; } catch (e) {}
       M = stored || freshState();
       M.papers = M.papers || [];
+      migrateAll();
       M.sort = M.sort || { col: 'lastUpdate', dir: -1 };
       if (!M.delayDays) M.delayDays = 45;
       applyTheme();
       setSyncStatus('sync');
       render();
-      flushSave();
+      if (!lockedBlob()) flushSave();          // do not re-create a plain copy while the board is locked
       window.__ms = { state: function () { return M; }, render: render, syncRender: syncRender,
-        importText: importText, pending: function () { return pendingRender; } };
+        importText: importText, pending: function () { return pendingRender; },
+        merge: function (r) { mergeRemote(r); render(); }, sync: function () { doSync(false); } };
       if (getPw()) doSync(true); else showGate();
     });
   });
