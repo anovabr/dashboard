@@ -307,6 +307,18 @@
   .actmenu button.danger:hover { background: rgba(194,64,44,0.10); color: var(--hard); }
   .actmenu .msep { height: 1px; background: var(--hairline); margin: 4px 6px; }
   .actmenu .secdotm { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  .actmenu.selbar { position: fixed; left: 0; right: 0; bottom: 20px; top: auto; margin: 0 auto;
+    width: max-content; min-width: 0; max-width: 97vw;
+    flex-direction: row; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center;
+    padding: 7px 10px; border-radius: 14px; z-index: 130;
+    animation: barin .18s cubic-bezier(.2,.8,.2,1); }
+  @keyframes barin { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .actmenu.selbar .selct { padding: 0 12px 0 6px; color: var(--accent); font-size: 11px; }
+  .actmenu.selbar button { padding: 7px 11px; font-size: 13px; font-weight: 650; }
+  .actmenu.selbar .mi { width: auto; margin-right: 1px; }
+  .actmenu.selbar .barsep { width: 1px; align-self: stretch; background: var(--hairline); margin: 2px 6px; }
+  @media (max-width: 900px) { .actmenu.selbar { left: 8px; right: 8px; width: auto; max-width: none; } }
+  ul.rows li.pend { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); border-radius: 6px; }
   .selct { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
     padding: 6px 10px 4px; }
   .carried { font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase;
@@ -876,7 +888,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-03 21:17 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-04 18:10 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2682,6 +2694,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function renderAll() {
     rebuildSecMeta();
+    setTimeout(restoreSelection, 0);
     if (isPhone()) { renderMobile(); renderSyncPill(); return; }
     var today = new Date();
     el('metaline').textContent = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -3282,9 +3295,19 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var r = anchor.getBoundingClientRect();
     var x = r.right + 4;
     if (x + m.offsetWidth > window.innerWidth - 6) x = r.left - m.offsetWidth - 4;
-    var y = Math.min(r.top - 4, window.innerHeight - m.offsetHeight - 8);
+    var fromBar = anchor.closest && anchor.closest('.selbar');
+    if (fromBar) {                                   // never let it spill back over the rows
+      m.style.maxHeight = Math.max(160, r.top - 24) + 'px';
+      m.style.overflowY = 'auto';
+    }
+    var y = fromBar ? Math.max(8, r.top - m.offsetHeight - 10)
+      : Math.min(r.top - 4, window.innerHeight - m.offsetHeight - 8);
     m.style.left = Math.max(4, x) + 'px';
     m.style.top = Math.max(4, y) + 'px';
+    if (fromBar) {                                   // re-measure once laid out, then sit clear of the bar
+      var h2 = m.getBoundingClientRect().height;
+      m.style.top = Math.max(8, r.top - 10 - h2) + 'px';
+    }
   }
   function removePanelsAbove(level) {
     document.querySelectorAll('.actmenu').forEach(function (p) {
@@ -3302,17 +3325,58 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function clearPendMenu() {
     document.querySelectorAll('li.pend').forEach(function (p) { p.classList.remove('pend'); });
     document.querySelectorAll('.actmenu').forEach(function (m) { m.remove(); });
+    selMem = {};
+    renderSelBar();
   }
-  function toggleSelect(li, t, x, y) {
+  function toggleSelect(li, t, menu, x, y) {
     if (li.classList.contains('pend')) {
       document.querySelectorAll('li.pend[data-id="' + t.id + '"]').forEach(function (p) { p.classList.remove('pend'); });
     } else {
       li.classList.add('pend');
     }
-    var old = document.querySelector('.actmenu');
-    if (old) old.remove();
+    document.querySelectorAll('.actmenu').forEach(function (m) { m.remove(); });
     var ids = selIds();
-    if (ids.length) openSelMenu(ids, x, y);
+    rememberSelection();
+    if (menu && ids.length) openSelMenu(ids, x, y);
+    renderSelBar();
+  }
+  var selMem = {};
+  function rememberSelection() {
+    selMem = {};
+    selIds().forEach(function (id) { selMem[id] = 1; });
+  }
+  function restoreSelection() {              // a background render must not drop what you had ticked
+    var ids = Object.keys(selMem);
+    if (ids.length) {
+      ids.forEach(function (id) {
+        document.querySelectorAll('li[data-id="' + id + '"]').forEach(function (li) { li.classList.add('pend'); });
+      });
+    }
+    renderSelBar();
+  }
+  // the docked bar: selecting never covers the rows you are still picking
+  function renderSelBar() {
+    var bar = document.querySelector('.selbar');
+    var ids = selIds();
+    if (!ids.length || isPhone()) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'actmenu selbar';
+      bar.dataset.level = '1';
+      document.body.appendChild(bar);
+    }
+    bar.dataset.ids = ids.join(',');
+    var one = ids.length === 1 ? task(ids[0]) : null;
+    bar.innerHTML =
+      '<span class="selct">' + ids.length + ' selected</span>' +
+      '<button data-act="done"><span class="mi">✅</span><span class="ml">Complete</span></button>' +
+      '<button data-act="focus"><span class="mi">🔆</span><span class="ml">' + (one && one.today ? 'Today ✓' : 'Today') + '</span></button>' +
+      '<button data-act="tmr"><span class="mi">🌙</span><span class="ml">' + (one && one.tomorrow ? 'Tomorrow ✓' : 'Tomorrow') + '</span></button>' +
+      '<button data-act="work"><span class="mi">🕒</span><span class="ml">Worked</span></button>' +
+      '<button data-act="move"><span class="mi">📂</span><span class="ml">Move to…</span><span class="sub-arrow">▸</span></button>' +
+      '<button class="danger" data-act="del"><span class="mi">🗑️</span><span class="ml">Delete</span></button>' +
+      '<span class="barsep"></span>' +
+      '<button data-act="selclear"><span class="ml">Clear</span></button>';
   }
   function mainMenuHtml(ids) {
     var one = ids.length === 1 ? task(ids[0]) : null;
@@ -3724,6 +3788,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (swb) { var swsec = swb.dataset.swsec; clearPendMenu(); setSecHue(swsec, swb.dataset.swhue); return; }
 
     var act = e.target.closest('.actmenu button');
+    if (act && act.dataset.act === 'selclear') { clearPendMenu(); return; }
     if (act && act.dataset.act === 'seccancel') { clearPendMenu(); return; }
     if (act && act.dataset.act === 'foldrename') {
       var frs = act.dataset.sec, frn = act.dataset.fold;
@@ -3854,7 +3919,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return;
     }
     var onBox = !!(e.target.closest && e.target.closest('li[data-id]') && e.target.closest('.box'));
-    if (!onBox && document.querySelector('.actmenu')) clearPendMenu();
+    var inMenu = !!(e.target.closest && e.target.closest('.actmenu'));
+    if (!onBox && !inMenu && document.querySelector('.actmenu')) clearPendMenu();
 
     var hh = (e.target.closest('.secdel') || e.target.closest('.secmore') || e.target.closest('.notebtn') || e.target.closest('.seccolor') || e.target.closest('.secfold')) ? null : e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
@@ -3901,7 +3967,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         logChange('Not done after all: ' + taskLabel(t));
         touch(t); scheduleSave(); renderAll();
       } else {
-        toggleSelect(li, t, e.clientX, e.clientY);
+        toggleSelect(li, t, false);          // ticking a box only selects; the bar carries the actions
       }
       return;
     }
@@ -4169,6 +4235,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   });
 
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.querySelector('li.pend')) { clearPendMenu(); return; }
     if (e.key === 'Escape') closeNote();
     else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && notePanel) commitNote();
   });
@@ -4190,7 +4257,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       openRowMenu(li, t, e.clientX, e.clientY);
       return;
     }
-    toggleSelect(li, t, e.clientX, e.clientY);
+    if (!li.classList.contains('pend')) toggleSelect(li, t, false);
+    document.querySelectorAll('.actmenu:not(.selbar)').forEach(function (m) { m.remove(); });
+    openSelMenu(selIds(), e.clientX, e.clientY);
   });
 
   var dragId = null, dragFold = null, dragSec = null;
