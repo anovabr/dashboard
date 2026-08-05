@@ -351,6 +351,10 @@
   #audit .cvlist ol { margin: 0 0 6px 20px; font-size: 13.5px; line-height: 1.55; color: var(--secondary); }
   #audit .cvlist li { margin-bottom: 6px; }
   .tsel.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  #unstick { position: fixed; right: 14px; bottom: 14px; z-index: 140; display: none;
+    font: inherit; font-size: 12px; font-weight: 700; color: var(--surface); background: var(--hard);
+    border: 0; border-radius: 20px; padding: 7px 13px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  #unstick.on { display: block; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 130;
     background: var(--ink); color: var(--page); font-size: 13px; font-weight: 650; padding: 8px 16px;
     border-radius: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.22); opacity: 0; pointer-events: none;
@@ -570,11 +574,12 @@
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-04 21:32 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-05 08:26 UTC</div>
 </div>
 
 <div id="syncbar"></div>
 <div class="scrim" id="scrim"></div>
+<button id="unstick" title="clears anything invisible that is blocking clicks">nothing responding? reset</button>
 <div class="modal" id="audit"></div>
 <div class="modal" id="modal">
   <h2 id="mtitle">New paper</h2>
@@ -1009,7 +1014,44 @@
     if (top) document.documentElement.style.setProperty('--stick', Math.round(top.getBoundingClientRect().height) + 'px');
   }
   window.addEventListener('resize', syncStickyOffset);
+  // if an overlay is left behind with nothing open, it silently eats every click — clear it
+  var healCount = 0, healSince = 0;
+  function healOverlays() {
+    var modalOn = el('modal').classList.contains('on');
+    var auditOn = el('audit').classList.contains('on');
+    var gateOn = el('gate').classList.contains('on');
+    var scrim = el('scrim');
+    if (scrim.classList.contains('on') && !modalOn && !auditOn) {
+      scrim.classList.remove('on');
+      var now = +new Date();
+      if (now - healSince > 10000) { healCount = 0; healSince = now; }
+      if (++healCount >= 3) el('unstick').classList.add('on');   // it keeps coming back: offer a way out
+    }
+    if (!gateOn && document.body.style.overflow === 'hidden') document.body.style.overflow = '';
+    if (auditOn && !String(el('audit').innerHTML).trim()) {
+      el('audit').classList.remove('on');
+      scrim.classList.remove('on');
+    }
+  }
+  function forceReset() {
+    pendingImport = null;
+    ['modal', 'audit', 'scrim'].forEach(function (id) { el(id).classList.remove('on'); });
+    document.body.style.overflow = '';
+    el('unstick').classList.remove('on');
+    render();
+    toast('Cleared — try again');
+  }
+  // watch for the symptom itself: clicks that land on something covering the page
+  document.addEventListener('mousedown', function (e) {
+    var t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === 'scrim' && !el('modal').classList.contains('on') && !el('audit').classList.contains('on')) {
+      forceReset();
+    }
+  }, true);
+  setInterval(healOverlays, 2000);
   function render() {
+    healOverlays();
     el('metaline').textContent = new Date().toLocaleDateString('en-US',
       { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     el('vTable').classList.toggle('on', M.view !== 'board');
@@ -2263,7 +2305,13 @@
       else if (t.id === 'fgBack') { el('forgotBox').classList.remove('on'); el('forgotLink').style.display = ''; }
       return;
     }
-    if (t.id === 'scrim') { el('audit').classList.remove('on'); closeModal(); return; }
+    if (t.id === 'scrim') {
+      pendingImport = null;
+      el('audit').classList.remove('on');
+      el('scrim').classList.remove('on');
+      closeModal();
+      return;
+    }
     if (t.id === 'newBtn') { openModal(null); return; }
     if (t.id === 'syncBtn') { doSync(false); return; }
     if (t.id === 'undoBtn') { undo(); return; }
@@ -2292,6 +2340,7 @@
     if (t.id === 'statsBtn') { showStats(); return; }
     if (t.id === 'cvBtn') { showCv(); return; }
     if (t.id === 'trashBtn') { showTrash(); return; }
+    if (t.id === 'unstick') { forceReset(); return; }
     if (t.id === 'moreChips') { document.body.classList.toggle('chipsopen'); syncStickyOffset(); return; }
     var vb = t.closest('[data-view]');
     if (vb) { M.view = vb.dataset.view; touchSettings(); render(); return; }
@@ -2371,6 +2420,7 @@
     if (e.target.id === 'u-text' && e.key === 'Enter') { e.preventDefault(); addUpdate(); return; }
     if (e.target.id === 'gatepw' && e.key === 'Enter') { tryUnlock(); return; }
     if (e.key === 'Escape' && anyModalOpen() && !el('gate').classList.contains('on')) { closeTopModal(); return; }
+    if (e.key === 'Escape') { healOverlays(); }
     if (el('modal').classList.contains('on')) {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveModal();
       return;
