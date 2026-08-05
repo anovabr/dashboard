@@ -888,7 +888,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-04 18:10 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-04 21:32 UTC</div>
 </div>
 
 <div id="mobile">
@@ -3774,6 +3774,16 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   });
 
   // ---------- interactions ----------
+  var downAt = null;
+  document.addEventListener('mousedown', function (e) { downAt = { x: e.clientX, y: e.clientY }; });
+  function textWasSelected() {
+    var sel = window.getSelection && window.getSelection();
+    return !!(sel && String(sel).length > 1 && !sel.isCollapsed);
+  }
+  function draggedNotClicked(e) {
+    if (!downAt) return false;
+    return Math.abs(e.clientX - downAt.x) > 6 || Math.abs(e.clientY - downAt.y) > 6;
+  }
   document.addEventListener('click', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -4023,6 +4033,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (arch) { arch.open = true; arch.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       return;
     }
+    if ((textWasSelected() || draggedNotClicked(e)) &&
+        (e.target.closest('h2') || e.target.closest('.micro') || e.target.closest('li[data-id]'))) return;
     var sfb = e.target.closest('.secfold');
     if (sfb) {
       var sfid = sfb.dataset.secfold, sfSec = SECMETA[sfid];
