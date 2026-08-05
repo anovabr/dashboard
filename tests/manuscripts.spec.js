@@ -487,6 +487,78 @@ test.describe('import', () => {
     await expect(page.locator('#f-title')).toHaveValue('Numeric id from the old CRM');
   });
 
+  const csvUpload = async (page, csv) =>
+    page.locator('#impFile').setInputFiles({ name: 'old-crm.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+
+  test('reads a last-update column written in Portuguese', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Status,Última atualização\nSuicide across countries,writing,2025-11-14\n');
+    await page.locator('#iApply').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.lastUpdate).toBe('2025-11-14');
+  });
+
+  test('reads the other ways that column gets named', async ({ page }) => {
+    for (const header of ['Atualizado em', 'Ultima atualizacao', 'Last modified', 'Data da última alteração']) {
+      await openMs(page);
+      await csvUpload(page, `Title,Status,${header}\nA paper,writing,2025-11-14\n`);
+      await page.locator('#iApply').click();
+      const p = await page.evaluate(() => window.__ms.state().papers[0]);
+      expect(p.lastUpdate, `header "${header}"`).toBe('2025-11-14');
+    }
+  });
+
+  test('reads a submitted column written in Portuguese', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Status,Data de submissão\nA paper,submitted,2025-03-09\n');
+    await page.locator('#iApply').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.submitted).toBe('2025-03-09');
+  });
+
+  test('accented headers match their plain spelling', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Situação,Projeto\nA paper,under review,ASQ\n');
+    await page.locator('#iApply').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.status).toBe('under review');
+    expect(p.project).toBe('ASQ');
+  });
+
+  test('with no last-update column, the date is left empty rather than invented', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Status\nA paper,writing\n');
+    await page.locator('#iApply').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.lastUpdate).toBe('');
+    await expect(page.locator('td[data-l="last update"]').first()).toHaveText('—');
+  });
+
+  test('a stalled paper with no date is flagged, not passed off as fresh', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Status\nA stalled paper,under review\n');
+    await page.locator('#iApply').click();
+    await page.locator('#aClose').click().catch(() => {});
+    await expect(page.locator('.late')).toBeVisible();
+  });
+
+  test('a real date still beats the import time', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Status,Last update\nA paper,under review,2025-11-14\n');
+    await page.locator('#iApply').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.lastUpdate).toBe('2025-11-14');
+  });
+
+  test('the report opens itself when the last-update column found nothing', async ({ page }) => {
+    await openMs(page);
+    await csvUpload(page, 'Title,Journal,Status,Date Submitted,Nao usada\nA paper,Nature,submitted,2026-02-01,x\n');
+    await page.locator('#iApply').click();
+    await expect(page.locator('#audit')).toContainText('Import report');
+    await expect(page.locator('#audit')).toContainText('no column matched');
+    await expect(page.locator('#audit')).toContainText('nao usada');   // and names what went unread
+  });
+
   test('a file with nothing usable in it is refused', async ({ page }) => {
     await openMs(page, { papers: [paper()] });
     await upload(page, { papers: [{ nothing: 'useful' }] });

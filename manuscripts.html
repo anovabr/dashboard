@@ -589,7 +589,7 @@
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-05 21:03 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-05 22:52 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -935,7 +935,9 @@
       if (d1 > best) best = d1;
       if (d2 > best) best = d2;
     });
-    if (!best) best = ymd(p.submitted) || ymd(p.createdAt) || '';
+    // createdAt is when the record entered this app -- for an import that is the
+    // moment of the import, which is not news about the paper. Never stand in for it.
+    if (!best) best = ymd(p.submitted) || '';
     if (!best) best = submittedOf(p);
     return best;
   }
@@ -1653,17 +1655,29 @@
     journal: ['journal', 'venue', 'revista', 'target journal'],
     url: ['url', 'published url', 'link', 'doi', 'published_url', 'publishedurl'],
     authors: ['authors', 'author', 'autores'],
+    // aliases are matched against normKey output, so they stay lower case and unaccented
     submitted: ['submitted', 'submitted date', 'submission', 'submission date', 'date submitted',
-      'date of submission', 'submitted on', 'submitted at', 'first submitted', 'submitteddate', 'submissiondate'],
-    lastUpdate: ['last update', 'lastupdate', 'last_update', 'updated', 'last change', 'last updated'],
+      'date of submission', 'submitted on', 'submitted at', 'first submitted', 'submitteddate', 'submissiondate',
+      'submetido', 'submetido em', 'data de submissao', 'data da submissao', 'enviado', 'enviado em'],
+    lastUpdate: ['last update', 'lastupdate', 'last_update', 'updated', 'last change', 'last updated',
+      'last modified', 'modified', 'update', 'last activity',
+      'ultima atualizacao', 'atualizacao', 'atualizado', 'atualizado em',
+      'data da ultima atualizacao', 'data da ultima alteracao', 'ultima alteracao'],
     status: ['status', 'state', 'situacao', 'situação'],
     notes: ['notes', 'note', 'history', 'notes/history', 'notes / history', 'comments', 'observacoes']
   };
-  function normKey(k) { return String(k || '').trim().toLowerCase().replace(/[_\-]+/g, ' ').replace(/\s+/g, ' '); }
+  // accents are folded, so "Última atualização" and "ultima atualizacao" are one key
+  function normKey(k) {
+    return String(k || '').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
   // last resort when the export uses a column name we have never seen
   var FUZZY = {
-    submitted: function (k) { return /submi(t|ss)/.test(k) && !/re-?submi/.test(k) && !/status|state|stage/.test(k); },
-    lastUpdate: function (k) { return (/last/.test(k) && /(update|change|activity|action)/.test(k)) || /^updated( at| on)?$/.test(k); },
+    submitted: function (k) { return (/submi(t|ss)/.test(k) || /submet|submiss|enviad/.test(k)) &&
+      !/re-?submi|ressubmi/.test(k) && !/status|state|stage/.test(k); },
+    lastUpdate: function (k) { return ((/last/.test(k) || /ultima/.test(k)) && /(update|change|activity|action|atualiza|alterac|modific)/.test(k)) ||
+      /^updated( at| on)?$/.test(k) || /^atualizad/.test(k); },
     title: function (k) { return /^(title|name)$/.test(k) || /manuscript title|paper title/.test(k); },
     journal: function (k) { return /journal|venue|revista/.test(k); },
     project: function (k) { return /project|projeto|study|grant/.test(k); },
@@ -1793,7 +1807,10 @@
       return '<tr><td>' + esc(f) + '</td><td>' + (src ? esc(src) : '<i>no column matched</i>') + '</td>' +
         '<td class="' + (bad ? 'bad' : 'good') + '">' + filled[f] + ' of ' + mapped.length + '</td></tr>';
     }).join('');
-    var suspicious = ['title', 'submitted', 'status', 'journal'].some(function (f) { return filled[f] === 0; }) ||
+    // no column matched at all means the dates below are derived, not read -- say so
+    var noDateColumn = ['submitted', 'lastUpdate'].some(function (f) { return !(LAST_MAP || {})[f]; });
+    var suspicious = noDateColumn ||
+      ['title', 'submitted', 'status', 'journal'].some(function (f) { return filled[f] === 0; }) ||
       filled.submitted < Math.ceil(mapped.length * 0.7);
     var html = '<h2>Import report — ' + esc(name) + '</h2>' +
       '<div class="asum"><b>' + added + '</b> new · <b>' + updated + '</b> updated · <b>' + withHist + '</b> arrived with a timeline</div>' +
