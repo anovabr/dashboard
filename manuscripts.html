@@ -570,7 +570,7 @@
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-04 06:03 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-04 21:32 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -683,7 +683,8 @@
   ];
   var EXTRA_HUES = ['indigo', 'plum', 'steel', 'clay', 'berry', 'moss', 'sand', 'ocean'];
   function statusMeta(s) {
-    var key = String(s || '').trim().toLowerCase();
+    if (s && typeof s === 'object') s = s.k || s.status || s.name || '';
+    var key = String(s == null ? '' : s).trim().toLowerCase();
     for (var i = 0; i < STATUS.length; i++) if (STATUS[i].k === key) return STATUS[i];
     var extras = extraStatuses();
     var idx = extras.indexOf(key);
@@ -721,12 +722,23 @@
   function live() { return (M && M.papers ? M.papers : []).filter(function (p) { return !p.deleted; }); }
   function trashed() { return (M && M.papers ? M.papers : []).filter(function (p) { return p.deleted; }); }
   // one row per submission attempt; the paper's journal/date mirror the latest one
+  function cleanList(v) {
+    if (!v || typeof v === 'string' || !v.length) return [];
+    if (!Array.isArray(v)) { try { v = Array.prototype.slice.call(v); } catch (e) { return []; } }
+    return v.filter(function (x) { return x && typeof x === 'object'; });
+  }
+  function updatesOf(p) {
+    var c = cleanList(p.updates);
+    if (!Array.isArray(p.updates) || c.length !== p.updates.length) p.updates = c;   // repair in place
+    return c;
+  }
   function attemptsOf(p) {
-    if (!p.attempts || !p.attempts.length) {
+    p.attempts = cleanList(p.attempts);
+    if (!p.attempts.length) {
       if (p.journal || p.submitted) {
         p.attempts = [{ id: uid(), journal: p.journal || '', submitted: ymd(p.submitted) || '',
           msid: p.msid || '', decision: '', decisionDate: '' }];
-      } else p.attempts = [];
+      }
     }
     return p.attempts;
   }
@@ -742,7 +754,12 @@
     p.msid = c.msid || '';
   }
   function migrateAll() {
-    (M.papers || []).forEach(function (p) { attemptsOf(p); });
+    (M.papers || []).forEach(function (p) {
+      if (!p || typeof p !== 'object') return;
+      updatesOf(p);                      // drop anything malformed once, at load
+      attemptsOf(p);
+    });
+    M.papers = (M.papers || []).filter(function (p) { return p && typeof p === 'object' && p.id; });
   }
   var DECISIONS = ['', 'accepted', 'minor revision', 'major revision', 'rejected', 'desk reject', 'withdrawn'];
   function paper(id) { var l = M.papers; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
@@ -865,7 +882,7 @@
     if (first) return first;
     var d = ymd(p.submitted);
     if (d) return d;
-    var ups = (p.updates || []).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
+    var ups = updatesOf(p).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
     for (var i = 0; i < ups.length; i++) {
       if (/submit/i.test(String(ups[i].s || '') + ' ' + String(ups[i].t || '')) && ups[i].d) return ups[i].d;
     }
@@ -874,7 +891,7 @@
   }
   function lastUpdateOf(p) {
     var best = ymd(p.lastUpdate) || '';
-    (p.updates || []).forEach(function (u) { var d = ymd(u.d); if (d > best) best = d; });
+    updatesOf(p).forEach(function (u) { var d = ymd(u.d); if (d > best) best = d; });
     attemptsOf(p).forEach(function (a) {
       var d1 = ymd(a.decisionDate), d2 = ymd(a.submitted);
       if (d1 > best) best = d1;
@@ -886,7 +903,7 @@
   }
   function rejectionBreak(p) {
     var tl = 0;
-    (p.updates || []).forEach(function (u) {
+    updatesOf(p).forEach(function (u) {
       if (/reject/i.test(String(u.s || '') + ' ' + String(u.t || ''))) tl++;
     });
     var m = String(p.notes || '').match(/reject/gi);
@@ -896,7 +913,7 @@
   function rejectionCount(p) { return rejectionBreak(p).total; }
   function resubCount(p) {
     var n = 0;
-    (p.updates || []).forEach(function (u) { if (/resubmit/i.test(String(u.s || '') + ' ' + String(u.t || ''))) n++; });
+    updatesOf(p).forEach(function (u) { if (/resubmit/i.test(String(u.s || '') + ' ' + String(u.t || ''))) n++; });
     if (!n) String(p.notes || '').replace(/resubmi|re-submi/gi, function () { n++; return ''; });
     return n;
   }
@@ -949,7 +966,7 @@
     if (!q) return true;
     var hay = [p.title, journalOf(p), p.authors, p.project, p.status, p.type, p.notes, p.doi, p.preprint, p.msid,
       attemptsOf(p).map(function (a) { return a.journal + ' ' + a.msid + ' ' + a.decision; }).join(' '),
-      (p.updates || []).map(function (u) { return u.t; }).join(' ')].join(' ').toLowerCase();
+      updatesOf(p).map(function (u) { return u.t; }).join(' ')].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   }
   var COLS = [
@@ -1109,7 +1126,7 @@
     return out;
   }
   function derivedUpdates(p) {
-    if ((p.updates || []).length) return p.updates;
+    if (updatesOf(p).length) return p.updates;
     var out = [];
     var sub = ymd(p.submitted);
     if (sub) out.push({ d: sub, t: 'submitted', s: 'Submitted', derived: true });
@@ -1127,7 +1144,7 @@
     var n = 0;
     pushUndo();
     live().forEach(function (p) {
-      if ((p.updates || []).length) return;
+      if (updatesOf(p).length) return;
       var d = derivedUpdates(p);
       if (!d.length) return;
       p.updates = d.map(function (u) { return { d: u.d, t: u.t, s: u.s, derived: true }; });
@@ -1160,7 +1177,7 @@
   }
   function timelineHtml(p) {
     var ups = derivedUpdates(p).slice().sort(function (a, b) { return (a.d || '') < (b.d || '') ? -1 : 1; });
-    var isDerived = !((p.updates || []).length);
+    var isDerived = !(updatesOf(p).length);
     if (!ups.length) return '<div class="dnone">Nothing to build a history from — no dates, no notes.</div>';
     var head = isDerived ? '<div class="dnone" style="margin-bottom:6px">Read out of the notes and dates — hit “rebuild history” to keep it.</div>' : '';
     return head +
@@ -1281,8 +1298,12 @@
   // ---------- modal ----------
   var editing = null, draftUpdates = [], draftAtt = [];
   function openModal(p) {
+    try { openModalInner(p); }
+    catch (e) { toast('Could not open that paper: ' + e.message); }
+  }
+  function openModalInner(p) {
     editing = p ? p.id : null;
-    draftUpdates = p ? clone(p.updates || []) : [];
+    draftUpdates = p ? clone(updatesOf(p)) : [];
     draftAtt = p ? clone(attemptsOf(p)) : [];
     el('mtitle').textContent = p ? 'Edit paper' : 'New paper';
     el('f-title').value = p ? (p.title || '') : '';
@@ -1634,7 +1655,7 @@
     fields.forEach(function (f) {
       filled[f] = mapped.filter(function (p) { return String(p[f] || '').trim() !== ''; }).length;
     });
-    var withHist = mapped.filter(function (p) { return (p.updates || []).length; }).length;
+    var withHist = mapped.filter(function (p) { return updatesOf(p).length; }).length;
     var cols = {};
     (recs || []).forEach(function (r) { Object.keys(flat(r)).forEach(function (k) { cols[k] = 1; }); });
     var used = {};
@@ -1812,14 +1833,14 @@
       if (!p.journal) noJournal.push(p.title);
       if (!submittedOf(p)) noSubmitted.push(p.title);
       if (!String(p.status || '').trim()) noStatus.push(p.title);
-      if (!(p.updates || []).length) noTimeline.push(p.title);
+      if (!updatesOf(p).length) noTimeline.push(p.title);
       var t = String(p.title || '').trim().toLowerCase();
       if (seen[t]) dupes.push(p.title); else seen[t] = 1;
       var d = submittedOf(p);
       if (d && d > new Date().toISOString().slice(0, 10)) future.push(p.title + ' (' + d + ')');
     });
     var upd = 0;
-    l.forEach(function (p) { upd += (p.updates || []).length; });
+    l.forEach(function (p) { upd += updatesOf(p).length; });
     function block(title, arr) {
       if (!arr.length) return '<div class="aok">' + esc(title) + ': none</div>';
       return '<div class="abad"><b>' + esc(title) + ' — ' + arr.length + '</b><ul>' +
@@ -1871,7 +1892,7 @@
         var val = n[k];
         var empty = (val == null) || (typeof val === 'string' && !val.trim()) || (Array.isArray(val) && !val.length);
         if (empty) { plan.kept++; return; }                       // never overwrite with nothing
-        if (k === 'updates' && (ex.updates || []).length && val.length <= (ex.updates || []).length) { plan.kept++; return; }
+        if (k === 'updates' && updatesOf(ex).length && val.length <= updatesOf(ex).length) { plan.kept++; return; }
         if (JSON.stringify(ex[k]) === JSON.stringify(val)) return;
         changes.push(k);
       });
@@ -2157,6 +2178,16 @@
   }
 
   // ---------- events ----------
+  var downAt = null;
+  document.addEventListener('mousedown', function (e) { downAt = { x: e.clientX, y: e.clientY }; });
+  function textWasSelected() {
+    var sel = window.getSelection && window.getSelection();
+    return !!(sel && String(sel).length > 1 && !sel.isCollapsed);
+  }
+  function draggedNotClicked(e) {
+    if (!downAt) return false;
+    return Math.abs(e.clientX - downAt.x) > 6 || Math.abs(e.clientY - downAt.y) > 6;
+  }
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (t.closest('#audit')) {
@@ -2291,10 +2322,12 @@
       return;
     }
     if (t.closest('tr.detail')) return;
+    if (textWasSelected()) return;                 // you were highlighting, not clicking
     var bc = t.closest('.bcard[data-id]');
     if (bc) { var pb = paper(bc.dataset.id); if (pb) openModal(pb); return; }
     var row = t.closest('tr[data-id]');
     if (row) {
+      if (draggedNotClicked(e)) return;
       var id = row.dataset.id;
       if (openRows[id]) delete openRows[id]; else openRows[id] = 1;
       render();
@@ -2471,6 +2504,10 @@
       el('gatepw').select();
     });
   }
+
+  window.addEventListener('error', function (ev) {
+    try { toast('Something broke: ' + (ev.message || 'unknown')); } catch (e) {}
+  });
 
   // ---------- boot ----------
   detectEngine(function (eng) {
