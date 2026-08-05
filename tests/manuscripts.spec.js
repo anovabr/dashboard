@@ -69,6 +69,66 @@ test.describe('add, edit, delete', () => {
     await expect(page.locator('tr[data-id]').filter({ hasText: 'Brand new manuscript' })).toHaveCount(1);
   });
 
+  test('a new paper opens with somewhere to put the submission', async ({ page }) => {
+    await openMs(page);
+    await page.locator('#newBtn').click();
+    await expect(page.locator('#att .attrow')).toHaveCount(1);
+    await expect(page.locator('#att [data-af="journal"]')).toHaveValue('');
+    await expect(page.locator('#att [data-af="submitted"]')).toBeVisible();
+  });
+
+  test('the submission fields say what they are', async ({ page }) => {
+    await openMs(page);
+    await page.locator('#newBtn').click();
+    const caps = page.locator('#att .attrow').first().locator('.attcap');
+    await expect(caps).toHaveText(['journal', 'submitted', 'ms number', 'decision', 'decided']);
+  });
+
+  test('adding a paper you just submitted uses only what is on screen', async ({ page }) => {
+    await openMs(page);
+    await page.locator('#newBtn').click();
+    await page.locator('#f-title').fill('Suicide across countries');
+    await page.locator('#att [data-af="journal"]').fill('Journal of Affective Disorders');
+    await page.locator('#att [data-af="submitted"]').fill('2026-08-01');
+    await page.locator('#f-status').selectOption('submitted');
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts).toHaveLength(1);
+    expect(p.attempts[0]).toMatchObject({ journal: 'Journal of Affective Disorders', submitted: '2026-08-01' });
+    expect(p.journal).toBe('Journal of Affective Disorders');
+    expect(p.submitted).toBe('2026-08-01');
+    expect(p.status).toBe('submitted');
+    await expect(page.locator('td[data-l="submitted"]').first()).toHaveText('2026-08-01');
+  });
+
+  test('a paper with nothing to submit yet saves clean', async ({ page }) => {
+    await openMs(page);
+    await page.locator('#newBtn').click();
+    await page.locator('#f-title').fill('Only an idea so far');
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts).toHaveLength(0);
+    expect(p.journal).toBe('');
+    await expect(page.locator('td[data-l="submitted"]').first()).toHaveText('—');
+  });
+
+  test('an existing paper does not gain a spare blank row', async ({ page }) => {
+    await openMs(page, { papers: [paper({ attempts: [{ id: 'a1', journal: 'J', submitted: '2026-01-01' }] })] });
+    await page.locator('.rowedit').click();
+    await expect(page.locator('#att .attrow')).toHaveCount(1);
+  });
+
+  test('the add button knows whether there is already a journal', async ({ page }) => {
+    await openMs(page);
+    await page.locator('#newBtn').click();
+    await expect(page.locator('#attAdd')).toHaveText('+ where you sent it');
+    await expect(page.locator('#attLabel')).toHaveText('Submission — where you sent it, and when');
+    // wording follows as you type, with no repaint to trigger it
+    await page.locator('#att [data-af="journal"]').fill('First Journal');
+    await expect(page.locator('#attAdd')).toHaveText('+ another journal');
+    await expect(page.locator('#attLabel')).toHaveText('Submission attempts — where it has been');
+  });
+
   test('refuses to save without a title', async ({ page }) => {
     await openMs(page);
     await page.locator('#newBtn').click();
@@ -257,9 +317,8 @@ test.describe('rejected, then sent to another journal', () => {
   test('the action is offered only once the paper has been somewhere', async ({ page }) => {
     await openMs(page);
     await page.locator('#newBtn').click();
-    await expect(page.locator('#attResub')).toBeHidden();
-    await page.locator('#attAdd').click();
-    await page.locator('#att .attrow [data-af="journal"]').fill('First Journal');
+    await expect(page.locator('#attResub')).toBeHidden();   // the blank row is not somewhere it has been
+    await page.locator('#att [data-af="journal"]').fill('First Journal');
     await expect(page.locator('#attResub')).toBeVisible();
   });
 

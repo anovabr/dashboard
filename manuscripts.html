@@ -329,9 +329,15 @@
   .attcard .dt { display: block; font-size: 11.5px; color: var(--secondary); margin-top: 1px; }
   .attcard .tx { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
   /* one attempt per row, every field editable where it sits */
-  .attrow { display: grid; grid-template-columns: 1.4fr .9fr .8fr 1fr .9fr auto; gap: 6px;
-    align-items: center; padding: 5px 0; border-top: 1px solid var(--hairline); }
+  .attrow { display: grid; grid-template-columns: 1.2fr 1fr .8fr 1.05fr 1fr auto; gap: 6px;
+    align-items: end; padding: 5px 0; border-top: 1px solid var(--hairline); }
   .attrow:first-child { border-top: 0; }
+  .attf { display: block; min-width: 0; }
+  .attf input, .attf select { width: 100%; }
+  /* captions once, over the first row -- every row carries them when stacked */
+  .attcap { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .attrow:not(:first-child) .attcap { display: none; }
   .attrow input, .attrow select, .resub input { font: inherit; font-size: 13px; color: var(--ink);
     background: var(--page); border: 1px solid var(--border); border-radius: 8px;
     padding: 6px 8px; outline: none; min-width: 0; }
@@ -390,6 +396,7 @@
     .frow { grid-template-columns: 1fr; }
     .addup, .attrow, .resub { grid-template-columns: 1fr; }
     .attrow { padding: 9px 0; }
+    .attrow:not(:first-child) .attcap { display: block; }   /* stacked: every field needs its own */
     .searchbox { order: 3; max-width: none; flex: 1 0 100%; }
     .searchbox input, .fld input, .fld select, .fld textarea, .addup input,
     .attrow input, .attrow select, .resub input,
@@ -589,7 +596,7 @@
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-05 22:52 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-05 23:08 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -607,27 +614,19 @@
     </div>
     <div class="fld"><label>Project</label><input id="f-project" list="projects" spellcheck="false"></div>
   </div>
-  <div class="frow">
-    <div class="fld"><label>DOI</label><input id="f-doi" spellcheck="false" placeholder="10.1000/xyz"></div>
-    <div class="fld"><label>Published URL</label><input id="f-url" spellcheck="false" placeholder="https://…"></div>
-  </div>
-  <div class="frow">
-    <div class="fld"><label>Preprint / OSF</label><input id="f-preprint" spellcheck="false" placeholder="https://osf.io/…"></div>
-    <div class="fld"><label>Next deadline</label><input id="f-due" type="date"></div>
-  </div>
   <div class="frow one">
     <div class="fld"><label>Authors</label><input id="f-authors" spellcheck="false" placeholder="Surname, A., Surname, B."></div>
   </div>
   <input type="hidden" id="f-journal"><input type="hidden" id="f-submitted">
   <div class="frow">
-    <div class="fld"><label>Published on</label><input id="f-published" type="date"></div>
     <div class="fld"><label>Status</label>
       <div style="display:flex;gap:6px"><select id="f-status" style="flex:1"></select>
       <button class="btn ghost" id="f-newstatus" title="create a status" style="padding:6px 10px">+</button></div>
     </div>
+    <div class="fld"><label>Next deadline</label><input id="f-due" type="date"></div>
   </div>
   <div class="frow one">
-    <div class="fld"><label>Submission attempts — where it has been</label>
+    <div class="fld"><label id="attLabel">Submission — where you sent it, and when</label>
       <div class="tl" id="att"></div>
       <div class="attacts">
         <button class="btn ghost" id="attAdd">+ another journal</button>
@@ -651,6 +650,15 @@
         <button class="btn ghost" id="u-add">Add</button>
       </div>
     </div>
+  </div>
+  <!-- publication details: only in play once it is accepted, so they sit below the submission story -->
+  <div class="frow">
+    <div class="fld"><label>DOI</label><input id="f-doi" spellcheck="false" placeholder="10.1000/xyz"></div>
+    <div class="fld"><label>Published URL</label><input id="f-url" spellcheck="false" placeholder="https://…"></div>
+  </div>
+  <div class="frow">
+    <div class="fld"><label>Preprint / OSF</label><input id="f-preprint" spellcheck="false" placeholder="https://osf.io/…"></div>
+    <div class="fld"><label>Published on</label><input id="f-published" type="date"></div>
   </div>
   <div class="frow one">
     <div class="fld"><label>Notes</label><textarea id="f-notes" spellcheck="false" placeholder="free notes; the timeline above is what drives the last-update date"></textarea></div>
@@ -1385,7 +1393,10 @@
     el('scrim').classList.add('on');
     el('modal').classList.add('on');
     draftUpdates = p ? clone(updatesOf(p)) : [];
-    draftAtt = p ? clone(attemptsOf(p)) : [];
+    // a new paper opens with one empty row, so "where did I put the submission
+    // date" never comes up. It is dropped on save if it stays empty.
+    draftAtt = p ? clone(attemptsOf(p))
+      : [{ id: uid(), journal: '', submitted: '', msid: '', decision: '', decisionDate: '' }];
     el('mtitle').textContent = p ? 'Edit paper' : 'New paper';
     el('f-title').value = p ? (p.title || '') : '';
     el('f-type').value = p ? (p.type || 'manuscript') : 'manuscript';
@@ -1425,25 +1436,34 @@
     el('att').innerHTML = draftAtt.length
       ? draftAtt.map(function (a, i) {
           var days = daysBetween(a.submitted, a.decisionDate);
+          function fld(cap, html) {
+            return '<label class="attf"><span class="attcap">' + cap + '</span>' + html + '</label>';
+          }
           return '<div class="attrow" data-atti="' + i + '">' +
-            '<input data-af="journal" data-ai="' + i + '" list="journals" placeholder="journal" value="' + esc(a.journal || '') + '">' +
-            '<input data-af="submitted" data-ai="' + i + '" type="date" title="submitted" value="' + esc(a.submitted || '') + '">' +
-            '<input data-af="msid" data-ai="' + i + '" placeholder="ms number" value="' + esc(a.msid || '') + '">' +
-            '<select data-af="decision" data-ai="' + i + '" title="decision">' +
+            fld('journal', '<input data-af="journal" data-ai="' + i + '" list="journals" placeholder="journal" value="' + esc(a.journal || '') + '">') +
+            fld('submitted', '<input data-af="submitted" data-ai="' + i + '" type="date" value="' + esc(a.submitted || '') + '">') +
+            fld('ms number', '<input data-af="msid" data-ai="' + i + '" placeholder="ms number" value="' + esc(a.msid || '') + '">') +
+            fld('decision', '<select data-af="decision" data-ai="' + i + '">' +
               DECISIONS.map(function (d) {
                 return '<option value="' + esc(d) + '"' + (d === (a.decision || '') ? ' selected' : '') + '>' +
                   esc(d || 'no decision yet') + '</option>';
-              }).join('') + '</select>' +
-            '<input data-af="decisionDate" data-ai="' + i + '" type="date" title="decision date" value="' + esc(a.decisionDate || '') + '">' +
+              }).join('') + '</select>') +
+            fld('decided', '<input data-af="decisionDate" data-ai="' + i + '" type="date" value="' + esc(a.decisionDate || '') + '">') +
             '<button class="rm" data-attrm="' + i + '" title="remove this attempt">✕</button>' +
             (days != null && days >= 0 ? '<span class="attdays">' + days + ' days to a decision</span>' : '') +
             '</div>';
         }).join('')
       : '<div class="none">No submission attempts recorded.</div>';
-    syncResubBtn();
+    syncAttActions();
   }
-  // "send it elsewhere" only means something once it has been somewhere
-  function syncResubBtn() {
+  // wording and the "send it elsewhere" action both follow whether the paper has
+  // actually been anywhere -- and that changes as you type, not only on a repaint
+  function syncAttActions() {
+    var been = draftAtt.some(function (a) { return String(a.journal || '').trim(); });
+    el('attAdd').textContent = been ? '+ another journal' : '+ where you sent it';
+    el('attLabel').textContent = been
+      ? 'Submission attempts — where it has been'
+      : 'Submission — where you sent it, and when';
     el('attResub').style.display = draftAtt.some(function (a) { return !attemptEmpty(a); }) ? '' : 'none';
   }
   // a field edited where it sits, with no repaint -- a repaint would drop the caret
@@ -1453,7 +1473,7 @@
     if (a) {
       var f = node.dataset.af;
       a[f] = (f === 'submitted' || f === 'decisionDate') ? ymd(node.value) : String(node.value).trim();
-      syncResubBtn();
+      syncAttActions();
     }
     return true;
   }
