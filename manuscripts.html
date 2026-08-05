@@ -192,11 +192,13 @@
     overflow: visible; box-shadow: var(--shadow); }
   table { table-layout: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  thead th { position: sticky; top: var(--stick, 64px); z-index: 30; background: var(--surface);
+  /* scoped to the main list: the panels use tables too, and a sticky header
+     inside a scrolling modal floats down over its own rows and eats the clicks */
+  .tablewrap thead th { position: sticky; top: var(--stick, 64px); z-index: 30; background: var(--surface);
     box-shadow: 0 1px 0 var(--border);
     text-align: left; font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
     color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
-  thead th:hover { color: var(--accent); }
+  .tablewrap thead th:hover { color: var(--accent); }
   thead th .ar { font-size: 9px; margin-left: 4px; }
   thead th .gr { font-size: 11px; margin-left: 6px; opacity: 0; }
   thead th:hover .gr { opacity: .55; }
@@ -574,7 +576,7 @@
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-05 08:26 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-05 20:04 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -759,15 +761,30 @@
     p.msid = c.msid || '';
   }
   function migrateAll() {
-    (M.papers || []).forEach(function (p) {
-      if (!p || typeof p !== 'object') return;
+    var seenId = {};
+    M.papers = (M.papers || []).filter(function (p) { return p && typeof p === 'object'; });
+    M.papers.forEach(function (p) {
+      // records out of the old Flask CRM carry numeric ids (12); the DOM only
+      // ever hands them back as strings ("12"), so settle on strings here
+      p.id = (p.id === 0 || p.id) ? String(p.id) : uid();
+      if (seenId[p.id]) p.id = uid();    // a duplicate id would shadow the first record
+      seenId[p.id] = 1;
       updatesOf(p);                      // drop anything malformed once, at load
       attemptsOf(p);
     });
-    M.papers = (M.papers || []).filter(function (p) { return p && typeof p === 'object' && p.id; });
   }
   var DECISIONS = ['', 'accepted', 'minor revision', 'major revision', 'rejected', 'desk reject', 'withdrawn'];
-  function paper(id) { var l = M.papers; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function paper(id) {
+    var l = M.papers, k = String(id);
+    for (var i = 0; i < l.length; i++) if (String(l[i].id) === k) return l[i];
+    return null;
+  }
+  // a lookup that finds nothing must say so rather than leave a dead click
+  function paperOrWarn(id) {
+    var p = paper(id);
+    if (!p) toast('Could not find that paper (id ' + id + ') — try reloading');
+    return p;
+  }
   function touch(p) { p.updatedAt = nowIso(); }
 
   var STORE_KEY = 'manuscript-crm-v1';
@@ -1344,7 +1361,11 @@
     catch (e) { toast('Could not open that paper: ' + e.message); }
   }
   function openModalInner(p) {
-    editing = p ? p.id : null;
+    editing = p ? String(p.id) : null;
+    // open the window first: a single bad field can then only leave a blank box,
+    // never block the edit entirely
+    el('scrim').classList.add('on');
+    el('modal').classList.add('on');
     draftUpdates = p ? clone(updatesOf(p)) : [];
     draftAtt = p ? clone(attemptsOf(p)) : [];
     el('mtitle').textContent = p ? 'Edit paper' : 'New paper';
@@ -1374,8 +1395,6 @@
     el('u-date').value = new Date().toISOString().slice(0, 10);
     el('u-text').value = '';
     paintTimeline();
-    el('scrim').classList.add('on');
-    el('modal').classList.add('on');
     setTimeout(function () { el('f-title').focus(); }, 40);
   }
   function closeModal() {
@@ -1647,7 +1666,7 @@
       });
     }
     var p = {
-      id: raw.id || uid(),
+      id: (raw.id === 0 || raw.id) ? String(raw.id) : uid(),   // numeric ids arrive from the old CRM
       deleted: !!raw.deleted,
       title: String(out.title || '').trim(),
       type: (String(out.type || 'manuscript').trim().toLowerCase() === 'other') ? 'other' : 'manuscript',
@@ -2235,7 +2254,7 @@
     if (t.closest('#audit')) {
       var rb = t.closest('[data-restore]');
       if (rb) {
-        var rp = paper(rb.dataset.restore);
+        var rp = paperOrWarn(rb.dataset.restore);
         if (rp) { pushUndo(); rp.deleted = false; touch(rp); logChange('Restored: ' + rp.title); scheduleSave(); render(); showTrash(); toast('Restored'); }
         return;
       }
@@ -2356,7 +2375,7 @@
     var eb0 = t.closest('[data-edit]');
     if (eb0) {
       e.preventDefault(); e.stopPropagation();
-      var p0 = paper(eb0.dataset.edit);
+      var p0 = paperOrWarn(eb0.dataset.edit);
       if (p0) openModal(p0);
       return;
     }
@@ -2365,7 +2384,7 @@
     if (eb) { var pe = paper(eb.dataset.edit); if (pe) openModal(pe); return; }
     var db = t.closest('[data-del]');
     if (db) {
-      var pd = paper(db.dataset.del);
+      var pd = paperOrWarn(db.dataset.del);
       if (pd) { pushUndo(); pd.deleted = true; touch(pd); logChange('Deleted paper: ' + (pd.title || pd.id));
         delete openRows[pd.id]; scheduleSave(); render(); toast('Deleted — Ctrl+Z to undo'); }
       return;
@@ -2373,7 +2392,7 @@
     if (t.closest('tr.detail')) return;
     if (textWasSelected()) return;                 // you were highlighting, not clicking
     var bc = t.closest('.bcard[data-id]');
-    if (bc) { var pb = paper(bc.dataset.id); if (pb) openModal(pb); return; }
+    if (bc) { var pb = paperOrWarn(bc.dataset.id); if (pb) openModal(pb); return; }
     var row = t.closest('tr[data-id]');
     if (row) {
       if (draggedNotClicked(e)) return;
