@@ -125,10 +125,11 @@ test.describe('add, edit, delete', () => {
   test('records a submission attempt', async ({ page }) => {
     await openMs(page, { papers: [paper()] });
     await page.locator('.rowedit').click();
-    await page.locator('#a-journal').fill('Second Journal');
-    await page.locator('#a-sub').fill('2026-03-04');
-    await page.locator('#a-add').click();
-    await expect(page.locator('#att .tlrow')).toHaveCount(2);
+    await page.locator('#attAdd').click();
+    await expect(page.locator('#att .attrow')).toHaveCount(2);
+    const fresh = page.locator('#att .attrow').nth(1);
+    await fresh.locator('[data-af="journal"]').fill('Second Journal');
+    await fresh.locator('[data-af="submitted"]').fill('2026-03-04');
     await page.locator('#mSave').click();
     const p = await page.evaluate(() => window.__ms.state().papers[0]);
     expect(p.attempts).toHaveLength(2);
@@ -145,6 +146,157 @@ test.describe('add, edit, delete', () => {
     await page.locator('#mSave').click();
     const p = await page.evaluate(() => window.__ms.state().papers[0]);
     expect(p.updates).toEqual([{ d: '2026-04-02', t: 'reviews came back' }]);
+  });
+});
+
+test.describe('rejected, then sent to another journal', () => {
+  const pending = (o = {}) => paper({
+    journal: 'Journal of Things', status: 'under review',
+    attempts: [{ id: 'a1', journal: 'Journal of Things', submitted: '2026-01-10',
+      msid: 'MS-4471', decision: '', decisionDate: '' }], ...o,
+  });
+
+  test('an attempt is edited in place and stays in the list', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    const first = page.locator('#att .attrow').first();
+    await first.locator('[data-af="decision"]').selectOption('rejected');
+    await first.locator('[data-af="decisionDate"]').fill('2026-04-02');
+    await expect(page.locator('#att .attrow')).toHaveCount(1);   // editing never removes the row
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts).toHaveLength(1);
+    expect(p.attempts[0].decision).toBe('rejected');
+    expect(p.attempts[0].decisionDate).toBe('2026-04-02');
+    expect(p.attempts[0].msid).toBe('MS-4471');                  // untouched fields survive
+  });
+
+  test('one action closes the old attempt and opens the new one', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-journal').fill('Second Journal');
+    await page.locator('#r-date').fill('2026-04-15');
+    await page.locator('#r-go').click();
+
+    await expect(page.locator('#att .attrow')).toHaveCount(2);
+    await expect(page.locator('#f-status')).toHaveValue('submitted');
+    await page.locator('#mSave').click();
+
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts[0].decision).toBe('rejected');
+    expect(p.attempts[0].decisionDate).toBeTruthy();
+    expect(p.attempts[1]).toMatchObject({ journal: 'Second Journal', submitted: '2026-04-15', decision: '' });
+    expect(p.status).toBe('submitted');
+    expect(p.journal).toBe('Second Journal');                    // the mirror follows the latest attempt
+    const line = p.updates.find((u) => /Resubmitted to Second Journal/.test(u.t));
+    expect(line).toBeTruthy();
+    expect(line.t).toContain('Journal of Things');
+    expect(line.d).toBe('2026-04-15');
+  });
+
+  test('the history line it writes is editable afterwards', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-journal').fill('Second Journal');
+    await page.locator('#r-go').click();
+    await expect(page.locator('#tl .tlrow')).toHaveCount(1);
+    await page.locator('#tl [data-utxt="0"]').fill('my own wording');
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.updates[0].t).toBe('my own wording');
+  });
+
+  test('it defaults the dates to today when they are left blank', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-journal').fill('Second Journal');
+    await page.locator('#r-go').click();
+    await page.locator('#mSave').click();
+    const today = new Date().toISOString().slice(0, 10);
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts[0].decisionDate).toBe(today);
+    expect(p.attempts[1].submitted).toBe(today);
+  });
+
+  test('a decision already on record is not overwritten', async ({ page }) => {
+    await openMs(page, { papers: [pending({ attempts: [{ id: 'a1', journal: 'Journal of Things',
+      submitted: '2026-01-10', decision: 'desk reject', decisionDate: '2026-01-20' }] })] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-journal').fill('Second Journal');
+    await page.locator('#r-go').click();
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts[0].decision).toBe('desk reject');
+    expect(p.attempts[0].decisionDate).toBe('2026-01-20');
+  });
+
+  test('it will not send the paper nowhere', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-go').click();
+    await expect(page.locator('.toast')).toContainText('Which journal');
+    await expect(page.locator('#att .attrow')).toHaveCount(1);
+  });
+
+  test('cancelling it changes nothing', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-journal').fill('Second Journal');
+    await page.locator('#r-cancel').click();
+    await expect(page.locator('#resubBox')).not.toHaveClass(/on/);
+    await expect(page.locator('#att .attrow')).toHaveCount(1);
+    await expect(page.locator('#f-status')).toHaveValue('under review');
+  });
+
+  test('the action is offered only once the paper has been somewhere', async ({ page }) => {
+    await openMs(page);
+    await page.locator('#newBtn').click();
+    await expect(page.locator('#attResub')).toBeHidden();
+    await page.locator('#attAdd').click();
+    await page.locator('#att .attrow [data-af="journal"]').fill('First Journal');
+    await expect(page.locator('#attResub')).toBeVisible();
+  });
+
+  test('an attempt row left blank is not saved', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attAdd').click();
+    await expect(page.locator('#att .attrow')).toHaveCount(2);
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts).toHaveLength(1);
+  });
+
+  test('the row still removes an attempt outright', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#att [data-attrm="0"]').click();
+    await expect(page.locator('#att .attrow')).toHaveCount(0);
+    await page.locator('#mSave').click();
+    const p = await page.evaluate(() => window.__ms.state().papers[0]);
+    expect(p.attempts).toHaveLength(0);
+  });
+
+  test('the whole story reads back in the row detail', async ({ page }) => {
+    await openMs(page, { papers: [pending()] });
+    await page.locator('.rowedit').click();
+    await page.locator('#attResub').click();
+    await page.locator('#r-journal').fill('Second Journal');
+    await page.locator('#r-date').fill('2026-04-15');
+    await page.locator('#r-go').click();
+    await page.locator('#mSave').click();
+    await page.locator('td.c-title').click();
+    const detail = page.locator('tr.detail');
+    await expect(detail).toContainText('Journal of Things');
+    await expect(detail).toContainText('rejected');
+    await expect(detail).toContainText('Second Journal');
+    await expect(detail).toContainText('1 resubmission');
   });
 });
 

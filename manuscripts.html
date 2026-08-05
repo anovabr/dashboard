@@ -328,10 +328,21 @@
   .attcard b { display: block; font-size: 12.5px; font-weight: 750; }
   .attcard .dt { display: block; font-size: 11.5px; color: var(--secondary); margin-top: 1px; }
   .attcard .tx { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-  .addatt { display: grid; grid-template-columns: 1.4fr .9fr .8fr 1fr .9fr auto; gap: 6px; }
-  .addatt input, .addatt select { font: inherit; font-size: 13px; color: var(--ink); background: var(--page);
-    border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; outline: none; min-width: 0; }
-  .addatt input:focus, .addatt select:focus { border-color: var(--accent); }
+  /* one attempt per row, every field editable where it sits */
+  .attrow { display: grid; grid-template-columns: 1.4fr .9fr .8fr 1fr .9fr auto; gap: 6px;
+    align-items: center; padding: 5px 0; border-top: 1px solid var(--hairline); }
+  .attrow:first-child { border-top: 0; }
+  .attrow input, .attrow select, .resub input { font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 8px; outline: none; min-width: 0; }
+  .attrow input:focus, .attrow select:focus, .resub input:focus { border-color: var(--accent); }
+  .attrow .rm { opacity: .45; }
+  .attrow:hover .rm { opacity: .75; }
+  .attdays { grid-column: 1 / -1; font-size: 11px; color: var(--muted); padding-left: 2px; }
+  .attacts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .resub { display: none; grid-template-columns: 1.6fr .9fr auto auto; gap: 6px; margin-top: 8px;
+    padding: 9px; border: 1px solid var(--accent); border-radius: 9px; background: var(--bg-focus); }
+  .resub.on { display: grid; }
   .tl .msid { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
   .tl .daysx { font-size: 11px; color: var(--muted); }
   .tl .ulab, .tl .utxt { font: inherit; font-size: 13px; color: var(--ink); background: var(--page);
@@ -377,9 +388,11 @@
   @media (max-width: 760px) {
     body { padding: 10px 10px 60px; }
     .frow { grid-template-columns: 1fr; }
-    .addup, .addatt { grid-template-columns: 1fr; }
+    .addup, .attrow, .resub { grid-template-columns: 1fr; }
+    .attrow { padding: 9px 0; }
     .searchbox { order: 3; max-width: none; flex: 1 0 100%; }
-    .searchbox input, .fld input, .fld select, .fld textarea, .addup input, .addatt input, .addatt select,
+    .searchbox input, .fld input, .fld select, .fld textarea, .addup input,
+    .attrow input, .attrow select, .resub input,
     #gatepw, .tl .ulab, .tl .utxt { font-size: 16px; }          /* stop iOS zooming on focus */
     .tl .ulab, .tl .utxt { width: 100%; margin: 0 0 4px; }
     .top { padding: 8px 0 10px; gap: 8px; }
@@ -576,7 +589,7 @@
 
   <div id="main"></div>
 
-  <div class="note" id="buildstamp">build 2026-08-05 20:04 UTC</div>
+  <div class="note" id="buildstamp">build 2026-08-05 21:03 UTC</div>
 </div>
 
 <div id="syncbar"></div>
@@ -616,13 +629,16 @@
   <div class="frow one">
     <div class="fld"><label>Submission attempts — where it has been</label>
       <div class="tl" id="att"></div>
-      <div class="addatt">
-        <input id="a-journal" placeholder="journal" list="journals">
-        <input id="a-sub" type="date" title="submitted">
-        <input id="a-msid" placeholder="ms number">
-        <select id="a-dec"></select>
-        <input id="a-decdate" type="date" title="decision date">
-        <button class="btn ghost" id="a-add">Add</button>
+      <div class="attacts">
+        <button class="btn ghost" id="attAdd">+ another journal</button>
+        <button class="btn ghost" id="attResub" style="display:none"
+          title="close this attempt as rejected and open the next one">Rejected — send to another journal</button>
+      </div>
+      <div class="resub" id="resubBox">
+        <input id="r-journal" placeholder="new journal" list="journals">
+        <input id="r-date" type="date" title="submitted to the new journal">
+        <button class="btn" id="r-go">Send</button>
+        <button class="btn ghost" id="r-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -1381,10 +1397,7 @@
     el('f-due').value = p ? ymd(p.due) : '';
     el('f-published').value = p ? ymd(p.published) : '';
     el('f-notes').value = p ? (p.notes || '') : '';
-    el('a-dec').innerHTML = DECISIONS.map(function (d) {
-      return '<option value="' + esc(d) + '">' + esc(d || 'no decision yet') + '</option>';
-    }).join('');
-    el('a-journal').value = ''; el('a-sub').value = ''; el('a-msid').value = ''; el('a-decdate').value = '';
+    showResub(false);
     paintAttempts();
     var sel = el('f-status');
     var cur = p ? statusMeta(p.status).k : 'writing';
@@ -1402,28 +1415,79 @@
     el('modal').classList.remove('on');
     editing = null;
   }
+  function today() { return new Date().toISOString().slice(0, 10); }
+  function attemptEmpty(a) {
+    return !String(a.journal || '').trim() && !a.submitted && !String(a.msid || '').trim() && !a.decision;
+  }
   function paintAttempts() {
     el('att').innerHTML = draftAtt.length
       ? draftAtt.map(function (a, i) {
           var days = daysBetween(a.submitted, a.decisionDate);
-          return '<div class="tlrow"><span class="d">' + esc(a.submitted || '—') + '</span>' +
-            '<span class="x"><b>' + esc(a.journal || '(no journal)') + '</b>' +
-            (a.msid ? ' <span class="msid">' + esc(a.msid) + '</span>' : '') +
-            (a.decision ? ' — ' + esc(a.decision) + (a.decisionDate ? ' on ' + esc(a.decisionDate) : '') : ' — pending') +
-            (days != null && days >= 0 ? ' <span class="daysx">' + days + ' days</span>' : '') + '</span>' +
-            '<button class="rm" data-attedit="' + i + '" title="edit">✎</button>' +
-            '<button class="rm" data-attrm="' + i + '" title="remove">✕</button></div>';
+          return '<div class="attrow" data-atti="' + i + '">' +
+            '<input data-af="journal" data-ai="' + i + '" list="journals" placeholder="journal" value="' + esc(a.journal || '') + '">' +
+            '<input data-af="submitted" data-ai="' + i + '" type="date" title="submitted" value="' + esc(a.submitted || '') + '">' +
+            '<input data-af="msid" data-ai="' + i + '" placeholder="ms number" value="' + esc(a.msid || '') + '">' +
+            '<select data-af="decision" data-ai="' + i + '" title="decision">' +
+              DECISIONS.map(function (d) {
+                return '<option value="' + esc(d) + '"' + (d === (a.decision || '') ? ' selected' : '') + '>' +
+                  esc(d || 'no decision yet') + '</option>';
+              }).join('') + '</select>' +
+            '<input data-af="decisionDate" data-ai="' + i + '" type="date" title="decision date" value="' + esc(a.decisionDate || '') + '">' +
+            '<button class="rm" data-attrm="' + i + '" title="remove this attempt">✕</button>' +
+            (days != null && days >= 0 ? '<span class="attdays">' + days + ' days to a decision</span>' : '') +
+            '</div>';
         }).join('')
       : '<div class="none">No submission attempts recorded.</div>';
+    syncResubBtn();
+  }
+  // "send it elsewhere" only means something once it has been somewhere
+  function syncResubBtn() {
+    el('attResub').style.display = draftAtt.some(function (a) { return !attemptEmpty(a); }) ? '' : 'none';
+  }
+  // a field edited where it sits, with no repaint -- a repaint would drop the caret
+  function attField(node) {
+    if (!node || !node.dataset || node.dataset.af === undefined) return false;
+    var a = draftAtt[+node.dataset.ai];
+    if (a) {
+      var f = node.dataset.af;
+      a[f] = (f === 'submitted' || f === 'decisionDate') ? ymd(node.value) : String(node.value).trim();
+      syncResubBtn();
+    }
+    return true;
   }
   function addAttempt() {
-    var j = el('a-journal').value.trim(), sub = ymd(el('a-sub').value);
-    if (!j && !sub) return;
-    draftAtt.push({ id: uid(), journal: j, submitted: sub, msid: el('a-msid').value.trim(),
-      decision: el('a-dec').value, decisionDate: ymd(el('a-decdate').value) });
-    el('a-journal').value = ''; el('a-sub').value = ''; el('a-msid').value = '';
-    el('a-dec').value = ''; el('a-decdate').value = '';
+    draftAtt.push({ id: uid(), journal: '', submitted: '', msid: '', decision: '', decisionDate: '' });
     paintAttempts();
+    var rows = el('att').querySelectorAll('.attrow [data-af="journal"]');
+    if (rows.length) rows[rows.length - 1].focus();
+  }
+  function showResub(on) {
+    el('resubBox').classList.toggle('on', !!on);
+    if (on) {
+      el('r-journal').value = '';
+      el('r-date').value = today();
+      el('r-journal').focus();
+    }
+  }
+  // the whole rejected-then-sent-elsewhere story in one step
+  function resubmitElsewhere() {
+    var j = el('r-journal').value.trim();
+    if (!j) { toast('Which journal is it going to?'); el('r-journal').focus(); return; }
+    var when = ymd(el('r-date').value) || today();
+    var cur = null;                                   // the last attempt that is actually filled in
+    for (var i = draftAtt.length - 1; i >= 0; i--) if (!attemptEmpty(draftAtt[i])) { cur = draftAtt[i]; break; }
+    var from = cur ? String(cur.journal || '').trim() : '';
+    if (cur && !cur.decision) {                       // never overwrite a decision already on record
+      cur.decision = 'rejected';
+      cur.decisionDate = cur.decisionDate || when;
+    }
+    draftAtt.push({ id: uid(), journal: j, submitted: when, msid: '', decision: '', decisionDate: '' });
+    el('f-status').value = 'submitted';
+    draftUpdates.push({ d: when, s: 'Resubmitted',
+      t: 'Resubmitted to ' + j + (from ? ' after rejection at ' + from : '') });
+    showResub(false);
+    paintAttempts(); paintTimeline();
+    toast('Now at ' + j + ' — status set to submitted');
   }
   function paintTimeline() {
     draftUpdates.sort(function (a, b) { return (b.d || '') < (a.d || '') ? -1 : 1; });
@@ -1466,13 +1530,14 @@
     p.due = ymd(el('f-due').value);
     p.published = ymd(el('f-published').value);
     p.updates = draftUpdates.slice();
-    if (el('a-journal').value.trim() || el('a-sub').value) addAttempt();
-    p.attempts = draftAtt.slice();
-    if (!p.attempts.length && (el('f-journal').value || el('f-submitted').value)) {
-      p.attempts = [{ id: uid(), journal: el('f-journal').value, submitted: ymd(el('f-submitted').value), msid: '', decision: '', decisionDate: '' }];
-    }
-    syncAttemptMirror(p);
-    if (!p.attempts.length) { p.journal = el('f-journal').value; p.submitted = ymd(el('f-submitted').value); }
+    p.attempts = draftAtt.filter(function (a) { return !attemptEmpty(a); });   // drop rows opened but never filled
+    // the attempts are the record; journal/submitted only mirror the latest one.
+    // Papers older than attempts are migrated by attemptsOf() at load, so there
+    // is nothing to rebuild here -- rebuilding only undid a deliberate delete.
+    // clear the mirror first: syncAttemptMirror reads through attemptsOf, which
+    // would rebuild an attempt out of a journal still sitting on the record
+    if (!p.attempts.length) { p.journal = ''; p.submitted = ''; }
+    else syncAttemptMirror(p);
     p.lastUpdate = lastUpdateOf(p);
     touch(p);
     logChange((isNew ? 'Added paper: ' : 'Updated paper: ') + title);
@@ -2295,7 +2360,10 @@
       else if (t.id === 'mCancel') closeModal();
       else if (t.id === 'mDel') deleteCurrent();
       else if (t.id === 'u-add') addUpdate();
-      else if (t.id === 'a-add') addAttempt();
+      else if (t.id === 'attAdd') addAttempt();
+      else if (t.id === 'attResub') showResub(!el('resubBox').classList.contains('on'));
+      else if (t.id === 'r-go') resubmitElsewhere();
+      else if (t.id === 'r-cancel') showResub(false);
       else if (t.id === 'f-newstatus') {
         var nm = String(window.prompt('New status name') || '').trim().toLowerCase();
         if (nm) {
@@ -2308,12 +2376,6 @@
         }
       }
       else if (t.dataset && t.dataset.attrm !== undefined) { draftAtt.splice(+t.dataset.attrm, 1); paintAttempts(); }
-      else if (t.dataset && t.dataset.attedit !== undefined) {
-        var ai = +t.dataset.attedit, a = draftAtt[ai];
-        el('a-journal').value = a.journal || ''; el('a-sub').value = a.submitted || '';
-        el('a-msid').value = a.msid || ''; el('a-dec').value = a.decision || ''; el('a-decdate').value = a.decisionDate || '';
-        draftAtt.splice(ai, 1); paintAttempts();
-      }
       else if (t.dataset && t.dataset.rm !== undefined) { draftUpdates.splice(+t.dataset.rm, 1); paintTimeline(); }
       else if (t.id === 'tokSave') {
         var v = el('gh-token').value.trim();
@@ -2403,6 +2465,7 @@
     }
   });
   document.addEventListener('change', function (e) {
+    if (attField(e.target)) return;                  // selects and date pickers land here, not on input
     if (/^f(Status|Project|Journal|Year)$/.test(e.target.id)) {
       F[e.target.id.slice(1).toLowerCase()] = e.target.value;
       render(); return;
@@ -2422,7 +2485,8 @@
   document.addEventListener('input', function (e) {
     if (e.target.id === 'q') { q = e.target.value.trim().toLowerCase(); render(); return; }
     if (e.target.dataset && e.target.dataset.ulab !== undefined) { draftUpdates[+e.target.dataset.ulab].s = e.target.value; return; }
-    if (e.target.dataset && e.target.dataset.utxt !== undefined) { draftUpdates[+e.target.dataset.utxt].t = e.target.value; }
+    if (e.target.dataset && e.target.dataset.utxt !== undefined) { draftUpdates[+e.target.dataset.utxt].t = e.target.value; return; }
+    attField(e.target);
   });
   function anyModalOpen() {
     return el('modal').classList.contains('on') || el('audit').classList.contains('on') ||
