@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  },
+  "name": "dashboard",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "check": "node tests/check-syntax.js"
+  }
+}
