@@ -57,6 +57,16 @@ test.describe('add, edit, delete', () => {
     expect(t.status).toBe('now');
   });
 
+  test('two tasks added back to back both land', async ({ page }) => {
+    // the first box's blur timer fires 150ms later; it must not close the second
+    await openBoard(page);
+    const a = uniq('first of two'), b = uniq('second of two');
+    await addWeekTask(page, a);
+    await addWeekTask(page, b);
+    await expect(page.locator(row(a))).toHaveCount(1);
+    await expect(page.locator(row(b))).toHaveCount(1);
+  });
+
   test('splits "Project — task" into project and text', async ({ page }) => {
     await openBoard(page);
     const text = uniq('draft intro');
@@ -338,6 +348,242 @@ test.describe('drag-select must not be read as a click', () => {
     await addWeekTask(page, text);
     await dragThenClick(page, `${row(text)} .txt`);
     await expect(page.locator('.actmenu.selbar')).toHaveCount(0);
+  });
+});
+
+test.describe('recurring tasks', () => {
+  // Reach the repeat rules the way the UI does: select the row, open the menu.
+  async function setRepeat(page, text, rule) {
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="repeat"]').first().click();
+    await page.locator(`.actmenu button[data-act="rep2"][data-rep="${rule}"]`).click();
+  }
+  const recurRow = (text) => `#list-recur li[data-id]:has(.txt:text-is("${text}"))`;
+
+  test('a daily task moves into the Recurring strip below Tomorrow', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('answer new leads');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await expect(page.locator('#recurWrap')).toBeVisible();
+    await expect(page.locator(recurRow(text))).toHaveCount(1);
+    await expect(page.locator(`${recurRow(text)} .rep`)).toHaveText('daily');
+  });
+
+  test('the strip sits below the Today and Tomorrow columns', async ({ page }) => {
+    await openBoard(page);
+    const day = uniq('something today'), text = uniq('placed below');
+    await addWeekTask(page, day);
+    await html5Drag(page, row(day), '#col-tdy');       // the columns only draw when in use
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await expect(page.locator('#daycols')).toBeVisible();
+    const cols = await page.locator('#daycols').boundingBox();
+    const strip = await page.locator('#recurWrap').boundingBox();
+    expect(strip.y).toBeGreaterThan(cols.y + cols.height - 1);
+  });
+
+  test('ticking one marks it done for today, it is not archived', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('30 min of writing');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await page.locator(`${recurRow(text)} .box`).click();
+    await expect(page.locator(recurRow(text))).toHaveClass(/done/);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.status).not.toBe('done');
+    expect(t.status).not.toBe('archived');
+    expect(t.lastDone).toBeTruthy();
+    await expect(page.locator(recurRow(text))).toHaveCount(1);   // still on the board
+  });
+
+  test('ticking it again unticks it', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('untick me');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await page.locator(`${recurRow(text)} .box`).click();
+    await expect(page.locator(recurRow(text))).toHaveClass(/done/);
+    await page.locator(`${recurRow(text)} .box`).click();
+    await expect(page.locator(recurRow(text))).not.toHaveClass(/done/);
+  });
+
+  test('yesterday’s tick does not carry into today', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('fresh each day');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await page.evaluate((x) => {
+      const t = window.__dbg.state().tasks.find((t) => t.text === x);
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      t.lastDone = y.toDateString();
+      window.__dbg.syncRender();
+    }, text);
+    await expect(page.locator(recurRow(text))).not.toHaveClass(/done/);
+  });
+
+  test('a weekly rule is only due on its own day', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('weekly export');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'weekly');
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.repeat).toBe('weekly');
+    expect(t.repeatDay).toBe(new Date().getDay());   // set to the day you asked on
+    await expect(page.locator(recurRow(text))).toHaveClass(/duetoday/);
+    await page.evaluate((x) => {
+      const t = window.__dbg.state().tasks.find((t) => t.text === x);
+      t.repeatDay = (new Date().getDay() + 3) % 7;
+      window.__dbg.syncRender();
+    }, text);
+    await expect(page.locator(recurRow(text))).toHaveClass(/notdue/);
+  });
+
+  test('a monthly rule remembers the day of the month', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('monthly report');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'monthly');
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.repeatDom).toBe(new Date().getDate());
+  });
+
+  test('the count says how many are still due', async ({ page }) => {
+    await openBoard(page);
+    const a = uniq('routine one'), b = uniq('routine two');
+    await addWeekTask(page, a);
+    await addWeekTask(page, b);
+    await setRepeat(page, a, 'daily');
+    await setRepeat(page, b, 'daily');
+    await expect(page.locator('#recN')).toHaveText('2 due today');
+    await page.locator(`${recurRow(a)} .box`).click();
+    await expect(page.locator('#recN')).toHaveText('1 due today');
+    await page.locator(`${recurRow(b)} .box`).click();
+    await expect(page.locator('#recN')).toHaveText('all done today');
+  });
+
+  test('a repeating task is not also listed in the week', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('only once');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await expect(page.locator(`#list-week li[data-id]`).filter({ hasText: text })).toHaveCount(0);
+    await expect(page.locator(`#list-today li[data-id]`).filter({ hasText: text })).toHaveCount(0);
+  });
+
+  test('turning the repeat off puts it back', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('no longer daily');
+    await addWeekTask(page, text);
+    await setRepeat(page, text, 'daily');
+    await expect(page.locator(recurRow(text))).toHaveCount(1);
+    await setRepeat(page, text, 'none');
+    await expect(page.locator(recurRow(text))).toHaveCount(0);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.repeat).toBeUndefined();
+  });
+
+  test('the strip is hidden when nothing repeats', async ({ page }) => {
+    await openBoard(page);
+    await expect(page.locator('#recurWrap')).toBeHidden();
+  });
+});
+
+test.describe('this month', () => {
+  const monthRow = (text) => `#list-month li[data-id]:has(.txt:text-is("${text}"))`;
+
+  test('the menu pins a task to This month', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('next month job');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator('#monthWrap')).toBeVisible();
+    await expect(page.locator(monthRow(text))).toHaveCount(1);
+    await expect(page.locator('#monN')).toHaveText('1');
+  });
+
+  test('This month sits below Tomorrow and below the week list', async ({ page }) => {
+    await openBoard(page);
+    const day = uniq('something today'), text = uniq('later job');
+    await addWeekTask(page, day);
+    await html5Drag(page, row(day), '#col-tdy');       // the columns only draw when in use
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator('#daycols')).toBeVisible();
+    const cols = await page.locator('#daycols').boundingBox();
+    const week = await page.locator('#list-week').boundingBox();
+    const mon = await page.locator('#monthWrap').boundingBox();
+    expect(mon.y).toBeGreaterThan(cols.y + cols.height - 1);
+    expect(mon.y).toBeGreaterThanOrEqual(week.y);
+  });
+
+  test('dropping a task on This month pins it there', async ({ page }) => {
+    await openBoard(page);
+    const seed = uniq('already monthly'), text = uniq('dragged in');
+    await addWeekTask(page, seed);
+    await page.locator(row(seed)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator('#monthWrap')).toBeVisible();
+    await addWeekTask(page, text);
+    await html5Drag(page, row(text), '#monthWrap');
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.month).toBe(true);
+  });
+
+  test('a month task is not also listed in the week', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('one place only');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator(monthRow(text))).toHaveCount(1);
+    await expect(page.locator('#list-week li[data-id]').filter({ hasText: text })).toHaveCount(0);
+  });
+
+  test('unpinning removes it and hides the block', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('off the month');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator(monthRow(text))).toHaveCount(1);
+    await page.locator(monthRow(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator('#monthWrap')).toBeHidden();
+  });
+
+  test('the block is hidden when nothing is pinned to it', async ({ page }) => {
+    await openBoard(page);
+    await expect(page.locator('#monthWrap')).toBeHidden();
+  });
+});
+
+test.describe('when this system last changed', () => {
+  test('the stat line carries the build time before the manuscript link', async ({ page }) => {
+    await openBoard(page);
+    const stamp = await page.locator('#buildstamp').textContent();
+    const m = stamp.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}:\d{2})/);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const expected = `updated ${months[+m[2] - 1]} ${+m[3]}, ${m[4]} UTC`;
+    await expect(page.locator('#statline .statbuilt')).toHaveText(expected);
+  });
+
+  test('it reads off the build stamp, so it cannot drift', async ({ page }) => {
+    await openBoard(page);
+    await page.evaluate(() => {
+      document.getElementById('buildstamp').textContent = 'build 2031-12-25 07:09 UTC';
+      window.__dbg.syncRender();
+    });
+    await expect(page.locator('#statline .statbuilt')).toHaveText('updated Dec 25, 07:09 UTC');
+  });
+
+  test('it comes before the manuscript link, not after', async ({ page }) => {
+    await openBoard(page);
+    const text = await page.locator('#statline').innerText();
+    expect(text.indexOf('updated')).toBeGreaterThan(-1);
+    expect(text.indexOf('updated')).toBeLessThan(text.indexOf('Manuscript system'));
   });
 });
 
