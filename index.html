@@ -330,7 +330,11 @@
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
   ul.rows li.tdyrow { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 9px; border-top-color: transparent; }
   .daycols { display: grid; grid-template-columns: 70% 10px 1fr; gap: 6px; margin: 4px 0 6px; align-items: start; }
-  @media (max-width: 1080px) { .daycols { grid-template-columns: 1fr !important; gap: 6px; } .daysplit { display: none; } }
+  @media (max-width: 1080px) {
+    .daycols { grid-template-columns: 1fr !important; gap: 6px; }
+    .daysplit { display: none; }
+    #col-tdy, #daysplit, #col-tmr, #sec-month { grid-column: 1; grid-row: auto; }
+  }
   .daysplit { align-self: stretch; min-height: 40px; cursor: col-resize; border-radius: 3px; position: relative; }
   .daysplit::before { content: ""; position: absolute; left: 50%; top: 6px; bottom: 6px; width: 2px;
     transform: translateX(-50%); background: var(--border); border-radius: 2px; transition: background .15s, width .15s; }
@@ -374,8 +378,16 @@
   .focus .rowbtn.star.on { opacity: 0; }
   .focus li:hover .rowbtn.star.on { opacity: .9; }
 
-  #horizons { margin-bottom: 14px; }
-  #horizons > .card > h2 { display: flex; align-items: center; gap: 9px; }
+  #sec-recur { margin-bottom: 14px; }
+  #sec-recur > h2 { display: flex; align-items: center; gap: 9px; }
+  /* This month rides in the day grid, directly under Tomorrow */
+  #col-tdy { grid-column: 1; grid-row: 1 / span 2; }
+  #daysplit { grid-column: 2; grid-row: 1 / span 2; }
+  #col-tmr { grid-column: 3; grid-row: 1; }
+  #sec-month { grid-column: 3; grid-row: 2; margin-top: 6px; }
+  .daycol.mon { background: var(--bg-rne); box-shadow: inset 3px 0 0 0 var(--h-rne); }
+  .dayhdr.mon { color: var(--h-rne); }
+  .dayhdr.mon .dn { background: var(--h-rne); }
   .recn { font-size: 11px; font-weight: 800; letter-spacing: 0; color: var(--surface);
     background: var(--hue, var(--muted)); border-radius: 20px; padding: 1px 8px;
     text-transform: none; margin-left: auto; }
@@ -864,23 +876,17 @@
       <div class="daycol tdy" id="col-tdy"><div class="dayhdr tdy">Today<span class="dn" id="tdyN">0</span></div><ul class="rows" id="list-today"></ul></div>
       <div class="daysplit" id="daysplit" title="drag to resize · double-click to reset"></div>
       <div class="daycol tmr" id="col-tmr"><div class="dayhdr tmr">Tomorrow<span class="dn" id="tmrN">0</span></div><ul class="rows" id="list-tmr"></ul></div>
+      <div class="daycol mon" id="sec-month" style="display:none"><div class="dayhdr mon">This month<span class="dn" id="monN">0</span></div><ul class="rows" id="list-month"></ul></div>
     </div>
     <ul class="rows" id="list-week"></ul>
     <div class="addrow" data-add="week">+ add task</div>
     <div class="addrow" id="clearDone" style="display:none">✓ archive completed from view</div>
   </div>
 
-  <div class="grid" id="horizons">
-    <div class="card foldable" id="sec-recur" data-foldkey="recur" data-hue
-      style="display:none; --hue:var(--h-focus); --hue-bg:var(--bg-focus)">
-      <h2>Recurring<span class="recn" id="recN"></span></h2>
-      <ul class="rows" id="list-recur"></ul>
-    </div>
-    <div class="card foldable" id="sec-month" data-foldkey="month" data-hue
-      style="display:none; --hue:var(--h-rne); --hue-bg:var(--bg-rne)">
-      <h2>This month<span class="recn" id="monN"></span></h2>
-      <ul class="rows" id="list-month"></ul>
-    </div>
+  <div class="card foldable" id="sec-recur" data-foldkey="recur" data-hue
+    style="display:none; --hue:var(--h-focus); --hue-bg:var(--bg-focus)">
+    <h2>Recurring<span class="recn" id="recN"></span></h2>
+    <ul class="rows" id="list-recur"></ul>
   </div>
 
   <div class="toolrow">
@@ -913,7 +919,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-08 18:34 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-08 21:56 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2789,7 +2795,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('list-tdy').innerHTML = '';
     var tmr = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
     var rest2 = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
-    el('daycols').style.display = (tdy.length || tmr.length) ? '' : 'none';
+    // This month rides in the same grid, so the grid has to show for it too
+    var mon = live.filter(function (t) { return t.month && !t.repeat && t.status !== 'done'; });
+    mon.sort(function (a, b) { return ((a.ord || 1e9) - (b.ord || 1e9)); });
+    el('sec-month').style.display = mon.length ? '' : 'none';
+    el('monN').textContent = mon.length;
+    el('list-month').innerHTML = mon.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
+    el('daycols').style.display = (tdy.length || tmr.length || mon.length) ? '' : 'none';
     applyDaySplit();
     el('tdyN').textContent = tdy.length;
     el('tmrN').textContent = tmr.length;
@@ -2813,13 +2825,6 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('sec-recur').style.display = recur.length ? '' : 'none';
     el('recN').textContent = recOpen ? recOpen + ' due today' : 'all done today';
     el('list-recur').innerHTML = recur.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
-
-    // This month
-    var mon = live.filter(function (t) { return t.month && !t.repeat && t.status !== 'done'; });
-    mon.sort(function (a, b) { return ((a.ord || 1e9) - (b.ord || 1e9)); });
-    el('sec-month').style.display = mon.length ? '' : 'none';
-    el('monN').textContent = mon.length;
-    el('list-month').innerHTML = mon.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
 
     var wkDone = wk.filter(function (t) { return t.status === 'done'; }).length;
     el('weekCount').textContent = wkDone + ' of ' + wk.length;
@@ -2927,7 +2932,6 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('foldAllBtn').textContent = openAny ? 'fold all' : 'expand all';
     el('sec-week').classList.toggle('folded', !!(S.folded && S.folded.week));
     el('sec-recur').classList.toggle('folded', !!(S.folded && S.folded.recur));
-    el('sec-month').classList.toggle('folded', !!(S.folded && S.folded.month));
 
 
     // done archive
@@ -4265,10 +4269,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var secs = secOrder();
       S.folded = S.folded || {};
       S.subFolded = S.subFolded || {};
-      var anyOpen = !S.folded.week || !S.folded.recur || !S.folded.month ||
+      var anyOpen = !S.folded.week || !S.folded.recur ||
         secs.some(function (sc) { return !S.folded[sc.id]; });
       if (anyOpen) {
-        S.folded.week = true; S.folded.recur = true; S.folded.month = true;
+        S.folded.week = true; S.folded.recur = true;
         secs.forEach(function (sc) {
           S.folded[sc.id] = true;
           subNamesOf(sc).forEach(function (fn) { S.subFolded[sc.id + '/' + fn] = true; });

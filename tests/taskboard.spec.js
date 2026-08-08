@@ -506,20 +506,31 @@ test.describe('this month', () => {
     await expect(page.locator('#monN')).toHaveText('1');
   });
 
-  test('This month sits below Tomorrow and below the week list', async ({ page }) => {
+  test('This month sits directly under the Tomorrow column', async ({ page }) => {
     await openBoard(page);
-    const day = uniq('something today'), text = uniq('later job');
+    const day = uniq('for tomorrow'), text = uniq('later job');
     await addWeekTask(page, day);
-    await html5Drag(page, row(day), '#col-tdy');       // the columns only draw when in use
+    await html5Drag(page, row(day), '#col-tmr');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+
+    const tmr = await page.locator('#col-tmr').boundingBox();
+    const mon = await page.locator('#sec-month').boundingBox();
+    const tdy = await page.locator('#col-tdy').boundingBox();
+    expect(mon.y).toBeGreaterThanOrEqual(tmr.y + tmr.height - 1);   // below Tomorrow
+    expect(Math.abs(mon.x - tmr.x)).toBeLessThan(2);                // in the same column
+    expect(mon.x).toBeGreaterThan(tdy.x + tdy.width - 2);           // to the right of Today
+  });
+
+  test('the day grid shows for a month task even with nothing today or tomorrow', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('month only');
     await addWeekTask(page, text);
     await page.locator(row(text)).click({ button: 'right' });
     await page.locator('.actmenu button[data-act="month"]').first().click();
     await expect(page.locator('#daycols')).toBeVisible();
-    const cols = await page.locator('#daycols').boundingBox();
-    const week = await page.locator('#list-week').boundingBox();
-    const mon = await page.locator('#sec-month').boundingBox();
-    expect(mon.y).toBeGreaterThan(cols.y + cols.height - 1);
-    expect(mon.y).toBeGreaterThanOrEqual(week.y);
+    await expect(page.locator('#sec-month')).toBeVisible();
   });
 
   test('dropping a task on This month pins it there', async ({ page }) => {
@@ -570,24 +581,28 @@ test.describe('the cards themselves', () => {
     await expect(page.locator('#navlinks a[href="#sec-week"]')).toHaveText('Tasks');
   });
 
-  test('Recurring and This month are cards of their own, below Tasks', async ({ page }) => {
+  test('Recurring is a card of its own below Tasks', async ({ page }) => {
     await openBoard(page);
-    const text = uniq('a routine'), later = uniq('a month job');
+    const text = uniq('a routine');
     await addWeekTask(page, text);
     await page.locator(row(text)).click({ button: 'right' });
     await page.locator('.actmenu button[data-act="repeat"]').first().click();
     await page.locator('.actmenu button[data-act="rep2"][data-rep="daily"]').click();
-    await addWeekTask(page, later);
-    await page.locator(row(later)).click({ button: 'right' });
-    await page.locator('.actmenu button[data-act="month"]').first().click();
 
     await expect(page.locator('#sec-recur')).toHaveClass(/card/);
-    await expect(page.locator('#sec-month')).toHaveClass(/card/);
     const week = await page.locator('#sec-week').boundingBox();
     const rec = await page.locator('#sec-recur').boundingBox();
-    const mon = await page.locator('#sec-month').boundingBox();
     expect(rec.y).toBeGreaterThanOrEqual(week.y + week.height - 1);
-    expect(mon.y).toBeGreaterThanOrEqual(week.y + week.height - 1);
+  });
+
+  test('This month rides inside the day grid, not below the card', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('a month job');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    const inGrid = await page.evaluate(() => !!document.querySelector('#daycols > #sec-month'));
+    expect(inGrid).toBe(true);
   });
 
   test('each new card folds on its own and remembers it', async ({ page }) => {
