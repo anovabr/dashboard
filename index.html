@@ -374,13 +374,11 @@
   .focus .rowbtn.star.on { opacity: 0; }
   .focus li:hover .rowbtn.star.on { opacity: .9; }
 
-  .rechdr, .monhdr { display: flex; align-items: center; gap: 8px; margin-top: 12px;
-    padding-top: 9px; border-top: 1px solid var(--hairline); }
-  .monhdr { color: var(--aim); }
+  #horizons { margin-bottom: 14px; }
+  #horizons > .card > h2 { display: flex; align-items: center; gap: 9px; }
   .recn { font-size: 11px; font-weight: 800; letter-spacing: 0; color: var(--surface);
-    background: var(--muted); border-radius: 20px; padding: 1px 7px; text-transform: none; }
-  .rechdr .recn { background: var(--accent); }
-  .monhdr .recn { background: var(--aim); }
+    background: var(--hue, var(--muted)); border-radius: 20px; padding: 1px 8px;
+    text-transform: none; margin-left: auto; }
   ul.rows li.notdue { opacity: .5; }
   .rep { display: inline-block; font-size: 10px; font-weight: 750; letter-spacing: .05em;
     color: var(--muted); border: 1px solid var(--border); border-radius: 4px;
@@ -549,7 +547,7 @@
   .micro.drophint .notebtn, .micro.drophint .subct { color: var(--surface); }
   .micro.drophint::after { content: " drop here"; font-size: 9.5px; letter-spacing: .1em; opacity: .8; margin-left: 6px; }
   #sec-week.drophint { outline: 2px dashed var(--accent); outline-offset: 2px; }
-  #monthWrap.drophint { outline: 2px dashed var(--aim); outline-offset: 3px; border-radius: 8px; }
+  #sec-month.drophint { outline: 2px dashed var(--h-rne); outline-offset: 2px; }
   .daycol.drophint { outline: 2px dashed var(--hue, var(--accent)); outline-offset: 2px; }
   .daycol.tmr.drophint { outline-color: var(--aim); }
   .daycol.tdy.drophint { outline-color: var(--accent); }
@@ -858,8 +856,8 @@
     <main>
       <div class="stats" id="statline"></div>
 
-  <div class="card focus foldable" id="sec-week" data-hue style="--hue:var(--h-focus); --hue-bg:var(--bg-focus)">
-    <h2>This Week</h2>
+  <div class="card focus foldable" id="sec-week" data-foldkey="week" data-hue style="--hue:var(--h-focus); --hue-bg:var(--bg-focus)">
+    <h2>Tasks</h2>
     <div class="micro" id="tdyHdr" style="display:none">Today</div>
     <ul class="rows" id="list-tdy"></ul>
     <div class="daycols" id="daycols">
@@ -867,17 +865,22 @@
       <div class="daysplit" id="daysplit" title="drag to resize · double-click to reset"></div>
       <div class="daycol tmr" id="col-tmr"><div class="dayhdr tmr">Tomorrow<span class="dn" id="tmrN">0</span></div><ul class="rows" id="list-tmr"></ul></div>
     </div>
-    <div id="recurWrap" style="display:none">
-      <div class="micro rechdr">Recurring<span class="recn" id="recN"></span></div>
-      <ul class="rows" id="list-recur"></ul>
-    </div>
     <ul class="rows" id="list-week"></ul>
-    <div id="monthWrap" style="display:none">
-      <div class="micro monhdr">This month<span class="recn" id="monN"></span></div>
-      <ul class="rows" id="list-month"></ul>
-    </div>
     <div class="addrow" data-add="week">+ add task</div>
     <div class="addrow" id="clearDone" style="display:none">✓ archive completed from view</div>
+  </div>
+
+  <div class="grid" id="horizons">
+    <div class="card foldable" id="sec-recur" data-foldkey="recur" data-hue
+      style="display:none; --hue:var(--h-focus); --hue-bg:var(--bg-focus)">
+      <h2>Recurring<span class="recn" id="recN"></span></h2>
+      <ul class="rows" id="list-recur"></ul>
+    </div>
+    <div class="card foldable" id="sec-month" data-foldkey="month" data-hue
+      style="display:none; --hue:var(--h-rne); --hue-bg:var(--bg-rne)">
+      <h2>This month<span class="recn" id="monN"></span></h2>
+      <ul class="rows" id="list-month"></ul>
+    </div>
   </div>
 
   <div class="toolrow">
@@ -910,7 +913,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-08 18:22 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-08 18:34 UTC</div>
 </div>
 
 <div id="mobile">
@@ -923,7 +926,7 @@
   </div>
   <div class="mtabs">
     <button class="mtab on" data-mtab="today">Today</button>
-    <button class="mtab" data-mtab="week">This Week</button>
+    <button class="mtab" data-mtab="week">Tasks</button>
     <button class="mtab" data-mtab="board">Board</button>
   </div>
   <div class="mmain" id="mmain"></div>
@@ -2732,7 +2735,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       h += '<span class="workbar' + (wdays.indexOf(dayStr()) !== -1 ? ' hot' : '') + '" title="worked ' + wdays.length + ' day' + (wdays.length === 1 ? '' : 's') + ' on this"><i style="width:' + wpct + '%"></i></span>';
     }
     h += '</span>';
-    var star = '<button class="rowbtn star' + (t.week ? ' on' : '') + '" title="pin to This Week">' + (t.week ? '★' : '☆') + '</button>';
+    var star = '<button class="rowbtn star' + (t.week ? ' on' : '') + '" title="pin to Tasks">' + (t.week ? '★' : '☆') + '</button>';
     var del = '<button class="rowbtn del" title="remove">✕</button>';
     var d = t.date || { kind: 'none', label: '' };
     var dateCls = d.kind === 'hard' ? 'hard' : d.kind === 'aim' ? 'aim' : d.kind === 'plain' ? '' : 'empty';
@@ -2807,14 +2810,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       return (aD - bD) || ((a.ord || 1e9) - (b.ord || 1e9));
     });
     var recOpen = recur.filter(function (t) { return repeatDueToday(t) && !repeatDone(t); }).length;
-    el('recurWrap').style.display = recur.length ? '' : 'none';
+    el('sec-recur').style.display = recur.length ? '' : 'none';
     el('recN').textContent = recOpen ? recOpen + ' due today' : 'all done today';
     el('list-recur').innerHTML = recur.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
 
     // This month
     var mon = live.filter(function (t) { return t.month && !t.repeat && t.status !== 'done'; });
     mon.sort(function (a, b) { return ((a.ord || 1e9) - (b.ord || 1e9)); });
-    el('monthWrap').style.display = mon.length ? '' : 'none';
+    el('sec-month').style.display = mon.length ? '' : 'none';
     el('monN').textContent = mon.length;
     el('list-month').innerHTML = mon.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
 
@@ -2923,6 +2926,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var openAny = !(S.folded && S.folded.week) || fsecs.some(function (sc) { return !(S.folded && S.folded[sc.id]); });
     el('foldAllBtn').textContent = openAny ? 'fold all' : 'expand all';
     el('sec-week').classList.toggle('folded', !!(S.folded && S.folded.week));
+    el('sec-recur').classList.toggle('folded', !!(S.folded && S.folded.recur));
+    el('sec-month').classList.toggle('folded', !!(S.folded && S.folded.month));
 
 
     // done archive
@@ -2985,7 +2990,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     return tt.length <= 16 ? tt : tt.slice(0, 15).trim() + '…';
   }
   function buildNav() {
-    var items = [{ id: 'sec-week', label: 'This Week', hue: 'focus', full: 'This Week' }];
+    var items = [{ id: 'sec-week', label: 'Tasks', hue: 'focus', full: 'Tasks' }];
+    if (S && S.tasks.some(function (t) { return t.repeat && t.status !== 'gone'; })) {
+      items.push({ id: 'sec-recur', label: 'Recurring', hue: 'focus', full: 'Recurring' });
+    }
+    if (S && S.tasks.some(function (t) { return t.month && t.status !== 'gone' && t.status !== 'done' && !t.repeat; })) {
+      items.push({ id: 'sec-month', label: 'This month', hue: 'rne', full: 'This month' });
+    }
     secOrder().forEach(function (sc) { items.push({ id: 'sec-' + sc.id, label: shortTitle(sc.title), hue: sc.hue, full: sc.title }); });
     items.push({ id: 'sec-archive', label: 'Archive', full: 'Done archive' });
     el('navlinks').innerHTML = items.map(function (it) {
@@ -3000,8 +3011,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (head) return { sec: head.dataset.sec, fold: head.dataset.fold, root: false };
     var ghead = node.closest('.grouphead');
     if (ghead) return { sec: ghead.dataset.sec, grp: ghead.dataset.grp, root: false };
-    if (node.closest('#monthWrap')) return { month: true };
-    if (node.closest('#recurWrap')) return null;      // repeating is a rule, not somewhere to drop
+    if (node.closest('#sec-month')) return { month: true };
+    if (node.closest('#sec-recur')) return null;      // repeating is a rule, not somewhere to drop
     if (node.closest('#col-tmr')) return { day: 'tomorrow' };
     if (node.closest('#col-tdy')) return { day: 'today' };
     if (node.closest('#sec-week')) return { week: true };
@@ -3571,7 +3582,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   }
   function moveTargetsHtml() {
     var h = '<span class="selct">Move to</span>' +
-      '<button data-act="mv2" data-tgt="week"><span class="mi">⭐</span><span class="ml">This Week</span></button>' +
+      '<button data-act="mv2" data-tgt="week"><span class="mi">⭐</span><span class="ml">Tasks</span></button>' +
       '<div class="msep"></div>';
     secOrder().forEach(function (sc) {
       var has = subprojectsOf(sc.id).length;
@@ -3620,7 +3631,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var td = live.filter(function (t) { return t.today && t.status !== 'done'; });
       h += '<div class="mgroup"><span>Today · ' + td.length + '</span></div>';
       h += td.length ? td.map(function (t) { return mRow(t, true); }).join('')
-        : '<div class="mempty">Nothing picked for today.<br>Open This Week and tap “Do it today”.</div>';
+        : '<div class="mempty">Nothing picked for today.<br>Open Tasks and tap “Do it today”.</div>';
       var tmrT = live.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
       if (tmrT.length) h += '<div class="mgroup tmr"><span>Tomorrow · ' + tmrT.length + '</span></div>' +
         tmrT.map(function (t) { return mRow(t, true); }).join('');
@@ -3697,7 +3708,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       (done ? '' :
         '<button class="mact" data-mact="today"><span class="ic">🔆</span>' + (t.today ? 'Remove from Today' : 'Do it today') + '</button>' +
         '<button class="mact" data-mact="tmr"><span class="ic">🌙</span>' + (t.tomorrow ? 'Unplan tomorrow' : 'Plan for tomorrow') + '</button>' +
-        '<button class="mact" data-mact="week"><span class="ic">⭐</span>' + (t.week ? 'Unpin from This Week' : 'Pin to This Week') + '</button>' +
+        '<button class="mact" data-mact="week"><span class="ic">⭐</span>' + (t.week ? 'Unpin from Tasks' : 'Pin to Tasks') + '</button>' +
         '<button class="mact" data-mact="worked"><span class="ic">🕒</span>' + (wkd ? 'Worked today ✓' : 'Worked on it today') + '</button>' +
         '<button class="mact" data-mact="edit"><span class="ic">✏️</span>Edit text</button>' +
         '<button class="mact" data-mact="move"><span class="ic">📂</span>Move to…</button>') +
@@ -3737,7 +3748,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         '<span class="mdot" style="background:var(--h-' + sc.hue + ')"></span>' + esc(sc.title) + '</button>';
     });
     h += '</div><div class="mpicks">' +
-      '<button class="mpick on" data-mtog="week">★ This week</button>' +
+      '<button class="mpick on" data-mtog="week">★ Tasks</button>' +
       '<button class="mpick" data-mtog="today">◉ Today</button>' +
       '<button class="mpick" data-mtog="big">BIG</button></div>' +
       '<button class="mprimary" data-mact="create">Add task</button>';
@@ -3836,7 +3847,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         else { mt.tomorrow = true; mt.tomorrowFor = tomorrowStr(); mt.week = true; mt.today = false; logChange('Planned for tomorrow: ' + taskLabel(mt)); }
       } else if (a === 'week') {
         mt.week = !mt.week; if (!mt.week) mt.today = false;
-        logChange((mt.week ? 'Pinned to This Week: ' : 'Unpinned: ') + taskLabel(mt));
+        logChange((mt.week ? 'Pinned to Tasks: ' : 'Unpinned: ') + taskLabel(mt));
       } else if (a === 'worked') {
         mt.worked = mt.worked || [];
         var ix = mt.worked.indexOf(dayStr());
@@ -4049,7 +4060,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           logChange('Removed: ' + taskLabel(mt));
         } else if (a === 'mv2') {
           var tgt = act.dataset.tgt;
-          if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to This Week: ' + taskLabel(mt)); }
+          if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to Tasks: ' + taskLabel(mt)); }
           else { mt.sec = tgt; delete mt.grp; delete mt.proj; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
         } else if (a === 'mv3') {
           var tsec = menuEl.dataset.tsec;
@@ -4073,7 +4084,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var hh = (e.target.closest('.secdel') || e.target.closest('.secmore') || e.target.closest('.notebtn') || e.target.closest('.seccolor') || e.target.closest('.secfold')) ? null : e.target.closest('h2');
     if (hh && hh.parentNode.classList && hh.parentNode.classList.contains('foldable')) {
       var card = hh.parentNode;
-      var fkey = card.dataset.sec || (card.id === 'sec-week' ? 'week' : null);
+      var fkey = card.dataset.sec || card.dataset.foldkey || null;
       if (fkey) {
         S.folded = S.folded || {};
         if (card.dataset.sec && isDbl('sec:' + fkey)) {
@@ -4134,7 +4145,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     if (t && e.target.closest('.star')) {
       pushUndo();
       t.week = !t.week;
-      logChange((t.week ? 'Pinned to This Week: ' : 'Unpinned from This Week: ') + taskLabel(t));
+      logChange((t.week ? 'Pinned to Tasks: ' : 'Unpinned from Tasks: ') + taskLabel(t));
       touch(t); scheduleSave(); renderAll();
       return;
     }
@@ -4156,7 +4167,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       S.tasks.forEach(function (t) {
         if (t.status === 'done' && t.week) { t.status = 'archived'; touch(t); n++; }
       });
-      if (n) { logChange('Archived ' + n + ' completed item' + (n === 1 ? '' : 's') + ' from This Week'); scheduleSave(); renderAll(); }
+      if (n) { logChange('Archived ' + n + ' completed item' + (n === 1 ? '' : 's') + ' from Tasks'); scheduleSave(); renderAll(); }
       return;
     }
 
@@ -4254,9 +4265,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       var secs = secOrder();
       S.folded = S.folded || {};
       S.subFolded = S.subFolded || {};
-      var anyOpen = !S.folded.week || secs.some(function (sc) { return !S.folded[sc.id]; });
+      var anyOpen = !S.folded.week || !S.folded.recur || !S.folded.month ||
+        secs.some(function (sc) { return !S.folded[sc.id]; });
       if (anyOpen) {
-        S.folded.week = true;
+        S.folded.week = true; S.folded.recur = true; S.folded.month = true;
         secs.forEach(function (sc) {
           S.folded[sc.id] = true;
           subNamesOf(sc).forEach(function (fn) { S.subFolded[sc.id + '/' + fn] = true; });
@@ -4494,7 +4506,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         hintEl = ph || null;
       }
     }
-    if (!hintEl) hintEl = e.target.closest('#monthWrap') || e.target.closest('.daycol') ||
+    if (!hintEl) hintEl = e.target.closest('#sec-month') || e.target.closest('.daycol') ||
       e.target.closest('#sec-week') || e.target.closest('.card[data-sec]');
     if (hintEl) hintEl.classList.add('drophint');
   });
@@ -4542,7 +4554,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         if (mt2.week) return;
         pushUndo();
         mt2.week = true;
-        logChange('Pinned to This Week: ' + taskLabel(mt2));
+        logChange('Pinned to Tasks: ' + taskLabel(mt2));
       } else {
         if (dst2.sec === mt2.sec && !dst2.fold && !dst2.grp && !(dst2.root && (mt2.proj || mt2.grp))) return;
         pushUndo();
@@ -4728,7 +4740,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           updatedAt: nowIso()
         };
         var secT = SECMETA[nt.sec] ? SECMETA[nt.sec].title : nt.sec;
-        if (target === 'week') secT = 'This Week → ' + secT;
+        if (target === 'week') secT = 'Tasks → ' + secT;
         pushUndo();
         S.tasks.push(nt);
         logChange('Added to ' + secT + ': ' + v);

@@ -354,7 +354,10 @@ test.describe('drag-select must not be read as a click', () => {
 test.describe('recurring tasks', () => {
   // Reach the repeat rules the way the UI does: select the row, open the menu.
   async function setRepeat(page, text, rule) {
-    await page.locator(row(text)).click({ button: 'right' });
+    // once it repeats the row lives in the Recurring card, not in Tasks
+    const li = page.locator('#sec-week li[data-id], #sec-recur li[data-id]')
+      .filter({ hasText: text }).first();
+    await li.click({ button: 'right' });
     await page.locator('.actmenu button[data-act="repeat"]').first().click();
     await page.locator(`.actmenu button[data-act="rep2"][data-rep="${rule}"]`).click();
   }
@@ -365,7 +368,7 @@ test.describe('recurring tasks', () => {
     const text = uniq('answer new leads');
     await addWeekTask(page, text);
     await setRepeat(page, text, 'daily');
-    await expect(page.locator('#recurWrap')).toBeVisible();
+    await expect(page.locator('#sec-recur')).toBeVisible();
     await expect(page.locator(recurRow(text))).toHaveCount(1);
     await expect(page.locator(`${recurRow(text)} .rep`)).toHaveText('daily');
   });
@@ -379,7 +382,7 @@ test.describe('recurring tasks', () => {
     await setRepeat(page, text, 'daily');
     await expect(page.locator('#daycols')).toBeVisible();
     const cols = await page.locator('#daycols').boundingBox();
-    const strip = await page.locator('#recurWrap').boundingBox();
+    const strip = await page.locator('#sec-recur').boundingBox();
     expect(strip.y).toBeGreaterThan(cols.y + cols.height - 1);
   });
 
@@ -485,7 +488,7 @@ test.describe('recurring tasks', () => {
 
   test('the strip is hidden when nothing repeats', async ({ page }) => {
     await openBoard(page);
-    await expect(page.locator('#recurWrap')).toBeHidden();
+    await expect(page.locator('#sec-recur')).toBeHidden();
   });
 });
 
@@ -498,7 +501,7 @@ test.describe('this month', () => {
     await addWeekTask(page, text);
     await page.locator(row(text)).click({ button: 'right' });
     await page.locator('.actmenu button[data-act="month"]').first().click();
-    await expect(page.locator('#monthWrap')).toBeVisible();
+    await expect(page.locator('#sec-month')).toBeVisible();
     await expect(page.locator(monthRow(text))).toHaveCount(1);
     await expect(page.locator('#monN')).toHaveText('1');
   });
@@ -514,7 +517,7 @@ test.describe('this month', () => {
     await expect(page.locator('#daycols')).toBeVisible();
     const cols = await page.locator('#daycols').boundingBox();
     const week = await page.locator('#list-week').boundingBox();
-    const mon = await page.locator('#monthWrap').boundingBox();
+    const mon = await page.locator('#sec-month').boundingBox();
     expect(mon.y).toBeGreaterThan(cols.y + cols.height - 1);
     expect(mon.y).toBeGreaterThanOrEqual(week.y);
   });
@@ -525,9 +528,9 @@ test.describe('this month', () => {
     await addWeekTask(page, seed);
     await page.locator(row(seed)).click({ button: 'right' });
     await page.locator('.actmenu button[data-act="month"]').first().click();
-    await expect(page.locator('#monthWrap')).toBeVisible();
+    await expect(page.locator('#sec-month')).toBeVisible();
     await addWeekTask(page, text);
-    await html5Drag(page, row(text), '#monthWrap');
+    await html5Drag(page, row(text), '#sec-month');
     const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
     expect(t.month).toBe(true);
   });
@@ -551,12 +554,54 @@ test.describe('this month', () => {
     await expect(page.locator(monthRow(text))).toHaveCount(1);
     await page.locator(monthRow(text)).click({ button: 'right' });
     await page.locator('.actmenu button[data-act="month"]').first().click();
-    await expect(page.locator('#monthWrap')).toBeHidden();
+    await expect(page.locator('#sec-month')).toBeHidden();
   });
 
   test('the block is hidden when nothing is pinned to it', async ({ page }) => {
     await openBoard(page);
-    await expect(page.locator('#monthWrap')).toBeHidden();
+    await expect(page.locator('#sec-month')).toBeHidden();
+  });
+});
+
+test.describe('the cards themselves', () => {
+  test('the first card is called Tasks', async ({ page }) => {
+    await openBoard(page);
+    await expect(page.locator('#sec-week > h2')).toHaveText('Tasks');
+    await expect(page.locator('#navlinks a[href="#sec-week"]')).toHaveText('Tasks');
+  });
+
+  test('Recurring and This month are cards of their own, below Tasks', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('a routine'), later = uniq('a month job');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="repeat"]').first().click();
+    await page.locator('.actmenu button[data-act="rep2"][data-rep="daily"]').click();
+    await addWeekTask(page, later);
+    await page.locator(row(later)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+
+    await expect(page.locator('#sec-recur')).toHaveClass(/card/);
+    await expect(page.locator('#sec-month')).toHaveClass(/card/);
+    const week = await page.locator('#sec-week').boundingBox();
+    const rec = await page.locator('#sec-recur').boundingBox();
+    const mon = await page.locator('#sec-month').boundingBox();
+    expect(rec.y).toBeGreaterThanOrEqual(week.y + week.height - 1);
+    expect(mon.y).toBeGreaterThanOrEqual(week.y + week.height - 1);
+  });
+
+  test('each new card folds on its own and remembers it', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('foldable routine');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="repeat"]').first().click();
+    await page.locator('.actmenu button[data-act="rep2"][data-rep="daily"]').click();
+    await page.locator('#sec-recur > h2').click();
+    await expect(page.locator('#sec-recur')).toHaveClass(/folded/);
+    expect(await page.evaluate(() => window.__dbg.state().folded.recur)).toBe(true);
+    await page.locator('#sec-recur > h2').click();
+    await expect(page.locator('#sec-recur')).not.toHaveClass(/folded/);
   });
 });
 
