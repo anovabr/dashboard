@@ -576,6 +576,86 @@ test.describe('this month', () => {
     await expect(page.locator('#sec-month')).toBeHidden();
   });
 
+  // The horizons are one choice. Moving a task to a nearer one has to release
+  // the longer one, or month becomes a bucket nothing can leave.
+  async function pinMonth(page, text) {
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator(monthRow(text))).toHaveCount(1);
+  }
+
+  test('dragging out of This month onto Tomorrow moves it', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('off to tomorrow');
+    await addWeekTask(page, text);
+    await pinMonth(page, text);
+    await html5Drag(page, monthRow(text), '#col-tmr');
+    await expect(page.locator('#list-tmr li[data-id]').filter({ hasText: text })).toHaveCount(1);
+    await expect(page.locator(monthRow(text))).toHaveCount(0);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.tomorrow).toBe(true);
+    expect(t.month).toBe(false);
+  });
+
+  test('dragging out of This month onto Today moves it', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('off to today');
+    await addWeekTask(page, text);
+    await pinMonth(page, text);
+    await html5Drag(page, monthRow(text), '#col-tdy');
+    await expect(page.locator('#list-today li[data-id]').filter({ hasText: text })).toHaveCount(1);
+    await expect(page.locator(monthRow(text))).toHaveCount(0);
+  });
+
+  test('the menu moves it out of This month too', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('menu to tomorrow');
+    await addWeekTask(page, text);
+    await pinMonth(page, text);
+    await page.locator(monthRow(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="tmr"]').first().click();
+    await expect(page.locator('#list-tmr li[data-id]').filter({ hasText: text })).toHaveCount(1);
+    await expect(page.locator(monthRow(text))).toHaveCount(0);
+  });
+
+  test('dropping it back on the week list releases the month too', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('back to the week');
+    await addWeekTask(page, text);
+    await pinMonth(page, text);
+    await html5Drag(page, monthRow(text), '#list-week');
+    await expect(page.locator('#list-week li[data-id]').filter({ hasText: text })).toHaveCount(1);
+    await expect(page.locator(monthRow(text))).toHaveCount(0);
+  });
+
+  test('pinning to This month releases Today, rather than leaving it stale', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('was today');
+    await addWeekTask(page, text);
+    await html5Drag(page, row(text), '#col-tdy');
+    await expect(page.locator('#list-today li[data-id]').filter({ hasText: text })).toHaveCount(1);
+    await page.locator('#list-today li[data-id]').filter({ hasText: text }).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator(monthRow(text))).toHaveCount(1);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.today).toBe(false);
+    expect(t.tomorrow).toBe(false);
+  });
+
+  test('a task can be sent to the month and brought back repeatedly', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('round trip');
+    await addWeekTask(page, text);
+    for (let i = 0; i < 2; i++) {
+      await pinMonth(page, text);
+      await html5Drag(page, monthRow(text), '#col-tmr');
+      await expect(page.locator('#list-tmr li[data-id]').filter({ hasText: text })).toHaveCount(1);
+      await page.locator('#list-tmr li[data-id]').filter({ hasText: text }).click({ button: 'right' });
+      await page.locator('.actmenu button[data-act="tmr"]').first().click();  // unplan
+      await expect(page.locator(row(text))).toHaveCount(1);
+    }
+  });
+
   test('the block is hidden when nothing is pinned to it', async ({ page }) => {
     await openBoard(page);
     await expect(page.locator('#sec-month')).toBeHidden();

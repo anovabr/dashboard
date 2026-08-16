@@ -914,7 +914,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-11 02:41 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-16 23:03 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2342,6 +2342,29 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
   function tickRepeat(t) {
     if (repeatDone(t)) { delete t.lastDone; logChange('Unticked for today: ' + taskLabel(t)); }
     else { t.lastDone = dayStr(); logChange('Done today: ' + taskLabel(t)); }
+  }
+
+  // ---------- horizons ----------
+  // Today, Tomorrow, This week and This month are one choice, not four flags.
+  // Each is drawn from the tasks the longer horizons have not claimed, so moving
+  // a task nearer must release the longer one -- otherwise This month is a
+  // bucket nothing can leave. Every path that moves a task goes through here.
+  function setHorizon(t, which) {
+    if (which === 'today') {
+      t.today = true; t.todayOn = dayStr();
+      t.tomorrow = false; delete t.tomorrowFor;
+      t.week = true; t.month = false;
+    } else if (which === 'tomorrow') {
+      t.tomorrow = true; t.tomorrowFor = tomorrowStr();
+      t.today = false; delete t.todayOn;
+      t.week = true; t.month = false;
+    } else if (which === 'week') {
+      t.week = true; t.month = false;
+    } else if (which === 'month') {
+      t.month = true;
+      t.today = false; delete t.todayOn;
+      t.tomorrow = false; delete t.tomorrowFor;
+    }
   }
 
   var undoStack = [];
@@ -3839,12 +3862,13 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         else { mt.prevStatus = mt.status; mt.status = 'done'; mt.doneAt = nowIso(); mt.today = false; delete mt.carried; logChange('Done: ' + taskLabel(mt)); }
       } else if (a === 'today') {
         if (mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
-        else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; mt.tomorrow = false; logChange('Today: ' + taskLabel(mt)); }
+        else { setHorizon(mt, 'today'); logChange('Today: ' + taskLabel(mt)); }
       } else if (a === 'tmr') {
         if (mt.tomorrow) { mt.tomorrow = false; delete mt.tomorrowFor; logChange('Unplanned from tomorrow: ' + taskLabel(mt)); }
-        else { mt.tomorrow = true; mt.tomorrowFor = tomorrowStr(); mt.week = true; mt.today = false; logChange('Planned for tomorrow: ' + taskLabel(mt)); }
+        else { setHorizon(mt, 'tomorrow'); logChange('Planned for tomorrow: ' + taskLabel(mt)); }
       } else if (a === 'week') {
-        mt.week = !mt.week; if (!mt.week) mt.today = false;
+        if (mt.week && !mt.month) { mt.week = false; mt.today = false; mt.tomorrow = false; }
+        else setHorizon(mt, 'week');
         logChange((mt.week ? 'Pinned to Tasks: ' : 'Unpinned: ') + taskLabel(mt));
       } else if (a === 'worked') {
         mt.worked = mt.worked || [];
@@ -4036,7 +4060,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           }
         } else if (a === 'month') {
           if (!multi && mt.month) { mt.month = false; logChange('Removed from This month: ' + taskLabel(mt)); }
-          else { mt.month = true; logChange('This month: ' + taskLabel(mt)); }
+          else { setHorizon(mt, 'month'); logChange('This month: ' + taskLabel(mt)); }
         } else if (a === 'rep2') {
           setRepeat(mt, act.dataset.rep);
         } else if (a === 'undo') {
@@ -4044,10 +4068,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           logChange('Not done after all: ' + taskLabel(mt));
         } else if (a === 'focus') {
           if (!multi && mt.today) { mt.today = false; logChange('Removed from Today: ' + taskLabel(mt)); }
-          else { mt.today = true; mt.todayOn = dayStr(); mt.week = true; mt.tomorrow = false; logChange('Today: ' + taskLabel(mt)); }
+          else { setHorizon(mt, 'today'); logChange('Today: ' + taskLabel(mt)); }
         } else if (a === 'tmr') {
           if (!multi && mt.tomorrow) { mt.tomorrow = false; delete mt.tomorrowFor; logChange('Unplanned from tomorrow: ' + taskLabel(mt)); }
-          else { mt.tomorrow = true; mt.tomorrowFor = tomorrowStr(); mt.week = true; mt.today = false; logChange('Planned for tomorrow: ' + taskLabel(mt)); }
+          else { setHorizon(mt, 'tomorrow'); logChange('Planned for tomorrow: ' + taskLabel(mt)); }
         } else if (a === 'work') {
           mt.worked = mt.worked || [];
           var dsx = mt.worked.indexOf(dayStr());
@@ -4058,7 +4082,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           logChange('Removed: ' + taskLabel(mt));
         } else if (a === 'mv2') {
           var tgt = act.dataset.tgt;
-          if (tgt === 'week') { mt.week = true; mt.today = false; logChange('Pinned to Tasks: ' + taskLabel(mt)); }
+          if (tgt === 'week') { setHorizon(mt, 'week'); mt.today = false; logChange('Pinned to Tasks: ' + taskLabel(mt)); }
           else { mt.sec = tgt; delete mt.grp; delete mt.proj; logChange('Moved to ' + (SECMETA[tgt] ? SECMETA[tgt].title : tgt) + ': ' + taskLabel(mt)); }
         } else if (a === 'mv3') {
           var tsec = menuEl.dataset.tsec;
@@ -4142,7 +4166,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
     if (t && e.target.closest('.star')) {
       pushUndo();
-      t.week = !t.week;
+      if (t.week && !t.month) { t.week = false; t.today = false; t.tomorrow = false; }
+      else setHorizon(t, 'week');
       logChange((t.week ? 'Pinned to Tasks: ' : 'Unpinned from Tasks: ') + taskLabel(t));
       touch(t); scheduleSave(); renderAll();
       return;
@@ -4491,7 +4516,7 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (t0.month) return;
     } else if (dst.day) {
       if (dst.day === 'tomorrow' ? t0.tomorrow : t0.today) return;
-    } else if (dst.week ? t0.week
+    } else if (dst.week ? (t0.week && !t0.month)
       : (dst.sec === t0.sec && !dst.fold && !dst.grp && !(dst.root && (t0.proj || t0.grp)))) return;
     e.preventDefault();
     var hintEl = e.target.closest('.subhead') || e.target.closest('.grouphead');
@@ -4534,23 +4559,22 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (dst2.month) {
         if (mt2.month) return;
         pushUndo();
-        mt2.month = true;
+        setHorizon(mt2, 'month');
         logChange('This month: ' + taskLabel(mt2));
       } else if (dst2.day) {
         if (dst2.day === 'tomorrow' ? mt2.tomorrow : mt2.today) return;
         pushUndo();
-        mt2.week = true;
         if (dst2.day === 'tomorrow') {
-          mt2.tomorrow = true; mt2.tomorrowFor = tomorrowStr(); mt2.today = false;
+          setHorizon(mt2, 'tomorrow');
           logChange('Planned for tomorrow: ' + taskLabel(mt2));
         } else {
-          mt2.today = true; mt2.todayOn = dayStr(); mt2.tomorrow = false; delete mt2.tomorrowFor;
+          setHorizon(mt2, 'today');
           logChange('Today: ' + taskLabel(mt2));
         }
       } else if (dst2.week) {
-        if (mt2.week) return;
+        if (mt2.week && !mt2.month) return;      // a month task has week set but is not shown there
         pushUndo();
-        mt2.week = true;
+        setHorizon(mt2, 'week');
         logChange('Pinned to Tasks: ' + taskLabel(mt2));
       } else {
         if (dst2.sec === mt2.sec && !dst2.fold && !dst2.grp && !(dst2.root && (mt2.proj || mt2.grp))) return;
