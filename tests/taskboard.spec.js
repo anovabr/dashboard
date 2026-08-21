@@ -75,6 +75,48 @@ test.describe('add, edit, delete', () => {
     expect(t.proj).toBe('Murray');
   });
 
+  test('a hyphen inside a name is part of the name, not a project separator', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('revise book chapter - revision');
+    await addWeekTask(page, text);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t).toBeTruthy();
+    expect(t.proj).toBeFalsy();
+    expect(t.text).toBe(text);
+  });
+
+  test('an em dash still means "project — task"', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('draft the intro');
+    await addWeekTask(page, `Murray — ${text}`);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.proj).toBe('Murray');
+  });
+
+  test('a hyphen still splits when the left side names something real', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('answer new leads');
+    // typed with a hyphen, drawn with an em dash, so assert on the state
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill(`ANOVA - ${text}`);
+    await input.press('Enter');
+    await expect(page.locator('#sec-week li[data-id]').filter({ hasText: text })).toHaveCount(1);
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.proj).toBe('ANOVA');
+  });
+
+  test('editing a hyphenated row does not eat half of it', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('revise chapter - final pass');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).locator('.txt').dblclick();
+    await page.locator('#sec-week .inline-edit').press('Enter');
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t).toBeTruthy();
+    expect(t.text).toBe(text);
+  });
+
   test('edits the text of a row on double click', async ({ page }) => {
     await openBoard(page);
     const text = uniq('before');
@@ -126,6 +168,69 @@ test.describe('add, edit, delete', () => {
     await input.press('Enter');
     const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
     expect(t.date).toEqual({ kind: 'hard', label: 'due 7/31' });
+  });
+});
+
+test.describe('choosing the section as you add', () => {
+  const pick = '.addrow[data-add="week"] .secpick';
+
+  test('the add row offers every section, with a guess already made', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('.addrow[data-add="week"]').click();
+    await expect(page.locator(`${pick} button`).first()).toBeVisible();
+    await page.locator('.addrow[data-add="week"] input').fill('write the manuscript');
+    await expect(page.locator(`${pick} button.on`)).toHaveText(/Writing/);
+  });
+
+  test('the guess follows what you type', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill('write the manuscript');
+    await expect(page.locator(`${pick} button.on`)).toHaveText(/Writing/);
+    await input.fill('pay the visa fee');
+    await expect(page.locator(`${pick} button.on`)).toHaveText(/Personal/);
+  });
+
+  test('picking a section overrides the guess and sticks', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('write the manuscript');
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill(text);
+    await expect(page.locator(`${pick} button.on`)).toHaveText(/Writing/);
+    await page.locator(`${pick} button[data-pick="personal"]`).click();
+    await expect(page.locator(`${pick} button.on`)).toHaveText(/Personal/);
+    await input.press('Enter');
+    const t = await page.evaluate((x) => window.__dbg.state().tasks.find((t) => t.text === x), text);
+    expect(t.sec).toBe('personal');
+    await expect(page.locator('#sec-personal').getByText(text)).toBeVisible();
+  });
+
+  test('once you pick, typing no longer moves it', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill('something');
+    await page.locator(`${pick} button[data-pick="puc"]`).click();
+    await input.fill('write the manuscript');       // would guess Writing
+    await expect(page.locator(`${pick} button.on`)).toHaveText(/PUC-Rio/);
+  });
+
+  test('picking a section keeps the caret in the box', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill('still typing');
+    await page.locator(`${pick} button[data-pick="others"]`).click();
+    await expect(input).toBeFocused();
+  });
+
+  test('the per-section add rows need no picker', async ({ page }) => {
+    await openBoard(page);
+    // the section's own add row, not the per-subsection ones
+    await page.locator('#sec-personal .addrow[data-add="personal"]:not([data-proj])').click();
+    await expect(page.locator('#sec-personal .secpick')).toHaveCount(0);
   });
 });
 

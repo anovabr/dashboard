@@ -580,6 +580,15 @@
 
   .addrow { margin-top: 8px; font-size: 13px; font-weight: 650; color: var(--muted); cursor: pointer; user-select: none; }
   .addrow:hover { color: var(--accent); }
+  .secpick { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .secpick button { font: inherit; font-size: 11.5px; font-weight: 700; line-height: 1.3;
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--secondary); cursor: pointer; }
+  .secpick button:hover { border-color: var(--hue); color: var(--hue); }
+  .secpick button.on { background: var(--hue); border-color: var(--hue); color: var(--surface); }
+  .secpick button.on .secdotm { background: var(--surface) !important; }
+  .secpick .secdotm { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+
   .addrow input, .inline-edit {
     font: inherit; font-size: 14px; width: 100%;
     padding: 5px 9px; border: 1.5px solid var(--accent); border-radius: 8px;
@@ -914,7 +923,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-16 23:03 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-21 11:12 UTC</div>
 </div>
 
 <div id="mobile">
@@ -3064,6 +3073,40 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     }
     scheduleSave(); renderAll();
   }
+  // "Project — task" only splits when it is unambiguous. An em or en dash is
+  // deliberate, so it always splits. A plain hyphen is far too common inside an
+  // ordinary name ("revise chapter - final pass") and only splits when the left
+  // side names a section or project that already exists.
+  function knownProj(name) {
+    var n = String(name || '').trim().toLowerCase();
+    if (!n) return false;
+    var secs = allSections();
+    for (var i = 0; i < secs.length; i++) {
+      if (String(secs[i].title).trim().toLowerCase() === n) return true;
+      var gs = secs[i].groups || [];
+      for (var g = 0; g < gs.length; g++) if (String(gs[g]).trim().toLowerCase() === n) return true;
+    }
+    for (var j = 0; j < S.tasks.length; j++) {
+      var t = S.tasks[j];
+      if (t.status === 'gone' || !t.proj) continue;
+      if (String(t.proj).split('/').pop().trim().toLowerCase() === n) return true;
+    }
+    var fl = S.folders || {};
+    for (var k in fl) {
+      if (!Object.prototype.hasOwnProperty.call(fl, k)) continue;
+      for (var m = 0; m < fl[k].length; m++) if (String(fl[k][m]).trim().toLowerCase() === n) return true;
+    }
+    return false;
+  }
+  function splitProj(v) {
+    var s = String(v == null ? '' : v).trim();
+    var m = s.match(/^(.+?)\s+(?:—|–)\s+(.+)$/);
+    if (m) return { proj: m[1].trim(), text: m[2].trim() };
+    m = s.match(/^(.+?)\s+(?:--|-)\s+(.+)$/);
+    if (m && knownProj(m[1])) return { proj: m[1].trim(), text: m[2].trim() };
+    return { proj: null, text: s };
+  }
+
   function guessSec(proj, text) {
     var top = proj ? String(proj).split('/')[0].trim().toLowerCase() : '';
     if (top) {
@@ -3829,9 +3872,9 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         var v = (el('mnewtext') || {}).value || '';
         if (!v.trim()) return;
         pushUndo();
-        var m = v.trim().match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
+        var sp = splitProj(v);
         var nt = {
-          id: uid(), sec: mNewSec, proj: m ? m[1] : null, text: m ? m[2] : v.trim(),
+          id: uid(), sec: mNewSec, proj: sp.proj, text: sp.text,
           status: 'planning', date: { kind: 'plain', label: 'added ' + new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) },
           addedAt: nowIso(), updatedAt: nowIso()
         };
@@ -3879,8 +3922,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
         mt.status = 'gone'; logChange('Removed: ' + taskLabel(mt));
       } else if (a === 'editgo') {
         var ev2 = (el('medtext') || {}).value || '';
-        var em = ev2.trim().match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
-        if (em) { mt.proj = em[1]; mt.text = em[2]; } else { mt.proj = null; mt.text = ev2.trim(); }
+        var esp = splitProj(ev2);
+        mt.proj = esp.proj; mt.text = esp.text;
         logChange('Edited: ' + taskLabel(mt));
       } else if (a === 'movego') {
         mt.sec = mMoveSec; delete mt.grp;
@@ -4699,8 +4742,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (save && inp.value.trim() && inp.value.trim() !== cur) {
         pushUndo();
         var v = inp.value.trim();
-        var m = v.match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
-        if (m) { t.proj = m[1]; t.text = m[2]; } else { t.proj = null; t.text = v; }
+        var dsp = splitProj(v);
+        t.proj = dsp.proj; t.text = dsp.text;
         logChange('Edited: "' + cur + '" → "' + v + '"');
         touch(t); scheduleSave();
       }
@@ -4740,18 +4783,52 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var orig = add.textContent;
     add.innerHTML = '';
     var inp = document.createElement('input');
-    inp.placeholder = 'Project — task · Enter to add, Esc to cancel';
-    add.appendChild(inp); inp.focus();
+    inp.placeholder = 'Task name · Enter to add, Esc to cancel';
+    add.appendChild(inp);
+
+    // Adding from the Tasks card has to land the task in some section, and the
+    // guess used to happen silently. Show it, and let it be overridden.
+    var picked = null, pick = null;
+    if (target === 'week') {
+      pick = document.createElement('div');
+      pick.className = 'secpick';
+      add.appendChild(pick);
+      pick.addEventListener('mousedown', function (ev) { ev.preventDefault(); });  // keep the caret
+      pick.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-pick]');
+        if (!b) return;
+        picked = b.dataset.pick;
+        paintPick();
+        inp.focus();
+      });
+      paintPick();
+      inp.addEventListener('input', function () { if (!picked) paintPick(); });
+    }
+    function currentSec() {
+      if (picked) return picked;
+      var sp = splitProj(inp.value);
+      return guessSec(sp.proj, sp.text);
+    }
+    function paintPick() {
+      var cur = currentSec();
+      pick.innerHTML = secOrder().map(function (sc) {
+        return '<button type="button" data-pick="' + esc(sc.id) + '" style="--hue:var(--h-' + sc.hue + ')"' +
+          (sc.id === cur ? ' class="on"' : '') + '>' +
+          '<span class="secdotm" style="background:var(--h-' + sc.hue + ')"></span>' + esc(sc.title) + '</button>';
+      }).join('');
+    }
+
+    inp.focus();
     function reset() { add.innerHTML = esc(orig); }
     inp.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter' && inp.value.trim()) {
         var v = inp.value.trim();
-        var m = v.match(/^(.+?)\s+(?:—|–|--|-)\s+(.+)$/);
-        var proj = m ? m[1] : (add.dataset.proj || null);
-        var text = m ? m[2] : v;
+        var asp = splitProj(v);
+        var proj = asp.proj || (add.dataset.proj || null);
+        var text = asp.text;
         var nt = {
           id: uid(),
-          sec: target === 'week' ? guessSec(proj, text) : target,
+          sec: target === 'week' ? currentSec() : target,
           proj: proj,
           text: text,
           status: target === 'week' ? 'now' : 'planning',
