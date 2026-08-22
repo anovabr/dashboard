@@ -327,6 +327,13 @@
   .workbar { display: inline-block; width: 48px; height: 5px; border-radius: 3px; background: var(--track); margin-left: 8px; vertical-align: middle; overflow: hidden; }
   .workbar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
   .secmark { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; position: relative; top: 0.5px; }
+  .projchip { display: inline-block; font-size: 10.5px; font-weight: 750; letter-spacing: .015em;
+    color: var(--hue); background: var(--hue-bg); border: 1px solid var(--hue);
+    border-radius: 5px; padding: 0 6px; margin-right: 8px; white-space: nowrap;
+    max-width: 210px; overflow: hidden; text-overflow: ellipsis;
+    vertical-align: baseline; position: relative; top: -1px; }
+  li.done .projchip, li.waiting .projchip { text-decoration: none; opacity: .55; font-style: normal; }
+  .daycol .projchip { max-width: 150px; }
   ul.rows li.fcs { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 8px; border-radius: 6px; }
   ul.rows li.tdyrow { background: var(--bg-focus); box-shadow: inset 3px 0 0 0 var(--accent); padding-left: 9px; border-top-color: transparent; }
   .daycols { display: grid; grid-template-columns: 70% 10px 1fr; gap: 6px; margin: 4px 0 6px; align-items: start; }
@@ -923,7 +930,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-21 11:12 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-22 12:31 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2748,14 +2755,22 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var h = '<li class="' + cls.join(' ') + '" data-id="' + t.id + '"' + drag + '>';
     if (t.status !== 'waiting') h += '<span class="box" title="mark done"></span>';
     h += '<span class="txt">';
-    if (opts.secMark && SECMETA[t.sec] && SECMETA[t.sec].hue) {
-      h += '<span class="secmark" style="background:var(--h-' + SECMETA[t.sec].hue + ')" title="' + esc(SECMETA[t.sec].title) + '"></span>';
+    // In the Tasks card every row comes from somewhere else, so it is labelled:
+    // the project it belongs to, or its section when it has no project. The
+    // colour is the section's, the one picked with the section swatch.
+    if (opts.secMark) {
+      var sc = SECMETA[t.sec];
+      var pleaf = t.proj ? String(t.proj).split('/').pop().trim() : '';
+      var label = pleaf || t.grp || (sc ? sc.title : t.sec);
+      var chue = (sc && sc.hue) || 'others';
+      h += '<span class="projchip" style="--hue:var(--h-' + chue + '); --hue-bg:var(--bg-' + chue + ')" title="' +
+        esc((sc ? sc.title : t.sec) + (label && sc && label !== sc.title ? ' / ' + label : '')) + '">' + esc(label) + '</span> ';
     } else {
       var dotCls = (t.status === 'done' || t.status === 'archived') ? 'done' : t.status;
       h += '<span class="dot ' + dotCls + '" title="click: change status"></span>';
     }
     if (opts.showSec && SECMETA[t.sec]) h += '<span class="secchip">' + esc(SECMETA[t.sec].title) + '</span>';
-    if (t.proj && !opts.hideProj) { var pp = String(t.proj).split('/'); h += '<strong>' + esc(pp[pp.length - 1]) + '</strong> — '; }
+    if (t.proj && !opts.hideProj && !opts.secMark) { var pp = String(t.proj).split('/'); h += '<strong>' + esc(pp[pp.length - 1]) + '</strong> — '; }
     h += esc(t.text);
     if (t.big) h += '<span class="tag">big</span>';
     if (t.repeat) h += '<span class="rep" title="repeats ' + esc(t.repeat) + '">' + esc(repeatLabel(t)) + '</span>';

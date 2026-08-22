@@ -14,7 +14,9 @@ async function addWeekTask(page, text) {
   const input = page.locator('.addrow[data-add="week"] input');
   await input.fill(text);
   await input.press('Enter');
-  await expect(page.locator(`#sec-week li[data-id]`).filter({ hasText: text })).toHaveCount(1);
+  // any "Project — " prefix is drawn as a chip, so only the task half is in the row text
+  const shown = text.split(/\s+—\s+/).pop();
+  await expect(page.locator(`#sec-week li[data-id]`).filter({ hasText: shown })).toHaveCount(1);
 }
 
 test.describe('password gate', () => {
@@ -231,6 +233,92 @@ test.describe('choosing the section as you add', () => {
     // the section's own add row, not the per-subsection ones
     await page.locator('#sec-personal .addrow[data-add="personal"]:not([data-proj])').click();
     await expect(page.locator('#sec-personal .secpick')).toHaveCount(0);
+  });
+});
+
+test.describe('the project chip in the Tasks card', () => {
+  test('a task with a project is chipped with the project', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('write the manuscript');
+    await addWeekTask(page, `Murray — ${text}`);
+    const chip = page.locator(row(text)).locator('.projchip');
+    await expect(chip).toHaveText('Murray');
+  });
+
+  test('a task with no project is chipped with its section', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('ride a bike');
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill(text);
+    await page.locator('.addrow[data-add="week"] .secpick button[data-pick="personal"]').click();
+    await input.press('Enter');
+    await expect(page.locator(row(text)).locator('.projchip')).toHaveText('Personal');
+  });
+
+  test('a task in a group is chipped with the group', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('apply for the grant');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="move"]').first().click();
+    await page.locator('.actmenu button[data-act="mv2"][data-tgt="writing"]').click();
+    await page.locator('.actmenu button[data-act="mv3"]').filter({ hasText: 'Grants' }).click();
+    await expect(page.locator(row(text)).locator('.projchip')).toHaveText('Grants');
+  });
+
+  test('the chip takes the colour of its section', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('coloured by section');
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill(text);
+    await page.locator('.addrow[data-add="week"] .secpick button[data-pick="anova"]').click();
+    await input.press('Enter');
+    const chip = page.locator(row(text)).locator('.projchip');
+    const chipColor = await chip.evaluate((n) => getComputedStyle(n).color);
+    const secColor = await page.locator('#sec-anova > h2').evaluate((n) => getComputedStyle(n).color);
+    expect(chipColor).toBe(secColor);
+  });
+
+  test('recolouring the section recolours the chip', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('follows the swatch');
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill(text);
+    await page.locator('.addrow[data-add="week"] .secpick button[data-pick="puc"]').click();
+    await input.press('Enter');
+    const chip = page.locator(row(text)).locator('.projchip');
+    const before = await chip.evaluate((n) => getComputedStyle(n).color);
+    await page.locator('#sec-puc .seccolor').click();
+    await page.locator('.actmenu .sw[data-swhue="berry"]').click();
+    await expect.poll(async () => chip.evaluate((n) => getComputedStyle(n).color)).not.toBe(before);
+  });
+
+  test('the section cards keep the status dot rather than a chip', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('inside its section');
+    await page.locator('.addrow[data-add="week"]').click();
+    const input = page.locator('.addrow[data-add="week"] input');
+    await input.fill(text);
+    await page.locator('.addrow[data-add="week"] .secpick button[data-pick="personal"]').click();
+    await input.press('Enter');
+    const inSection = page.locator('#sec-personal li[data-id]').filter({ hasText: text }).first();
+    await expect(inSection.locator('.dot')).toHaveCount(1);
+    await expect(inSection.locator('.projchip')).toHaveCount(0);
+  });
+
+  test('the chip shows in Today, This month and Recurring too', async ({ page }) => {
+    await openBoard(page);
+    const a = uniq('for today'), b = uniq('for the month');
+    await addWeekTask(page, a);
+    await html5Drag(page, row(a), '#col-tdy');
+    await addWeekTask(page, b);
+    await page.locator(row(b)).click({ button: 'right' });
+    await page.locator('.actmenu button[data-act="month"]').first().click();
+    await expect(page.locator('#list-today li[data-id]').filter({ hasText: a }).locator('.projchip')).toHaveCount(1);
+    await expect(page.locator('#list-month li[data-id]').filter({ hasText: b }).locator('.projchip')).toHaveCount(1);
   });
 });
 
