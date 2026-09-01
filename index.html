@@ -930,7 +930,7 @@
     </div>
   </details>
 
-  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-08-22 12:31 UTC</div>
+  <div class="note" id="buildstamp" style="margin-top:18px">build 2026-09-01 20:51 UTC</div>
 </div>
 
 <div id="mobile">
@@ -2817,10 +2817,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     el('metaline').textContent = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
     var live = S.tasks.filter(function (t) { return t.status !== 'gone' && t.status !== 'archived'; });
+    var searching = !!deskQ;
+    // while searching, every list on the board narrows to what matches
+    function qf(list) { return searching ? list.filter(qMatch) : list; }
 
     // This Week -- repeating and month-pinned tasks have their own strips below,
     // so they are shown in the nearest horizon they belong to and not listed twice
-    var wk = live.filter(function (t) { return t.week && !t.repeat && !t.month; });
+    var wkAll = live.filter(function (t) { return t.week && !t.repeat && !t.month; });
+    var wk = qf(wkAll);
     wk.sort(function (a, b) {
       var ad = a.status === 'done' ? 1 : 0, bd = b.status === 'done' ? 1 : 0;
       if (ad !== bd) return ad - bd;
@@ -2838,14 +2842,14 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var tmr = rest.filter(function (t) { return t.tomorrow && t.status !== 'done'; });
     var rest2 = rest.filter(function (t) { return !(t.tomorrow && t.status !== 'done'); });
     // the longer horizons ride in the same grid, so it has to show for them too
-    var mon = live.filter(function (t) { return t.month && !t.repeat && t.status !== 'done'; });
+    var mon = qf(live.filter(function (t) { return t.month && !t.repeat && t.status !== 'done'; }));
     mon.sort(function (a, b) { return ((a.ord || 1e9) - (b.ord || 1e9)); });
     el('sec-month').style.display = mon.length ? '' : 'none';
     el('monN').textContent = mon.length;
     el('list-month').innerHTML = mon.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
 
     // Recurring: due today first, then the rest of the rota, dimmed
-    var recur = live.filter(function (t) { return t.repeat; });
+    var recur = qf(live.filter(function (t) { return t.repeat; }));
     recur.sort(function (a, b) {
       var ad = repeatDueToday(a) ? 0 : 1, bd = repeatDueToday(b) ? 0 : 1;
       if (ad !== bd) return ad - bd;
@@ -2867,10 +2871,10 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var wkHtml = ((tdy.length || tmr.length) && rest2.length ? '<li class="dayhdr rest">Rest of the week<span class="dn">' + rest2.length + '</span></li>' : '') +
       rest2.map(function (t) { return rowHtml(t, { secMark: true }); }).join('');
     el('list-week').innerHTML = wkHtml ||
-      ((tdy.length || tmr.length) ? '' : '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>');
-    var wkDone = wk.filter(function (t) { return t.status === 'done'; }).length;
-    el('weekCount').textContent = wkDone + ' of ' + wk.length;
-    el('ringVal').style.strokeDashoffset = String(107 * (1 - (wk.length ? wkDone / wk.length : 0)));
+      ((tdy.length || tmr.length || searching) ? '' : '<li class="waiting"><span class="txt">Nothing pinned — hit ☆ on any task below.</span></li>');
+    var wkDone = wkAll.filter(function (t) { return t.status === 'done'; }).length;
+    el('weekCount').textContent = wkDone + ' of ' + wkAll.length;
+    el('ringVal').style.strokeDashoffset = String(107 * (1 - (wkAll.length ? wkDone / wkAll.length : 0)));
     el('clearDone').style.display = wkDone > 0 ? '' : 'none';
 
     // stats
@@ -2879,21 +2883,34 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
     var workedToday = live.filter(function (t) { return (t.worked || []).indexOf(dayStr()) !== -1; }).length;
     var tmrN = live.filter(function (t) { return t.tomorrow && t.status !== 'done'; }).length;
     var built = buildLabel();
-    el('statline').innerHTML = '<b>' + wkDone + ' of ' + wk.length + '</b> weekly focus · <b>' + doneToday + '</b> checked off today · ' +
+    var found = searching
+      ? S.tasks.filter(function (t) { return t.status !== 'gone' && qMatch(t); }).length : 0;
+    var searchNote = searching
+      ? '<b>' + (found ? found + (found === 1 ? ' match' : ' matches') : 'nothing matches') +
+        '</b> for “' + esc(deskQ) + '” <span class="statsep">|</span> '
+      : '';
+    el('statline').innerHTML = searchNote +
+      '<b>' + wkDone + ' of ' + wkAll.length + '</b> weekly focus · <b>' + doneToday + '</b> checked off today · ' +
       (tmrN ? '<b>' + tmrN + '</b> lined up for tomorrow · ' : '') + '<b>' + workedToday + '</b> worked on today · <b>' + open + '</b> open' +
       (built ? ' <span class="statsep">|</span> <span class="statbuilt">' + esc(built) + '</span>' : '') +
       ' <span class="statsep">|</span> <a class="statlink" href="manuscripts.html">Manuscript system</a>';
 
     // sections
+    // A search looks through everything, finished and archived included, and
+    // ignores folds -- a match you cannot see is the same as no match at all.
     var html = '';
+    var searchPool = searching ? S.tasks.filter(function (t) { return t.status !== 'gone'; }) : live;
     secOrder().forEach(function (sec) {
       var allN = live.filter(function (t) { return t.sec === sec.id && t.status !== 'done'; }).length;
       var wkN = live.filter(function (t) { return t.sec === sec.id && t.week && t.status !== 'done'; }).length;
-      var ts = live.filter(function (t) { return t.sec === sec.id && t.status !== 'done' && qMatch(t) && fMatch(t); });
+      var ts = searchPool.filter(function (t) {
+        return t.sec === sec.id && (searching || t.status !== 'done') && qMatch(t) && fMatch(t);
+      });
+      if (searching && !ts.length) return;                 // keep the results uncluttered
       ts.sort(function (a, b) {
         return ((a.ord || 1e9) - (b.ord || 1e9)) || ((STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0));
       });
-      var folded = S.folded && S.folded[sec.id] ? ' folded' : '';
+      var folded = (!searching && S.folded && S.folded[sec.id]) ? ' folded' : '';
       html += '<div class="card foldable seccard' + folded + '" draggable="true" id="sec-' + sec.id + '" data-hue style="--hue:var(--h-' + sec.hue + '); --hue-bg:var(--bg-' + sec.hue + ')" data-sec="' + sec.id + '">';
       html += '<h2>' + esc(sec.title) +
         '<span class="loadwrap"><span class="loadbar"><i style="width:' + (allN ? Math.min(100, Math.round(wkN / allN * 100)) : 0) +
@@ -2906,7 +2923,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
       if (sec.groups && sec.groups.length) {
         sec.groups.forEach(function (g) {
           var gts = ts.filter(function (t) { return (t.grp || sec.groups[0]) === g; });
-          var gF = S.subFolded && S.subFolded[sec.id + '/' + g];
+          if (searching && !gts.length) return;            // no matches in this group
+          var gF = !searching && S.subFolded && S.subFolded[sec.id + '/' + g];
           html += '<div class="micro grouphead" data-sec="' + sec.id + '" data-grp="' + esc(g) + '" title="click to fold/unfold">' +
             (gF ? '▸ ' : '▾ ') + esc(g) +
             (gF && gts.length ? '<span class="subct">' + gts.length + '</span>' : '') +
@@ -2938,7 +2956,8 @@ MAINTENANCE RULES (any Claude session updating this artifact later):
           if (loose.length) html += '<ul class="rows">' + loose.map(function (t) { return rowHtml(t, { hideProj: true }); }).join('') + '</ul>';
           pn.forEach(function (p) {
             var deletable = true;
-            var isF = S.subFolded && S.subFolded[sec.id + '/' + p];
+            if (searching && !byP[p].length) return;        // no matches in this subsection
+            var isF = !searching && S.subFolded && S.subFolded[sec.id + '/' + p];
             html += '<div class="micro subhead" draggable="true" data-sec="' + sec.id + '" data-fold="' + esc(p) + '" title="click to fold/unfold · drag to reorder or move">' +
               (isF ? '▸ ' : '▾ ') + esc(p) +
               (isF && byP[p].length ? '<span class="subct">' + byP[p].length + '</span>' : '') +

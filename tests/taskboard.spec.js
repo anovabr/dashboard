@@ -322,6 +322,110 @@ test.describe('the project chip in the Tasks card', () => {
   });
 });
 
+test.describe('search', () => {
+  const results = () => '#sections li[data-id]';
+  const shown = (page) => page.evaluate(() =>
+    [...document.querySelectorAll('#sections li[data-id]')]
+      .filter((li) => li.offsetParent)                 // actually on screen, not behind a fold
+      .map((li) => li.querySelector('.txt').textContent.trim()));
+
+  test('finds a live task', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#deskq').fill('empirical blue');
+    await expect(page.locator(results())).toHaveCount(1);
+    expect((await shown(page)).join(' ')).toContain('empirical blue zone');
+  });
+
+  test('finds an archived task', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#deskq').fill('blue');
+    const rows = await shown(page);
+    expect(rows.join(' ')).toContain('blue zone manuscript');   // archived
+    expect(rows.join(' ')).toContain('empirical blue zone');    // live
+  });
+
+  test('finds a completed task', async ({ page }) => {
+    await openBoard(page);
+    const text = uniq('finished thing');
+    await addWeekTask(page, text);
+    await page.locator(row(text)).locator('.box').click();
+    await page.locator('.actmenu.selbar button[data-act="done"]').click();
+    await page.locator('#deskq').fill(text);
+    expect((await shown(page)).join(' ')).toContain(text);
+  });
+
+  test('a match inside a folded section still surfaces', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#sec-personal > h2').click();
+    await expect(page.locator('#sec-personal')).toHaveClass(/folded/);
+    await page.locator('#deskq').fill('blue zone manuscript');
+    expect((await shown(page)).join(' ')).toContain('blue zone manuscript');
+  });
+
+  test('a match inside a folded subsection still surfaces', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#sec-writing .grouphead').first().click();   // fold a group
+    await page.locator('#deskq').fill('empirical blue');
+    expect((await shown(page)).join(' ')).toContain('empirical blue zone');
+  });
+
+  test('sections with nothing matching drop out of the way', async ({ page }) => {
+    await openBoard(page);
+    const before = await page.locator('#sections .seccard').count();
+    await page.locator('#deskq').fill('empirical blue');
+    const after = await page.locator('#sections .seccard').count();
+    expect(after).toBeLessThan(before);
+    expect(after).toBe(1);
+  });
+
+  test('the Tasks card only shows matches while searching', async ({ page }) => {
+    await openBoard(page);
+    const a = uniq('keep this one'), b = uniq('hide this one');
+    await addWeekTask(page, a);
+    await addWeekTask(page, b);
+    await page.locator('#deskq').fill(a);
+    await expect(page.locator('#sec-week li[data-id]').filter({ hasText: a })).toHaveCount(1);
+    await expect(page.locator('#sec-week li[data-id]').filter({ hasText: b })).toHaveCount(0);
+  });
+
+  test('it says how many it found', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#deskq').fill('blue');
+    await expect(page.locator('#statline')).toContainText('2 matches');
+    await page.locator('#deskq').fill('zzzznothingatall');
+    await expect(page.locator('#statline')).toContainText('nothing matches');
+  });
+
+  test('clearing the box puts the board back, folds and all', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#sec-personal > h2').click();
+    const before = await page.locator('#sections .seccard').count();
+    await page.locator('#deskq').fill('empirical blue');
+    await expect(page.locator('#sections .seccard')).toHaveCount(1);
+    await page.locator('#deskq').fill('');
+    await expect(page.locator('#sections .seccard')).toHaveCount(before);
+    await expect(page.locator('#sec-personal')).toHaveClass(/folded/);   // fold was not spent
+  });
+
+  test('subsections with nothing matching are left out', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#deskq').fill('empirical blue');
+    // the headings are uppercased in CSS, so compare without case
+    const heads = (await page.locator('#sec-writing .grouphead, #sec-writing .subhead')
+      .allInnerTexts()).join(' ').toLowerCase();
+    expect(heads).toContain('manuscripts');       // holds the match
+    expect(heads).not.toContain('grants');        // empty, so not drawn
+    expect(heads).not.toContain('other writing');
+  });
+
+  test('archived matches are struck through so you can tell', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('#deskq').fill('blue zone manuscript');
+    const li = page.locator('#sections li[data-id]').filter({ hasText: 'blue zone manuscript' }).first();
+    await expect(li).toHaveClass(/done/);
+  });
+});
+
 test.describe('the docked selection bar', () => {
   test('ticking a box selects rather than completing', async ({ page }) => {
     await openBoard(page);
