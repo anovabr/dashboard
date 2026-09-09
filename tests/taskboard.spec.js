@@ -426,6 +426,96 @@ test.describe('search', () => {
   });
 });
 
+test.describe('the day columns stay inside the card', () => {
+  // A 1fr track cannot shrink below its own min-content, so a wide chip, a
+  // nowrap date or one long token used to push the right column off the card
+  // as soon as the splitter went past about 70%.
+  async function loadUp(page, split) {
+    await page.evaluate((sp) => {
+      const S = window.__dbg.state();
+      const mk = (o) => Object.assign({ id: 'x' + Math.random().toString(36).slice(2, 8), sec: 'anova',
+        status: 'now', week: true, updatedAt: new Date().toISOString() }, o);
+      S.tasks.push(mk({ proj: 'ANOVA saude para profissionais', text: 'Pilotar sistema completo com clientes',
+        tomorrow: true, carried: 3, date: { kind: 'hard', label: 'due this week' } }));
+      S.tasks.push(mk({ proj: 'ANOVA infra', text: 'anova-vps Gunicorn 8000/8001 nginx Remote-SSH',
+        month: true, date: { kind: 'aim', label: 'aim September' } }));
+      S.tasks.push(mk({ proj: 'ANOVA autismo', text: 'testetea.com.br DNS via Netlify/Hostgator',
+        repeat: 'daily', date: { kind: 'hard', label: 'due this week' } }));
+      S.daySplit = sp;
+      window.__dbg.syncRender();
+    }, split);
+  }
+  const overflow = (page) => page.evaluate(() => {
+    const card = document.getElementById('sec-week');
+    const cs = getComputedStyle(card);
+    const inner = card.getBoundingClientRect().right - parseFloat(cs.paddingRight) - parseFloat(cs.borderRightWidth);
+    const bad = [];
+    ['col-tdy', 'col-tmr', 'sec-month', 'sec-recur'].forEach((id) => {
+      const n = document.getElementById(id);
+      if (!n || n.style.display === 'none') return;
+      const r = n.getBoundingClientRect().right;
+      if (r > inner + 1) bad.push(id + ' +' + Math.round(r - inner) + 'px');
+      n.querySelectorAll('li[data-id] *').forEach((c) => {
+        const cr = c.getBoundingClientRect();
+        if (cr.width && cr.right > inner + 1) bad.push(id + ' ' + (c.className || c.tagName) + ' +' + Math.round(cr.right - inner) + 'px');
+      });
+    });
+    return [...new Set(bad)];
+  });
+
+  for (const split of [25, 50, 70, 80, 85]) {
+    test(`nothing spills at a ${split}% splitter`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await openBoard(page);
+      await loadUp(page, split);
+      expect(await overflow(page)).toEqual([]);
+    });
+  }
+
+  test('nothing spills on a narrow laptop either', async ({ page }) => {
+    await page.setViewportSize({ width: 1120, height: 900 });
+    await openBoard(page);
+    await loadUp(page, 70);
+    expect(await overflow(page)).toEqual([]);
+  });
+
+  test('the whole board never scrolls sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await openBoard(page);
+    await loadUp(page, 85);
+    const dc = await page.evaluate(() => {
+      const n = document.getElementById('daycols');
+      return { scrollW: n.scrollWidth, clientW: n.clientWidth };
+    });
+    expect(dc.scrollW).toBeLessThanOrEqual(dc.clientW + 1);
+  });
+
+  test('the splitter cannot squeeze the right column to nothing', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await openBoard(page);
+    await loadUp(page, 85);
+    const w = await page.locator('#col-tmr').evaluate((n) => n.getBoundingClientRect().width);
+    expect(w).toBeGreaterThanOrEqual(200);
+    expect(await overflow(page)).toEqual([]);
+    // what was dragged is still what is stored, so a wider window opens it up again
+    expect(await page.evaluate(() => window.__dbg.state().daySplit)).toBe(85);
+  });
+
+  test('a long unbroken token wraps instead of forcing the column wider', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await openBoard(page);
+    await page.evaluate(() => {
+      const S = window.__dbg.state();
+      S.tasks.push({ id: 'longtoken', sec: 'anova', status: 'now', week: true, tomorrow: true,
+        proj: 'ANOVA', text: 'https://anova.example.com/a/very/long/path/that/never/breaks',
+        updatedAt: new Date().toISOString() });
+      S.daySplit = 85;
+      window.__dbg.syncRender();
+    });
+    expect(await overflow(page)).toEqual([]);
+  });
+});
+
 test.describe('the docked selection bar', () => {
   test('ticking a box selects rather than completing', async ({ page }) => {
     await openBoard(page);
